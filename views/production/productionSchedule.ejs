@@ -1,0 +1,348 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Production Schedule</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+
+    <!-- FullCalendar CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/fullcalendar@5.10.1/main.min.css" rel="stylesheet">
+
+    <style>
+        :root {
+            --primary-color: #4CAF50;
+            --primary-dark: #1b5e20;
+            --secondary-color: #2c3e50;
+            --text-color: #333;
+            --text-muted: #6c757d;
+            --bg-color: #f8f9fa;
+            --border-radius: 8px;
+            --box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        body {
+            font-family: 'Segoe UI', 'Roboto', sans-serif;
+            background: var(--bg-color);
+            color: var(--text-color);
+            line-height: 1.6;
+        }
+
+        .content {
+            margin-left: 260px;
+            padding: 2rem;
+            transition: margin-left 0.3s ease;
+        }
+
+        .header {
+            background: white;
+            padding: 2rem;
+            border-radius: var(--border-radius);
+            box-shadow: var(--box-shadow);
+            margin-bottom: 2rem;
+        }
+
+        .header h1 {
+            font-size: 2rem;
+            color: var(--secondary-color);
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+        }
+
+        .header p {
+            color: var(--text-muted);
+            font-size: 1rem;
+            margin-bottom: 0;
+        }
+
+        #calendar {
+            background: white;
+            border-radius: var(--border-radius);
+            box-shadow: var(--box-shadow);
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .fc-button {
+            background-color: var(--primary-color) !important;
+            border-color: var(--primary-color) !important;
+        }
+
+        .fc-button:hover {
+            background-color: var(--primary-dark) !important;
+            border-color: var(--primary-dark) !important;
+        }
+
+        .fc-event {
+            border-radius: 4px;
+            padding: 2px 4px;
+            margin: 1px 0;
+            border: none;
+            background-color: var(--primary-color);
+            color: white;
+            cursor: pointer;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .fc-event:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.15);
+        }
+
+        .fc-toolbar-title {
+            color: var(--secondary-color);
+            font-weight: 600;
+        }
+
+        .fc-day-today {
+            background-color: rgba(76, 175, 80, 0.05) !important;
+        }
+
+        .fc-day-header {
+            background-color: var(--primary-color);
+            color: white;
+            padding: 8px !important;
+        }
+
+        .fc-scrollgrid {
+            border-radius: var(--border-radius);
+            overflow: hidden;
+        }
+
+        .tooltip {
+            font-family: 'Segoe UI', 'Roboto', sans-serif;
+            font-size: 0.875rem;
+        }
+
+        .tooltip-inner {
+            background-color: var(--secondary-color);
+            border-radius: 4px;
+            padding: 8px 12px;
+        }
+
+        /* Modal Styles */
+        .modal-content {
+            border-radius: var(--border-radius);
+            box-shadow: var(--box-shadow);
+        }
+
+        .modal-header {
+            background-color: var(--primary-color);
+            color: white;
+            border-top-left-radius: var(--border-radius);
+            border-top-right-radius: var(--border-radius);
+            padding: 1rem 1.5rem;
+        }
+
+        .modal-title {
+            font-weight: 600;
+            font-size: 1.25rem;
+        }
+
+        .modal-body {
+            padding: 1.5rem;
+        }
+
+        .detail-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.75rem 0;
+            border-bottom: 1px solid #eee;
+        }
+
+        .detail-row:last-child {
+            border-bottom: none;
+        }
+
+        .detail-row span:first-child {
+            color: var(--text-muted);
+            font-weight: 500;
+        }
+
+        .detail-row span:last-child {
+            font-weight: 600;
+            color: var(--text-color);
+        }
+
+        .modal-footer {
+            background-color: #f8f9fa;
+            border-bottom-left-radius: var(--border-radius);
+            border-bottom-right-radius: var(--border-radius);
+            padding: 1rem 1.5rem;
+        }
+
+        .btn-secondary {
+            background-color: var(--text-muted);
+            border: none;
+        }
+
+        .btn-secondary:hover {
+            background-color: #5a6268;
+        }
+
+        /* Responsive Design */
+        @media (max-width: 992px) {
+            .content {
+                margin-left: 0;
+                padding: 1rem;
+            }
+
+            .header {
+                padding: 1.5rem;
+            }
+
+            .header h1 {
+                font-size: 1.75rem;
+            }
+
+            #calendar {
+                padding: 1rem;
+            }
+        }
+
+        @media (max-width: 576px) {
+            .header h1 {
+                font-size: 1.5rem;
+            }
+
+            .modal-body {
+                padding: 1rem;
+            }
+
+            .detail-row {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 0.5rem;
+            }
+
+            .detail-row span:last-child {
+                padding-left: 1rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <%- include('../partials/sidebar', { userRole: userRole }) %>
+    
+    <div class="content">
+        <div class="header">
+            <h1>Production Schedule</h1>
+            <p>Manage and view all your production schedules in one place.</p>
+        </div>
+        <div id="calendar"></div>
+    </div>
+
+    <!-- Modal to display production details -->
+    <div class="modal fade" id="productionModal" tabindex="-1" role="dialog" aria-labelledby="productionModalLabel" aria-hidden="true">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="productionModalLabel">Production Details</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="detail-row">
+                        <span>Batch Number:</span>
+                        <span id="batchNumber"></span>
+                    </div>
+                    <div class="detail-row">
+                        <span>Quantity:</span>
+                        <span id="quantity"></span>
+                    </div>
+                    <div class="detail-row">
+                        <span>QC Status:</span>
+                        <span id="qcStatus"></span>
+                    </div>
+                    <div class="detail-row">
+                        <span>Stir Sequence:</span>
+                        <span id="stirSequence"></span>
+                    </div>
+                    <div class="detail-row">
+                        <span>Sample Retained:</span>
+                        <span id="sampleRetained"></span>
+                    </div>
+                    <div class="detail-row">
+                        <span>Retained Sample Volume:</span>
+                        <span id="retainedSampleVolume"></span>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Ensure jQuery is loaded first -->
+    <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/2.9.2/umd/popper.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+
+    <!-- FullCalendar JS -->
+    <script src="https://cdn.jsdelivr.net/npm/fullcalendar@5.10.1/main.min.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const calendarEl = document.getElementById('calendar');
+            let events = [];
+            try {
+                events = JSON.parse('<%- JSON.stringify(productionEvents || []) %>'.replace(/&quot;/g, '"'));
+            } catch (error) {
+                console.error('Error parsing production events:', error);
+            }
+
+            // Initialize FullCalendar with enhanced options
+            const calendar = new FullCalendar.Calendar(calendarEl, {
+                initialView: 'dayGridMonth',
+                headerToolbar: {
+                    left: 'prev,next today',
+                    center: 'title',
+                    right: 'dayGridMonth,timeGridWeek,timeGridDay'
+                },
+                events: events,
+                eventDisplay: 'block',
+                displayEventTime: true,
+                eventTimeFormat: {
+                    hour: '2-digit',
+                    minute: '2-digit',
+                    meridiem: false,
+                    hour12: false
+                },
+                eventClick: function(info) {
+                    const event = info.event.extendedProps;
+                    
+                    // Update modal with formatted data
+                    document.getElementById('batchNumber').textContent = event.batchNumber || 'N/A';
+                    document.getElementById('quantity').textContent = event.quantity ? `${event.quantity} Kg` : 'N/A';
+                    document.getElementById('qcStatus').textContent = event.qcStatus || 'Not Available';
+                    document.getElementById('stirSequence').textContent = event.stirSequence || 'N/A';
+                    document.getElementById('sampleRetained').textContent = event.sampleRetained ? 'Yes' : 'No';
+                    document.getElementById('retainedSampleVolume').textContent = 
+                        event.retainedSampleVolume ? `${event.retainedSampleVolume} L` : 'N/A';
+
+                    // Show the modal using Bootstrap 5 syntax
+                    const modal = new bootstrap.Modal(document.getElementById('productionModal'));
+                    modal.show();
+                },
+                eventDidMount: function(info) {
+                    // Add tooltip with basic information
+                    $(info.el).tooltip({
+                        title: `Batch: ${info.event.extendedProps.batchNumber || 'N/A'}\nQuantity: ${info.event.extendedProps.quantity || 'N/A'} Kg`,
+                        placement: 'top',
+                        trigger: 'hover',
+                        container: 'body'
+                    });
+                }
+            });
+
+            // Render the calendar
+            calendar.render();
+
+            // Handle window resize
+            window.addEventListener('resize', function() {
+                calendar.updateSize();
+            });
+        });
+    </script>
+</body>
+</html>

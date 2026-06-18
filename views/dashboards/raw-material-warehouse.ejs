@@ -1,0 +1,2155 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Raw Material Warehouse - MIB Flow</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.7.2/font/bootstrap-icons.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+    <style>
+        :root {
+            --primary-color: #2e7d32;
+            --primary-light: #4caf50;
+            --primary-dark: #1b5e20;
+            --text-color: #2c3e50;
+            --background-light: #e8f5e9;
+            --shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            --transition: all 0.3s ease;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--background-light);
+            margin: 0;
+            padding: 0;
+            min-height: 100vh;
+        }
+
+        .main-content {
+            margin-left: 0;
+            padding: 1rem;
+            width: 100%;
+            transition: var(--transition);
+        }
+
+        .page-header {
+            background: white;
+            padding: 1rem;
+            border-radius: 15px;
+            box-shadow: var(--shadow);
+            margin-bottom: 1rem;
+            animation: slideDown 0.5s ease-out;
+        }
+
+        .page-title {
+            margin: 0;
+            color: var(--primary-dark);
+            font-weight: 600;
+            font-size: 1.25rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .page-subtitle {
+            color: #6c757d;
+            margin: 0.5rem 0 0 0;
+            font-size: 0.875rem;
+        }
+
+        .dashboard-section {
+            background: white;
+            border-radius: 15px;
+            box-shadow: var(--shadow);
+            margin-bottom: 1rem;
+            overflow: hidden;
+            animation: fadeIn 0.5s ease-out;
+        }
+
+        .section-header {
+            padding: 1rem;
+            background-color: var(--background-light);
+            border-bottom: 1px solid rgba(0,0,0,0.1);
+            cursor: pointer;
+            transition: var(--transition);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .section-title {
+            margin: 0;
+            color: var(--primary-dark);
+            font-weight: 600;
+            font-size: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .section-content {
+            padding: 1rem;
+            display: none;
+        }
+
+        .section-content.show {
+            display: block;
+            animation: slideDown 0.3s ease-out;
+        }
+
+        /* Mobile Card View */
+        .mobile-card {
+            background: white;
+            border-radius: 12px;
+            padding: 1rem;
+            margin-bottom: 1rem;
+            box-shadow: var(--shadow);
+        }
+
+        .mobile-card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 0.75rem;
+            padding-bottom: 0.75rem;
+            border-bottom: 1px solid rgba(0,0,0,0.1);
+        }
+
+        .mobile-card-title {
+            font-weight: 600;
+            color: var(--primary-dark);
+            margin: 0;
+            font-size: 0.875rem;
+        }
+
+        .mobile-card-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.5rem 0;
+            border-bottom: 1px solid rgba(0,0,0,0.05);
+        }
+
+        .mobile-card-label {
+            color: #6c757d;
+            font-size: 0.75rem;
+            font-weight: 500;
+        }
+
+        .mobile-card-value {
+            font-size: 0.875rem;
+            font-weight: 500;
+        }
+
+        .mobile-card-actions {
+            display: grid;
+            gap: 0.5rem;
+            margin-top: 1rem;
+        }
+
+        /* Badges */
+        .badge {
+            padding: 0.4rem 0.8rem;
+            border-radius: 50px;
+            font-size: 0.75rem;
+            font-weight: 500;
+        }
+
+        .badge-pending {
+            background-color: #fff3cd;
+            color: #856404;
+        }
+
+        .badge-pass {
+            background-color: #d1e7dd;
+            color: #0f5132;
+        }
+
+        .badge-fail {
+            background-color: #f8d7da;
+            color: #842029;
+        }
+
+        /* Buttons */
+        .btn {
+            padding: 0.75rem 1rem;
+            border-radius: 8px;
+            font-weight: 500;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            transition: var(--transition);
+            justify-content: center;
+            width: 100%;
+            font-size: 0.875rem;
+        }
+
+        .btn-success {
+            background-color: var(--primary-color);
+            border: none;
+        }
+
+        .btn-success:hover {
+            background-color: var(--primary-dark);
+            transform: translateY(-1px);
+        }
+
+        .btn-warning {
+            background-color: #ffc107;
+            border: none;
+            color: #000;
+        }
+
+        .btn-warning:hover {
+            background-color: #ffca2c;
+            color: #000;
+            transform: translateY(-1px);
+        }
+
+        /* Filter Section */
+        .filter-section {
+            background: white;
+            padding: 1rem;
+            border-radius: 10px;
+            margin-bottom: 1rem;
+            display: grid;
+            gap: 1rem;
+        }
+
+        .filter-group {
+            width: 100%;
+        }
+
+        .filter-group input {
+            width: 100%;
+            padding: 0.75rem 1rem;
+            border: 1px solid rgba(0,0,0,0.1);
+            border-radius: 8px;
+            font-size: 0.875rem;
+        }
+
+        .filter-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 500;
+            color: var(--text-color);
+        }
+
+        .date-range-picker {
+            width: 100%;
+            padding: 0.75rem 1rem;
+            border: 1px solid rgba(0,0,0,0.1);
+            border-radius: 8px;
+            font-size: 0.875rem;
+        }
+
+        @media (min-width: 769px) {
+            .filter-section {
+                display: flex;
+                align-items: flex-end;
+                gap: 1rem;
+            }
+
+            .filter-group {
+                flex: 1;
+            }
+
+            .filter-section button {
+                margin-bottom: 0.5rem;
+            }
+        }
+
+        /* Quantities */
+        .quantity-positive {
+            color: var(--primary-color);
+            font-weight: 500;
+        }
+
+        .quantity-negative {
+            color: #dc3545;
+            font-weight: 500;
+        }
+
+        /* Loading Animation */
+        .loading {
+            pointer-events: none;
+            position: relative;
+        }
+
+        .loading::after {
+            content: '';
+            position: absolute;
+            width: 20px;
+            height: 20px;
+            top: 50%;
+            left: 50%;
+            margin: -10px 0 0 -10px;
+            border: 3px solid rgba(255,255,255,0.3);
+            border-radius: 50%;
+            border-top-color: #fff;
+            animation: spin 1s ease-in-out infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        @keyframes slideDown {
+            from { opacity: 0; transform: translateY(-20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Desktop styles */
+        @media (min-width: 769px) {
+            .main-content {
+                margin-left: 280px;
+                padding: 2rem;
+                width: calc(100% - 280px);
+            }
+
+            .page-header {
+                padding: 1.5rem;
+                margin-bottom: 2rem;
+            }
+
+            .page-title {
+                font-size: 1.5rem;
+            }
+
+            .section-header {
+                padding: 1.5rem;
+            }
+
+            .section-title {
+                font-size: 1.2rem;
+            }
+
+            .section-content {
+                padding: 1.5rem;
+            }
+
+            .filter-section {
+                display: flex;
+                padding: 1.5rem;
+            }
+
+            .btn {
+                width: auto;
+            }
+
+            .mobile-card {
+                display: none;
+            }
+
+            .desktop-table {
+                display: block;
+            }
+
+            body:has(.sidebar.collapsed) .main-content {
+                margin-left: 70px;
+                width: calc(100% - 70px);
+            }
+        }
+
+        /* Enhanced Mobile Styles */
+        @media (max-width: 768px) {
+            /* Layout Improvements */
+            .main-content {
+                padding: 0.75rem;
+            }
+
+            .dashboard-section {
+                margin-bottom: 1rem;
+                border-radius: 10px;
+            }
+
+            .section-header {
+                padding: 0.875rem;
+            }
+
+            .section-content {
+                padding: 0.75rem;
+            }
+
+            /* Mobile Table Improvements */
+            .table-responsive {
+                border-radius: 8px;
+                background: white;
+                box-shadow: var(--shadow);
+                margin-bottom: 1rem;
+            }
+
+            .desktop-table {
+                display: none;
+            }
+
+            .table {
+                display: block;
+            }
+
+            .table thead {
+                display: none; /* Hide headers on mobile */
+            }
+
+            .table tbody {
+                display: block;
+            }
+
+            .table tr {
+                display: block;
+                margin-bottom: 1rem;
+                border: 1px solid var(--background-light);
+                border-radius: 8px;
+                background: white;
+            }
+
+            .table td {
+                display: flex;
+                padding: 0.75rem;
+                align-items: center;
+                border: none;
+                border-bottom: 1px solid rgba(0,0,0,0.05);
+            }
+
+            .table td:last-child {
+                border-bottom: none;
+            }
+
+            .table td::before {
+                content: attr(data-label);
+                font-weight: 600;
+                width: 120px;
+                min-width: 120px;
+                color: var(--primary-dark);
+                font-size: 0.85rem;
+            }
+
+            .table td > * {
+                flex: 1;
+                margin-left: 1rem;
+            }
+
+            .table .form-control,
+            .table .btn,
+            .table select {
+                width: auto;
+                min-width: 120px;
+            }
+
+            /* Form Controls */
+            .form-control {
+                height: 40px;
+                font-size: 16px; /* Prevents iOS zoom */
+                padding: 0.5rem;
+            }
+
+            select.form-control {
+                padding-right: 24px;
+            }
+
+            /* Button Improvements */
+            .btn {
+                height: 40px;
+                padding: 0 1rem;
+                margin: 0.25rem;
+                font-size: 0.9rem;
+                display: inline-flex;
+                align-items: center;
+                justify-content: center;
+                min-width: 100px;
+                touch-action: manipulation;
+            }
+
+            .btn-group {
+                display: grid;
+                gap: 0.5rem;
+            }
+
+            /* Badge Adjustments */
+            .badge {
+                font-size: 0.8rem;
+                padding: 0.4rem 0.8rem;
+            }
+
+            /* Loading State */
+            .loading {
+                min-height: 40px;
+            }
+
+            .loading::after {
+                width: 24px;
+                height: 24px;
+                margin: -12px 0 0 -12px;
+                border-width: 2px;
+            }
+
+            /* Touch-friendly Improvements */
+            .btn:active,
+            .section-header:active {
+                transform: scale(0.98);
+            }
+
+            .table tbody tr:active {
+                background-color: var(--background-light);
+            }
+
+            .form-control:focus,
+            select:focus {
+                outline: none;
+                border-color: var(--primary-color);
+                box-shadow: 0 0 0 2px rgba(46, 125, 50, 0.2);
+            }
+
+            /* Filter Section Improvements */
+            .filter-section {
+                padding: 0.75rem;
+                margin-bottom: 0.75rem;
+            }
+
+            .filter-group {
+                margin-bottom: 0.75rem;
+            }
+
+            .filter-group:last-child {
+                margin-bottom: 0;
+            }
+
+            .filter-group input,
+            .filter-group select {
+                font-size: 16px;
+                height: 40px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <%- include('../partials/sidebar', { userRole: userRole, path: '/dashboard/raw-material-warehouse' }) %>
+
+    <div class="main-content">
+        <div class="page-header">
+            <h1 class="page-title">
+                <i class="bi bi-box-seam"></i>
+                Raw Material Warehouse
+            </h1>
+            <p class="page-subtitle">Manage inbound and outbound raw materials</p>
+        </div>
+
+        <!-- Pending Raw Material Requests -->
+        <div class="dashboard-section">
+            <div class="section-header" data-bs-toggle="collapse" data-bs-target="#pendingRawMaterialRequests" aria-expanded="true" aria-controls="pendingRawMaterialRequests">
+                <h2 class="section-title">
+                    <i class="bi bi-hourglass-split"></i>
+                    Pending Raw Material Requests
+                    <% if (pendingRawMaterialRequests && pendingRawMaterialRequests.length > 0) { %>
+                        <span class="badge rounded-pill bg-danger ms-2"><%= pendingRawMaterialRequests.length %></span>
+                    <% } %>
+                </h2>
+                <i class="bi bi-chevron-down"></i>
+            </div>
+            <div id="pendingRawMaterialRequests" class="collapse section-content">
+                <!-- Desktop View -->
+                <div class="table-responsive desktop-table">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>PO Number</th>
+                                <th>Batch Number</th>
+                                <th>Material</th>
+                                <th>Quantity</th>
+                                <th>Status</th>
+                                <th>Vendor</th>
+                                <th>QC Status</th>
+                                <th>Expired Date</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <% if (pendingRawMaterialRequests && pendingRawMaterialRequests.length > 0) { %>
+                                <% pendingRawMaterialRequests.forEach(function(requestVendor) { %>
+                                    <tr id="request-row-<%= requestVendor.id %>">
+                                        <td>#<%= requestVendor.id %></td>
+                                        <td><%= requestVendor.ponumber || '-' %></td>
+                                        <td><%= requestVendor.batchNumber || '-' %></td>
+                                        <td>
+                                            <div class="fw-semibold"><%= requestVendor.RawMaterialRequest.materialName %></div>
+                                        </td>
+                                        <td>
+                                            <% if (requestVendor.rejectQuantity > 0) { %>
+                                                <%= requestVendor.rejectQuantity %> Kg (Rejected Quantity)
+                                            <% } else { %>
+                                                <%= requestVendor.splitQuantity %> Kg
+                                            <% } %>
+                                        </td>
+                                        <td>
+                                            <%= requestVendor.status %>
+                                            <% if (requestVendor.status === 'Quarantined') { %>
+                                                <span class="text-danger">(Failed Raw Material)</span>
+                                            <% } %>
+                                        </td>
+                                        <td><%= requestVendor.Vendor.name %></td>
+                                        <td>
+                                            <% if (requestVendor.qcStatus === 'Pending') { %>
+                                                <span class="badge badge-pending">Pending</span>
+                                            <% } else if (requestVendor.qcStatus === 'Pass') { %>
+                                                <span class="badge badge-pass">Pass</span>
+                                            <% } else if (requestVendor.qcStatus === 'Fail') { %>
+                                                <span class="badge badge-fail">Fail</span>
+                                            <% } %>
+                                        </td>
+                                        <td>
+                                            <% if (requestVendor.expiredDate) { %>
+                                                <%= new Date(requestVendor.expiredDate).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' }) %>
+                                            <% } else { %>
+                                                -
+                                            <% } %>
+                                        </td>
+                                        <td>
+                                            <div class="d-flex gap-2">
+                                                <% if (requestVendor.status === 'On Delivery' || requestVendor.status === 'Returned') { %>
+                                                    <button type="button" class="btn btn-success receive-btn" data-id="<%= requestVendor.id %>" data-type="raw">
+                                                        <i class="bi bi-check-lg"></i>
+                                                        Receive
+                                                    </button>
+                                                <% } else if (requestVendor.status === 'Received' && (requestVendor.qcStatus === 'Pending' || requestVendor.qcStatus === 'Fail')) { %>
+                                                    <button type="button" class="btn btn-warning test-qc-btn" data-id="<%= requestVendor.id %>" data-type="raw">
+                                                        <i class="bi bi-clipboard-check"></i>
+                                                        Test to QC
+                                                    </button>
+                                                <% } else if (requestVendor.status === 'Received') { %>
+                                                    <button type="button" class="btn btn-warning test-qc-btn" data-id="<%= requestVendor.id %>" data-type="raw">
+                                                        <i class="bi bi-clipboard-check"></i>
+                                                        Test to QC
+                                                    </button>
+                                                <% } else if (requestVendor.status === 'Returned') { %>
+                                                    <button type="button" class="btn btn-warning test-qc-btn" data-id="<%= requestVendor.id %>" data-type="raw">
+                                                        <i class="bi bi-clipboard-check"></i>
+                                                        Test to QC
+                                                    </button>
+                                                <% } else if (requestVendor.status === 'No Return') { %>
+                                                    <form class="receive-failed-form" action="/rawMaterial/receivedFailedMaterial/<%= requestVendor.id %>" method="POST" data-id="<%= requestVendor.id %>" data-type="raw">
+                                                        <button type="submit" class="btn btn-warning">
+                                                            <i class="bi bi-box-arrow-in-down"></i>
+                                                            Received Failed Raw Material
+                                                        </button>
+                                                    </form>
+                                                <% } else if (requestVendor.qcStatus === 'Pass' || requestVendor.qcStatus === 'Reject Sebagian') { %>
+                                                    <form class="update-stock-form" action="/rawMaterial/updateStock/<%= requestVendor.id %>" method="POST" data-id="<%= requestVendor.id %>" data-type="raw">
+                                                        <% if (requestVendor.qcStatus === 'Reject Sebagian') { %>
+                                                            <div class="mb-2">
+                                                                <label class="form-label">Reject Quantity (Kg)</label>
+                                                                <% if (requestVendor.status === 'QC Testing') { %>
+                                                                    <input type="number" name="rejectQuantity" class="form-control" step="0.01" required>
+                                                                    <small class="text-muted">Current Reject: <%= requestVendor.rejectQuantity %> Kg</small>
+                                                                <% } else { %>
+                                                                    <input type="number" name="rejectQuantity" class="form-control" step="0.01" required>
+                                                                    <small class="text-muted">Current Split: <%= requestVendor.splitQuantity %> Kg</small>
+                                                                <% } %>
+                                                            </div>
+                                                            <% if (requestVendor.rejectComment) { %>
+                                                                <div class="alert alert-warning mb-2">
+                                                                    <strong>Reject Reason:</strong> <%= requestVendor.rejectComment %>
+                                                                </div>
+                                                            <% } %>
+                                                        <% } %>
+                                                        <% if (requestVendor.qcStatus === 'Pass') { %>
+                                                            <% if (requestVendor.rejectQuantity === 0) { %>
+                                                                <div class="mb-2">
+                                                                    <label class="form-label">Real Quantity (Kg)</label>
+                                                                    <input type="number" name="realQuantity" class="form-control" step="0.01" required>
+                                                                    <small class="text-muted">Current Split: <%= requestVendor.splitQuantity %> Kg</small>
+                                                                </div>
+                                                            <% } %>
+                                                        <% } %>
+                                                        <button type="submit" class="btn btn-warning">
+                                                            <i class="bi bi-arrow-clockwise"></i>
+                                                            Update Stock
+                                                        </button>
+                                                    </form>
+                                                <% } %>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                <% }); %>
+                            <% } else { %>
+                                <tr>
+                                    <td colspan="7" class="text-center py-4 text-muted">
+                                        <i class="bi bi-inbox fs-4 d-block mb-2"></i>
+                                        No pending raw material requests found
+                                    </td>
+                                </tr>
+                            <% } %>
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Mobile View -->
+                <div class="mobile-view">
+                    <% if (pendingRawMaterialRequests && pendingRawMaterialRequests.length > 0) { %>
+                        <% pendingRawMaterialRequests.forEach(function(requestVendor) { %>
+                            <div class="mobile-card">
+                                <div class="mobile-card-header">
+                                    <h3 class="mobile-card-title">#<%= requestVendor.id %></h3>
+                                    <% if (requestVendor.qcStatus === 'Pending') { %>
+                                        <span class="badge badge-pending">QC Pending</span>
+                                    <% } else if (requestVendor.qcStatus === 'Pass') { %>
+                                        <span class="badge badge-pass">QC Pass</span>
+                                    <% } else if (requestVendor.qcStatus === 'Fail') { %>
+                                        <span class="badge badge-fail">QC Fail</span>
+                                    <% } %>
+                                </div>
+                                <div class="mobile-card-row">
+                                    <span class="mobile-card-label">Material</span>
+                                    <span class="mobile-card-value"><%= requestVendor.RawMaterialRequest.materialName %></span>
+                                </div>
+                                <div class="mobile-card-row">
+                                    <span class="mobile-card-label">Quantity</span>
+                                    <span class="mobile-card-value">
+                                        <% if (requestVendor.rejectQuantity > 0) { %>
+                                            <%= requestVendor.rejectQuantity %> Kg (Rejected Quantity)
+                                        <% } else { %>
+                                            <%= requestVendor.splitQuantity %> Kg
+                                        <% } %>
+                                    </span>
+                                </div>
+                                <div class="mobile-card-row">
+                                    <span class="mobile-card-label">Status</span>
+                                    <span class="mobile-card-value">
+                                        <%= requestVendor.status %>
+                                        <% if (requestVendor.status === 'Quarantined') { %>
+                                            <span class="text-danger">(Failed Raw Material)</span>
+                                        <% } %>
+                                    </span>
+                                </div>
+                                <div class="mobile-card-row">
+                                    <span class="mobile-card-label">Vendor</span>
+                                    <span class="mobile-card-value"><%= requestVendor.Vendor.name %></span>
+                                </div>
+                                <div class="mobile-card-actions">
+                                    <% if (requestVendor.status === 'On Delivery' || requestVendor.status === 'Returned') { %>
+                                        <button type="button" class="btn btn-success receive-btn" data-id="<%= requestVendor.id %>" data-type="raw">
+                                            <i class="bi bi-check-lg"></i>
+                                            Receive
+                                        </button>
+                                    <% } else if (requestVendor.status === 'Received' && (requestVendor.qcStatus === 'Pending' || requestVendor.qcStatus === 'Fail')) { %>
+                                        <button type="button" class="btn btn-warning test-qc-btn" data-id="<%= requestVendor.id %>" data-type="raw">
+                                            <i class="bi bi-clipboard-check"></i>
+                                            Test to QC
+                                        </button>
+                                    <% } else if (requestVendor.status === 'Received') { %>
+                                        <button type="button" class="btn btn-warning test-qc-btn" data-id="<%= requestVendor.id %>" data-type="raw">
+                                            <i class="bi bi-clipboard-check"></i>
+                                            Test to QC
+                                        </button>
+                                    <% } else if (requestVendor.status === 'Returned') { %>
+                                        <button type="button" class="btn btn-warning test-qc-btn" data-id="<%= requestVendor.id %>" data-type="raw">
+                                            <i class="bi bi-clipboard-check"></i>
+                                            Test to QC
+                                        </button>
+                                    <% } else if (requestVendor.status === 'No Return') { %>
+                                        <form class="receive-failed-form" action="/rawMaterial/receivedFailedMaterial/<%= requestVendor.id %>" method="POST" data-id="<%= requestVendor.id %>" data-type="raw">
+                                            <button type="submit" class="btn btn-warning">
+                                                <i class="bi bi-box-arrow-in-down"></i>
+                                                Received Failed Raw Material
+                                            </button>
+                                        </form>
+                                    <% } else if (requestVendor.qcStatus === 'Pass' || requestVendor.qcStatus === 'Reject Sebagian') { %>
+                                        <form class="update-stock-form" action="/rawMaterial/updateStock/<%= requestVendor.id %>" method="POST" data-id="<%= requestVendor.id %>" data-type="raw">
+                                            <% if (requestVendor.qcStatus === 'Reject Sebagian') { %>
+                                                <div class="mb-2">
+                                                    <label class="form-label">Reject Quantity (Kg)</label>
+                                                    <% if (requestVendor.status === 'QC Testing') { %>
+                                                        <input type="number" name="rejectQuantity" class="form-control" step="0.01" required>
+                                                        <small class="text-muted">Current Reject: <%= requestVendor.rejectQuantity %> Kg</small>
+                                                    <% } else { %>
+                                                        <input type="number" name="rejectQuantity" class="form-control" step="0.01" required>
+                                                        <small class="text-muted">Current Split: <%= requestVendor.splitQuantity %> Kg</small>
+                                                    <% } %>
+                                                </div>
+                                                <% if (requestVendor.rejectComment) { %>
+                                                    <div class="alert alert-warning mb-2">
+                                                        <strong>Reject Reason:</strong> <%= requestVendor.rejectComment %>
+                                                    </div>
+                                                <% } %>
+                                            <% } %>
+                                            <% if (requestVendor.qcStatus === 'Pass') { %>
+                                                <% if (requestVendor.rejectQuantity === 0) { %>
+                                                    <div class="mb-2">
+                                                        <label class="form-label">Real Quantity (Kg)</label>
+                                                        <input type="number" name="realQuantity" class="form-control" step="0.01" required>
+                                                        <small class="text-muted">Current Split: <%= requestVendor.splitQuantity %> Kg</small>
+                                                    </div>
+                                                <% } %>
+                                            <% } %>
+                                            <button type="submit" class="btn btn-warning">
+                                                <i class="bi bi-arrow-clockwise"></i>
+                                                Update Stock
+                                            </button>
+                                        </form>
+                                    <% } %>
+                                </div>
+                            </div>
+                        <% }); %>
+                    <% } else { %>
+                        <div class="text-center py-4 text-muted">
+                            <i class="bi bi-inbox fs-4 d-block mb-2"></i>
+                            No pending raw material requests found
+                        </div>
+                    <% } %>
+                </div>
+            </div>
+        </div>
+
+        <!-- Pending Packaging Requests -->
+        <div class="dashboard-section">
+            <div class="section-header" data-bs-toggle="collapse" data-bs-target="#pendingPackagingRequests" aria-expanded="true" aria-controls="pendingPackagingRequests">
+                <h2 class="section-title">
+                    <i class="bi bi-box2"></i>
+                    Pending Packaging Requests
+                    <% if (pendingPackagingRequests && pendingPackagingRequests.length > 0) { %>
+                        <span class="badge rounded-pill bg-danger ms-2"><%= pendingPackagingRequests.length %></span>
+                    <% } %>
+                </h2>
+                <i class="bi bi-chevron-down"></i>
+            </div>
+            <div id="pendingPackagingRequests" class="collapse section-content">
+                <!-- Desktop View -->
+                <div class="table-responsive desktop-table">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>PO Number</th>
+                                <th>Packaging</th>
+                                <th>Quantity</th>
+                                <th>Status</th>
+                                <th>Vendor</th>
+                                <th>QC Status</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <% if (pendingPackagingRequests && pendingPackagingRequests.length > 0) { %>
+                                <% pendingPackagingRequests.forEach(function(requestVendor) { %>
+                                    <tr id="request-row-<%= requestVendor.id %>">
+                                        <td>#<%= requestVendor.id %></td>
+                                        <td><%= requestVendor.ponumber %></td>
+                                        <td>
+                                            <div class="fw-semibold"><%= requestVendor.PackagingRequest.packagingName %></div>
+                                        </td>
+                                        <td>
+                                            <% if (requestVendor.rejectQuantity > 0) { %>
+                                                <%= requestVendor.rejectQuantity %> pcs (Rejected Quantity)
+                                            <% } else { %>
+                                                <%= requestVendor.splitQuantity %> pcs
+                                            <% } %>
+                                        </td>
+                                        <td>
+                                            <%= requestVendor.status %>
+                                            <% if (requestVendor.status === 'Quarantined') { %>
+                                                <span class="text-danger">(Failed Packaging)</span>
+                                            <% } %>
+                                        </td>
+                                        <td><%= requestVendor.Vendor.name %></td>
+                                        <td>
+                                            <% if (requestVendor.qcStatus === 'Pending') { %>
+                                                <span class="badge badge-pending">Pending</span>
+                                            <% } else if (requestVendor.qcStatus === 'Pass') { %>
+                                                <span class="badge badge-pass">Pass</span>
+                                            <% } else if (requestVendor.qcStatus === 'Fail') { %>
+                                                <span class="badge badge-fail">Fail</span>
+                                            <% } %>
+                                        </td>
+                                        <td>
+                                            <div class="d-flex gap-2">
+                                                <% if (requestVendor.status === 'On Delivery' || requestVendor.status === 'Returned') { %>
+                                                    <button type="button" class="btn btn-success receive-btn" data-id="<%= requestVendor.id %>" data-type="packaging">
+                                                        <i class="bi bi-check-lg"></i>
+                                                        Receive
+                                                    </button>
+                                                <% } else if (requestVendor.status === 'Received' || requestVendor.status === 'Returned') { %>
+                                                    <button type="button" class="btn btn-warning test-qc-btn" data-id="<%= requestVendor.id %>" data-type="packaging">
+                                                        <i class="bi bi-clipboard-check"></i>
+                                                        Test to QC
+                                                    </button>
+                                                <% } else if (requestVendor.status === 'No Return') { %>
+                                                    <form class="receive-failed-form" action="/packaging-request/receivedFailedPackaging/<%= requestVendor.id %>" method="POST" data-id="<%= requestVendor.id %>" data-type="packaging">
+                                                        <button type="submit" class="btn btn-warning">
+                                                            <i class="bi bi-box-arrow-in-down"></i>
+                                                            Received Failed Packaging
+                                                        </button>
+                                                    </form>
+                                                <% } else if (requestVendor.qcStatus === 'Pass' || requestVendor.qcStatus === 'Reject Sebagian') { %>
+                                                    <form class="update-stock-form" action="/packaging-request/updateStock/<%= requestVendor.id %>" method="POST" data-id="<%= requestVendor.id %>" data-type="packaging">
+                                                        <% if (requestVendor.qcStatus === 'Reject Sebagian') { %>
+                                                            <div class="mb-2">
+                                                                <label class="form-label">Reject Quantity (pcs)</label>
+                                                                <% if (requestVendor.status === 'QC Testing') { %>
+                                                                    <input type="number" name="rejectQuantity" class="form-control" required>
+                                                                    <small class="text-muted">Current Reject: <%= requestVendor.rejectQuantity %> pcs</small>
+                                                                <% } else { %>
+                                                                    <input type="number" name="rejectQuantity" class="form-control" required>
+                                                                    <small class="text-muted">Current Split: <%= requestVendor.splitQuantity %> pcs</small>
+                                                                <% } %>
+                                                            </div>
+                                                            <% if (requestVendor.rejectComment) { %>
+                                                                <div class="alert alert-warning mb-2">
+                                                                    <strong>Reject Reason:</strong> <%= requestVendor.rejectComment %>
+                                                                </div>
+                                                            <% } %>
+                                                        <% } %>
+                                                        <button type="submit" class="btn btn-warning">
+                                                            <i class="bi bi-arrow-clockwise"></i>
+                                                            Update Stock
+                                                        </button>
+                                                    </form>
+                                                <% } %>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                <% }); %>
+                            <% } else { %>
+                                <tr>
+                                    <td colspan="7" class="text-center py-4 text-muted">
+                                        <i class="bi bi-inbox fs-4 d-block mb-2"></i>
+                                        No pending packaging requests found
+                                    </td>
+                                </tr>
+                            <% } %>
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Mobile View -->
+                <div class="mobile-view">
+                    <% if (pendingPackagingRequests && pendingPackagingRequests.length > 0) { %>
+                        <% pendingPackagingRequests.forEach(function(requestVendor) { %>
+                            <div class="mobile-card">
+                                <div class="mobile-card-header">
+                                    <h3 class="mobile-card-title">#<%= requestVendor.id %></h3>
+                                    <% if (requestVendor.qcStatus === 'Pending') { %>
+                                        <span class="badge badge-pending">QC Pending</span>
+                                    <% } else if (requestVendor.qcStatus === 'Pass') { %>
+                                        <span class="badge badge-pass">QC Pass</span>
+                                    <% } else if (requestVendor.qcStatus === 'Fail') { %>
+                                        <span class="badge badge-fail">QC Fail</span>
+                                    <% } %>
+                                </div>
+                                <div class="mobile-card-row">
+                                    <span class="mobile-card-label">Packaging</span>
+                                    <span class="mobile-card-value"><%= requestVendor.PackagingRequest.packagingName %></span>
+                                </div>
+                                <div class="mobile-card-row">
+                                    <span class="mobile-card-label">Quantity</span>
+                                    <span class="mobile-card-value">
+                                        <% if (requestVendor.rejectQuantity > 0) { %>
+                                            <%= requestVendor.rejectQuantity %> pcs (Rejected Quantity)
+                                        <% } else { %>
+                                            <%= requestVendor.splitQuantity %> pcs
+                                        <% } %>
+                                    </span>
+                                </div>
+                                <div class="mobile-card-row">
+                                    <span class="mobile-card-label">Status</span>
+                                    <span class="mobile-card-value"><%= requestVendor.status %></span>
+                                </div>
+                                <div class="mobile-card-row">
+                                    <span class="mobile-card-label">Vendor</span>
+                                    <span class="mobile-card-value"><%= requestVendor.Vendor.name %></span>
+                                </div>
+                                <div class="mobile-card-actions">
+                                    <% if (requestVendor.status === 'On Delivery' || requestVendor.status === 'Returned') { %>
+                                        <button type="button" class="btn btn-success receive-btn" data-id="<%= requestVendor.id %>" data-type="packaging">
+                                            <i class="bi bi-check-lg"></i>
+                                            Receive
+                                        </button>
+                                    <% } else if (requestVendor.status === 'Received' || requestVendor.status === 'Returned') { %>
+                                        <button type="button" class="btn btn-warning test-qc-btn" data-id="<%= requestVendor.id %>" data-type="packaging">
+                                            <i class="bi bi-clipboard-check"></i>
+                                            Test to QC
+                                        </button>
+                                    <% } else if (requestVendor.status === 'No Return') { %>
+                                        <form class="receive-failed-form" action="/packaging-request/receivedFailedPackaging/<%= requestVendor.id %>" method="POST" data-id="<%= requestVendor.id %>" data-type="packaging">
+                                            <button type="submit" class="btn btn-warning">
+                                                <i class="bi bi-box-arrow-in-down"></i>
+                                                Received Failed Packaging
+                                            </button>
+                                        </form>
+                                    <% } else if (requestVendor.qcStatus === 'Pass' || requestVendor.qcStatus === 'Reject Sebagian') { %>
+                                        <form class="update-stock-form" action="/packaging-request/updateStock/<%= requestVendor.id %>" method="POST" data-id="<%= requestVendor.id %>" data-type="packaging">
+                                            <% if (requestVendor.qcStatus === 'Reject Sebagian') { %>
+                                                <div class="mb-2">
+                                                    <label class="form-label">Reject Quantity (pcs)</label>
+                                                    <% if (requestVendor.status === 'QC Testing') { %>
+                                                        <input type="number" name="rejectQuantity" class="form-control" required>
+                                                        <small class="text-muted">Current Reject: <%= requestVendor.rejectQuantity %> pcs</small>
+                                                    <% } else { %>
+                                                        <input type="number" name="rejectQuantity" class="form-control" required>
+                                                        <small class="text-muted">Current Split: <%= requestVendor.splitQuantity %> pcs</small>
+                                                    <% } %>
+                                                </div>
+                                                <% if (requestVendor.rejectComment) { %>
+                                                    <div class="alert alert-warning mb-2">
+                                                        <strong>Reject Reason:</strong> <%= requestVendor.rejectComment %>
+                                                    </div>
+                                                <% } %>
+                                            <% } %>
+                                            <button type="submit" class="btn btn-warning">
+                                                <i class="bi bi-arrow-clockwise"></i>
+                                                Update Stock
+                                            </button>
+                                        </form>
+                                    <% } %>
+                                </div>
+                            </div>
+                        <% }); %>
+                    <% } else { %>
+                        <div class="text-center py-4 text-muted">
+                            <i class="bi bi-inbox fs-4 d-block mb-2"></i>
+                            No pending packaging requests found
+                        </div>
+                    <% } %>
+                </div>
+            </div>
+        </div>
+
+        <!-- Inbound Raw Material -->
+        <div class="dashboard-section">
+            <div class="section-header" data-bs-toggle="collapse" data-bs-target="#inboundRawMaterial" aria-expanded="false" aria-controls="inboundRawMaterial">
+                <h2 class="section-title">
+                    <i class="bi bi-box-arrow-in-down"></i>
+                    Inbound Raw Material
+                    <% if (inboundRawMaterialRequests && inboundRawMaterialRequests.length > 0) { %>
+                        <span class="badge rounded-pill bg-danger ms-2"><%= inboundRawMaterialRequests.length %></span>
+                    <% } %>
+                </h2>
+                <i class="bi bi-chevron-down"></i>
+            </div>
+            <div id="inboundRawMaterial" class="collapse section-content">
+                <form class="filter-section" method="GET">
+                    <div class="filter-group">
+                        <label class="form-label">Date Range</label>
+                        <input type="text" class="date-range-picker form-control" name="inboundDateRange" 
+                            value="<%= inboundStartDate ? inboundStartDate + ' to ' + inboundEndDate : '' %>"
+                            placeholder="Select date range">
+                    </div>
+                    <div class="filter-group">
+                        <label class="form-label">Filter by Name</label>
+                        <input type="text" class="form-control" name="nameFilter" placeholder="Enter material name (e.g. Alkohol)">
+                    </div>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="bi bi-funnel"></i>
+                        Apply Filter
+                    </button>
+                </form>
+
+                <!-- Desktop View -->
+                <div class="table-responsive desktop-table">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>Date</th>
+                                <th>PO/SO Number</th>
+                                <th>Batch Number</th>
+                                <th>Item</th>
+                                <th>Vendor</th>
+                                <th>Quantity</th>
+                                <th>Notes</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <% if (inboundRawMaterialRequests && inboundRawMaterialRequests.length > 0) { %>
+                                <% inboundRawMaterialRequests.forEach(function(inbound) { %>
+                                    <tr>
+                                        <td><%= new Date(inbound.date).toLocaleString() %></td>
+                                        <td><%= inbound.poSoNumber || '-' %></td>
+                                        <td><%= inbound.batchNumber || '-' %></td>
+                                        <td>
+                                            <div class="fw-semibold"><%= inbound.item %></div>
+                                        </td>
+                                        <td><%= inbound.vendor %></td>
+                                        <td class="quantity-positive"><%= inbound.quantity %> KG</td>
+                                        <td><%= inbound.notes || '-' %></td>
+                                    </tr>
+                                <% }); %>
+                            <% } else { %>
+                                <tr>
+                                    <td colspan="7" class="text-center py-4 text-muted">
+                                        <i class="bi bi-inbox fs-4 d-block mb-2"></i>
+                                        No inbound raw materials found
+                                    </td>
+                                </tr>
+                            <% } %>
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Mobile View -->
+                <div class="mobile-view">
+                    <% if (inboundRawMaterialRequests && inboundRawMaterialRequests.length > 0) { %>
+                        <% inboundRawMaterialRequests.forEach(function(inbound) { %>
+                            <div class="mobile-card">
+                                <div class="mobile-card-header">
+                                    <h3 class="mobile-card-title">
+                                        <%= new Date(inbound.date).toLocaleString() %>
+                                    </h3>
+                                    <span class="quantity-positive"><%= inbound.quantity %></span>
+                                </div>
+                                <div class="mobile-card-row">
+                                    <span class="mobile-card-label">Item</span>
+                                    <span class="mobile-card-value"><%= inbound.item %></span>
+                                </div>
+                                <div class="mobile-card-row">
+                                    <span class="mobile-card-label">Vendor</span>
+                                    <span class="mobile-card-value"><%= inbound.vendor %></span>
+                                </div>
+                                <div class="mobile-card-row">
+                                    <span class="mobile-card-label">Notes</span>
+                                    <span class="mobile-card-value"><%= inbound.notes || '-' %></span>
+                                </div>
+                            </div>
+                        <% }); %>
+                    <% } else { %>
+                        <div class="text-center py-4 text-muted">
+                            <i class="bi bi-inbox fs-4 d-block mb-2"></i>
+                            No inbound raw materials found
+                        </div>
+                    <% } %>
+                </div>
+            </div>
+        </div>
+
+        <!-- Inbound Packaging -->
+        <div class="dashboard-section">
+            <div class="section-header" data-bs-toggle="collapse" data-bs-target="#inboundPackaging" aria-expanded="false" aria-controls="inboundPackaging">
+                <h2 class="section-title">
+                    <i class="bi bi-box2"></i>
+                    Inbound Packaging
+                    <% if (inboundPackagingRequests && inboundPackagingRequests.length > 0) { %>
+                        <span class="badge rounded-pill bg-danger ms-2"><%= inboundPackagingRequests.length %></span>
+                    <% } %>
+                </h2>
+                <i class="bi bi-chevron-down"></i>
+            </div>
+            <div id="inboundPackaging" class="collapse section-content">
+                <form class="filter-section" method="GET">
+                    <div class="filter-group">
+                        <label class="form-label">Date Range</label>
+                        <input type="text" class="date-range-picker form-control" name="inboundPackagingDateRange"
+                            value="<%= inboundStartDate ? inboundStartDate + ' to ' + inboundEndDate : '' %>"
+                            placeholder="Select date range">
+                    </div>
+                    <div class="filter-group">
+                        <label class="form-label">Filter by Name</label>
+                        <input type="text" class="form-control" name="nameFilter" placeholder="Enter packaging name">
+                    </div>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="bi bi-funnel"></i>
+                        Apply Filter
+                    </button>
+                </form>
+
+                <!-- Desktop View -->
+                <div class="table-responsive desktop-table">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>Date</th>
+                                <th>PO/SO Number</th>
+                                <th>Batch Number</th>
+                                <th>Item</th>
+                                <th>Vendor</th>
+                                <th>Quantity</th>
+                                <th>Notes</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <% if (inboundPackagingRequests && inboundPackagingRequests.length > 0) { %>
+                                <% inboundPackagingRequests.forEach(function(inbound) { %>
+                                    <tr>
+                                        <td><%= new Date(inbound.date).toLocaleString() %></td>
+                                        <td><%= inbound.poSoNumber || '-' %></td>
+                                        <td><%= inbound.batchNumber || '-' %></td>
+                                        <td>
+                                            <div class="fw-semibold"><%= inbound.item %></div>
+                                        </td>
+                                        <td><%= inbound.vendor %></td>
+                                        <td class="quantity-positive"><%= inbound.quantity %> PCS</td>
+                                        <td><%= inbound.notes || '-' %></td>
+                                    </tr>
+                                <% }); %>
+                            <% } else { %>
+                                <tr>
+                                    <td colspan="7" class="text-center py-4 text-muted">
+                                        <i class="bi bi-inbox fs-4 d-block mb-2"></i>
+                                        No inbound packaging found
+                                    </td>
+                                </tr>
+                            <% } %>
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Mobile View -->
+                <div class="mobile-view">
+                    <% if (inboundPackagingRequests && inboundPackagingRequests.length > 0) { %>
+                        <% inboundPackagingRequests.forEach(function(inbound) { %>
+                            <div class="mobile-card">
+                                <div class="mobile-card-header">
+                                    <h3 class="mobile-card-title">
+                                        <%= new Date(inbound.date).toLocaleString() %>
+                                    </h3>
+                                    <span class="quantity-positive"><%= inbound.quantity %></span>
+                                </div>
+                                <div class="mobile-card-row">
+                                    <span class="mobile-card-label">Item</span>
+                                    <span class="mobile-card-value"><%= inbound.item %></span>
+                                </div>
+                                <div class="mobile-card-row">
+                                    <span class="mobile-card-label">Vendor</span>
+                                    <span class="mobile-card-value"><%= inbound.vendor %></span>
+                                </div>
+                                <div class="mobile-card-row">
+                                    <span class="mobile-card-label">Notes</span>
+                                    <span class="mobile-card-value"><%= inbound.notes || '-' %></span>
+                                </div>
+                            </div>
+                        <% }); %>
+                    <% } else { %>
+                        <div class="text-center py-4 text-muted">
+                            <i class="bi bi-inbox fs-4 d-block mb-2"></i>
+                            No inbound packaging found
+                        </div>
+                    <% } %>
+                </div>
+            </div>
+        </div>
+
+        <!-- Outbound Raw Material -->
+        <div class="dashboard-section">
+            <div class="section-header" data-bs-toggle="collapse" data-bs-target="#outboundMaterial" aria-expanded="false" aria-controls="outboundMaterial">
+                <h2 class="section-title">
+                    <i class="bi bi-box-arrow-right"></i>
+                    Outbound Raw Material
+                    <% if (productions && productions.length > 0) { %>
+                        <span class="badge rounded-pill bg-danger ms-2"><%= productions.length %></span>
+                    <% } %>
+                </h2>
+                <i class="bi bi-chevron-down"></i>
+            </div>
+            <div id="outboundMaterial" class="collapse section-content">
+                <form class="filter-section" method="GET">
+                    <div class="filter-group">
+                        <label class="form-label">Date Range</label>
+                        <input type="text" class="date-range-picker form-control" name="outboundDateRange"
+                            value="<%= outboundStartDate ? outboundStartDate + ' to ' + outboundEndDate : '' %>"
+                            placeholder="Select date range">
+                    </div>
+                    <div class="filter-group">
+                        <label class="form-label">Filter by Name</label>
+                        <input type="text" class="form-control" name="nameFilter" placeholder="Enter material name">
+                    </div>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="bi bi-funnel"></i>
+                        Apply Filter
+                    </button>
+                </form>
+
+                <!-- Desktop View -->
+                <div class="table-responsive desktop-table">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>Date</th>
+                                <th>SO/PRN</th>
+                                <th>Batch Number</th>
+                                <th>Customer</th>
+                                <th>Product</th>
+                                <th>Item</th>
+                                <th>Quantity</th>
+                                <th>Notes</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <% if (productions && productions.length > 0) { %>
+                                <% productions.forEach(function(outbound) { %>
+                                    <tr>
+                                        <td><%= new Date(outbound.date).toLocaleString() %></td>
+                                        <td><%= outbound.soPrn || '-' %></td>
+                                        <td><%= outbound.batchNumber || '-' %></td>
+                                        <td><%= outbound.customer || '-' %></td>
+                                        <td><%= outbound.product || '-' %></td>
+                                        <td>
+                                            <div class="fw-semibold"><%= outbound.item %></div>
+                                        </td>
+                                        <td class="quantity-negative"><%= outbound.quantity %> KG</td>
+                                        <td><%= outbound.notes || '-' %></td>
+                                    </tr>
+                                <% }); %>
+                            <% } else { %>
+                                <tr>
+                                    <td colspan="8" class="text-center py-4 text-muted">
+                                        <i class="bi bi-inbox fs-4 d-block mb-2"></i>
+                                        No outbound raw materials found
+                                    </td>
+                                </tr>
+                            <% } %>
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Mobile View -->
+                <div class="mobile-view">
+                    <% if (productions && productions.length > 0) { %>
+                        <% productions.forEach(function(outbound) { %>
+                            <div class="mobile-card">
+                                <div class="mobile-card-header">
+                                    <h3 class="mobile-card-title">
+                                        <%= new Date(outbound.date).toLocaleString() %>
+                                    </h3>
+                                    <span class="quantity-negative"><%= outbound.quantity %></span>
+                                </div>
+                                <div class="mobile-card-row">
+                                    <span class="mobile-card-label">Item</span>
+                                    <span class="mobile-card-value"><%= outbound.item %></span>
+                                </div>
+                                <div class="mobile-card-row">
+                                    <span class="mobile-card-label">Product</span>
+                                    <span class="mobile-card-value"><%= outbound.product || '-' %></span>
+                                </div>
+                                <div class="mobile-card-row">
+                                    <span class="mobile-card-label">SO/PRN</span>
+                                    <span class="mobile-card-value"><%= outbound.soPrn || '-' %></span>
+                                </div>
+                                <div class="mobile-card-row">
+                                    <span class="mobile-card-label">Notes</span>
+                                    <span class="mobile-card-value"><%= outbound.notes || '-' %></span>
+                                </div>
+                            </div>
+                        <% }); %>
+                    <% } else { %>
+                        <div class="text-center py-4 text-muted">
+                            <i class="bi bi-inbox fs-4 d-block mb-2"></i>
+                            No outbound raw materials found
+                        </div>
+                    <% } %>
+                </div>
+            </div>
+        </div>
+
+        <!-- Outbound Packaging -->
+        <div class="dashboard-section">
+            <div class="section-header" data-bs-toggle="collapse" data-bs-target="#outboundPackaging" aria-expanded="false" aria-controls="outboundPackaging">
+                <h2 class="section-title">
+                    <i class="bi bi-box-arrow-right"></i>
+                    Outbound Packaging
+                    <% if (outboundPackaging && outboundPackaging.length > 0) { %>
+                        <span class="badge rounded-pill bg-danger ms-2"><%= outboundPackaging.length %></span>
+                    <% } %>
+                </h2>
+                <i class="bi bi-chevron-down"></i>
+            </div>
+            <div id="outboundPackaging" class="collapse section-content">
+                <form class="filter-section" method="GET">
+                    <div class="filter-group">
+                        <label class="form-label">Date Range</label>
+                        <input type="text" class="date-range-picker form-control" name="outboundPackagingDateRange"
+                            value="<%= outboundStartDate ? outboundStartDate + ' to ' + outboundEndDate : '' %>"
+                            placeholder="Select date range">
+                    </div>
+                    <div class="filter-group">
+                        <label class="form-label">Filter by Name</label>
+                        <input type="text" class="form-control" name="nameFilter" placeholder="Enter packaging name">
+                    </div>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="bi bi-funnel"></i>
+                        Apply Filter
+                    </button>
+                </form>
+
+                <!-- Desktop View -->
+                <div class="table-responsive desktop-table">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>Date</th>
+                                <th>SO/PRN</th>
+                                <th>Batch Number</th>
+                                <th>Customer</th>
+                                <th>Product</th>
+                                <th>Packaging</th>
+                                <th>Quantity</th>
+                                <th>Notes</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <% if (outboundPackaging && outboundPackaging.length > 0) { %>
+                                <% outboundPackaging.forEach(function(outbound) { %>
+                                    <tr>
+                                        <td><%= new Date(outbound.date).toLocaleString() %></td>
+                                        <td><%= outbound.soPrn || '-' %></td>
+                                        <td><%= outbound.batchNumber || '-' %></td>
+                                        <td><%= outbound.customer || '-' %></td>
+                                        <td><%= outbound.product || '-' %></td>
+                                        <td>
+                                            <div class="fw-semibold">
+                                                <% if (outbound.type === 'Product' && outbound.Packaging) { %>
+                                                    <%= outbound.Packaging.name %>
+                                                <% } else { %>
+                                                    <%= outbound.item %>
+                                                <% } %>
+                                            </div>
+                                        </td>
+                                        <td class="quantity-negative"><%= outbound.quantity %> PCS</td>
+                                        <td><%= outbound.notes || '-' %></td>
+                                    </tr>
+                                <% }); %>
+                            <% } else { %>
+                                <tr>
+                                    <td colspan="8" class="text-center py-4 text-muted">
+                                        <i class="bi bi-inbox fs-4 d-block mb-2"></i>
+                                        No outbound packaging found
+                                    </td>
+                                </tr>
+                            <% } %>
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Mobile View -->
+                <div class="mobile-view">
+                    <% if (outboundPackaging && outboundPackaging.length > 0) { %>
+                        <% outboundPackaging.forEach(function(outbound) { %>
+                            <div class="mobile-card">
+                                <div class="mobile-card-header">
+                                    <h3 class="mobile-card-title">
+                                        <%= new Date(outbound.date).toLocaleString() %>
+                                    </h3>
+                                    <span class="quantity-negative"><%= outbound.quantity %> PCS</span>
+                                </div>
+                                <div class="mobile-card-row">
+                                    <span class="mobile-card-label">Packaging</span>
+                                    <span class="mobile-card-value">
+                                        <% if (outbound.type === 'Product' && outbound.Packaging) { %>
+                                            <%= outbound.Packaging.name %>
+                                        <% } else { %>
+                                            <%= outbound.item %>
+                                        <% } %>
+                                    </span>
+                                </div>
+                                <div class="mobile-card-row">
+                                    <span class="mobile-card-label">Product</span>
+                                    <span class="mobile-card-value"><%= outbound.product || '-' %></span>
+                                </div>
+                                <div class="mobile-card-row">
+                                    <span class="mobile-card-label">SO/PRN</span>
+                                    <span class="mobile-card-value"><%= outbound.soPrn || '-' %></span>
+                                </div>
+                                <div class="mobile-card-row">
+                                    <span class="mobile-card-label">Notes</span>
+                                    <span class="mobile-card-value"><%= outbound.notes || '-' %></span>
+                                </div>
+                            </div>
+                        <% }); %>
+                    <% } else { %>
+                        <div class="text-center py-4 text-muted">
+                            <i class="bi bi-inbox fs-4 d-block mb-2"></i>
+                            No outbound packaging found
+                        </div>
+                    <% } %>
+                </div>
+            </div>
+        </div>
+    </div>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+    <script>
+        // Set up SSE for notifications
+        const evtSource = new EventSource('/notifications');
+        const audio = new Audio('/audio/raw.mp3');
+
+        evtSource.onmessage = function(event) {
+            const data = JSON.parse(event.data);
+            
+            if (data.type === 'newDeliveryRawMaterial') {
+                // Show notification for new raw material delivery
+                const notification = `New raw material delivery: ${data.materialName} (${data.status})`;
+                showNotification(notification);
+                
+                // Play audio if specified
+                if (data.audio) {
+                    audio.play().catch(e => console.error('Error playing audio:', e));
+                }
+            } else if (data.type === 'newDeliveryPackaging') {
+                // Show notification for new packaging delivery
+                const notification = `New packaging delivery (${data.status})`;
+                showNotification(notification);
+                
+                // Play audio if specified
+                if (data.audio) {
+                    audio.play().catch(e => console.error('Error playing audio:', e));
+                }
+            } else if (data.type === 'qcPassRawMaterial') {
+                // Show notification for QC Passed raw material
+                const notification = `QC Passed: ${data.materialName} (${data.status})`;
+                showNotification(notification);
+                
+                // Play audio if specified
+                if (data.audio) {
+                    audio.play();
+                }
+            } else if (data.type === 'qcRejectSebagianRawMaterial') {
+                // Show notification for QC Rejected Sebagian raw material
+                const notification = `QC Rejected Sebagian: ${data.materialName} (${data.status})`;
+                showNotification(notification);
+                
+                // Play audio if specified
+                if (data.audio) {
+                    audio.play();
+                }
+            } else if (data.type === 'qcPassPackaging') {
+                // Show notification for QC Passed raw material
+                const notification = `QC Passed: ${data.packagingName} (${data.status})`;
+                showNotification(notification);
+                
+                // Play audio if specified
+                if (data.audio) {
+                    audio.play();
+                }
+            } else if (data.type === 'qcRejectSebagianPackaging') {
+                // Show notification for QC Rejected Sebagian raw material
+                const notification = `QC Rejected Sebagian: ${data.packagingName} (${data.status})`;
+                showNotification(notification);
+                
+                // Play audio if specified
+                if (data.audio) {
+                    audio.play();
+                }
+            } else if (data.type === 'returnRawMaterial') {
+                // Show notification for QC Rejected Sebagian raw material
+                const notification = `QC Return: ${data.materialName} ${data.quantity}KG (${data.status})`;
+                showNotification(notification);
+                
+                // Play audio if specified
+                if (data.audio) {
+                    audio.play();
+                }
+            } else if (data.type === 'noReturnRawMaterial') {
+                // Show notification for QC Rejected Sebagian raw material
+                const notification = `QC No Return: ${data.materialName} ${data.quantity}KG (${data.status})`;
+                showNotification(notification);
+                
+                // Play audio if specified
+                if (data.audio) {
+                    audio.play();
+                }
+            } else if (data.type === 'returnPackaging') {
+                // Show notification for QC Rejected Sebagian raw material
+                const notification = `QC Return: ${data.packagingName} ${data.quantity}Pcs (${data.status})`;
+                showNotification(notification);
+                
+                // Play audio if specified
+                if (data.audio) {
+                    audio.play();
+                }
+            } else if (data.type === 'noReturnPackaging') {
+                // Show notification for QC Rejected Sebagian raw material
+                const notification = `QC No Return: ${data.packagingName} ${data.quantity}Pcs (${data.status})`;
+                showNotification(notification);
+                
+                // Play audio if specified
+                if (data.audio) {
+                    audio.play();
+                }
+            }
+        };
+
+        function showNotification(message) {
+            const notificationDiv = document.createElement('div');
+            notificationDiv.className = 'alert alert-info alert-dismissible fade show';
+            notificationDiv.style.position = 'fixed';
+            notificationDiv.style.top = '20px';
+            notificationDiv.style.right = '20px';
+            notificationDiv.style.zIndex = '9999';
+            notificationDiv.innerHTML = `
+                ${message}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            `;
+            document.body.appendChild(notificationDiv);
+
+            // Auto-remove after 5 seconds
+            setTimeout(() => {
+                notificationDiv.remove();
+            }, 5000);
+        }
+        
+        document.addEventListener('DOMContentLoaded', function() {
+            // Handle sidebar state changes
+            const sidebar = document.querySelector('.sidebar');
+            const mainContent = document.querySelector('.main-content');
+
+            function updateContentWidth() {
+                if (window.innerWidth > 768) {
+                    if (sidebar.classList.contains('collapsed')) {
+                        mainContent.style.marginLeft = '70px';
+                        mainContent.style.width = 'calc(100% - 70px)';
+                    } else {
+                        mainContent.style.marginLeft = '280px';
+                        mainContent.style.width = 'calc(100% - 280px)';
+                    }
+                } else {
+                    mainContent.style.marginLeft = '0';
+                    mainContent.style.width = '100%';
+                }
+            }
+
+            // Initial width update
+            updateContentWidth();
+
+            // Watch for sidebar class changes
+            const observer = new MutationObserver(function(mutations) {
+                mutations.forEach(function(mutation) {
+                    if (mutation.attributeName === 'class') {
+                        updateContentWidth();
+                    }
+                });
+            });
+
+            observer.observe(sidebar, { attributes: true });
+
+            // Handle window resize
+            window.addEventListener('resize', updateContentWidth);
+
+            // Initialize date pickers with default values
+            const defaultConfig = {
+                mode: "range",
+                dateFormat: "Y-m-d",
+                defaultDate: [
+                    "<%= defaultStartDate %>",
+                    "<%= defaultEndDate %>"
+                ],
+                onChange: function(selectedDates, dateStr, instance) {
+                    // When dates are selected, automatically submit the form
+                    if (selectedDates.length === 2) {
+                        instance.element.closest('form').submit();
+                    }
+                }
+            };
+
+            // Initialize all date range pickers
+            document.querySelectorAll('.date-range-picker').forEach(picker => {
+                const currentValue = picker.value;
+                flatpickr(picker, {
+                    ...defaultConfig,
+                    defaultDate: currentValue ? currentValue.split(' to ') : defaultConfig.defaultDate
+                });
+            });
+
+            // Initialize collapsible sections
+            const sections = document.querySelectorAll('.dashboard-section');
+            sections.forEach(section => {
+                const content = section.querySelector('.section-content');
+                const icon = section.querySelector('.bi-chevron-down');
+
+                // Set initial state
+                if (content.classList.contains('show')) {
+                    icon.style.transform = 'rotate(180deg)';
+                }
+
+                // Use Bootstrap's collapse events
+                content.addEventListener('show.bs.collapse', () => {
+                    icon.style.transform = 'rotate(180deg)';
+                });
+
+                content.addEventListener('hide.bs.collapse', () => {
+                    icon.style.transform = 'rotate(0)';
+                });
+            });
+
+            // Form submissions
+            document.querySelectorAll('form').forEach(form => {
+                form.addEventListener('submit', function(e) {
+                    const submitBtn = this.querySelector('button[type="submit"]');
+                    if (submitBtn) {
+                        submitBtn.classList.add('loading');
+                        submitBtn.disabled = true;
+                    }
+                });
+            });
+
+            // Add AJAX functionality for filters
+            document.querySelectorAll('.filter-section').forEach(form => {
+                const nameFilter = form.querySelector('input[name="nameFilter"]');
+                const dateRangePicker = form.querySelector('.date-range-picker');
+                const submitButton = form.querySelector('button[type="submit"]');
+
+                // Handle name filter input
+                if (nameFilter) {
+                    // Set initial value from URL if exists
+                    const urlParams = new URLSearchParams(window.location.search);
+                    const nameFilterValue = urlParams.get('nameFilter');
+                    if (nameFilterValue) {
+                        nameFilter.value = nameFilterValue;
+                    }
+
+                    // Add input event listener to submit form on input
+                    nameFilter.addEventListener('input', function(e) {
+                        // Small delay to avoid too many requests while typing
+                        clearTimeout(this.timer);
+                        this.timer = setTimeout(() => {
+                            form.dispatchEvent(new Event('submit'));
+                        }, 500);
+                    });
+                }
+
+                // Handle form submission
+                form.addEventListener('submit', async function(e) {
+                    e.preventDefault();
+                    
+                    // Show loading state
+                    submitButton.classList.add('loading');
+                    submitButton.disabled = true;
+
+                    const formData = new FormData(this);
+                    const section = this.closest('.dashboard-section');
+                    const tableBody = section.querySelector('tbody');
+                    
+                    // Get the current URL and its search params
+                    const url = new URL(window.location.href);
+                    const searchParams = new URLSearchParams(url.search);
+                    
+                    // Update search params with form data
+                    for (const [key, value] of formData.entries()) {
+                        if (value) { // Only add non-empty values
+                            searchParams.set(key, value);
+                        } else {
+                            searchParams.delete(key);
+                        }
+                    }
+                    
+                    try {
+                        const response = await fetch(`${window.location.pathname}?${searchParams.toString()}`, {
+                            headers: {
+                                'Accept': 'application/json'
+                            }
+                        });
+
+                        if (!response.ok) {
+                            throw new Error('Network response was not ok');
+                        }
+
+                        const data = await response.json();
+                        
+                        // Update the appropriate section based on the form
+                        if (this.querySelector('[name="inboundDateRange"]')) {
+                            updateInboundRawMaterialTable(data.inboundRawMaterialRequests, tableBody);
+                        } else if (this.querySelector('[name="inboundPackagingDateRange"]')) {
+                            updateInboundPackagingTable(data.inboundPackagingRequests, tableBody);
+                        } else if (this.querySelector('[name="outboundDateRange"]')) {
+                            updateOutboundMaterialTable(data.productions, tableBody);
+                        } else if (this.querySelector('[name="outboundPackagingDateRange"]')) {
+                            updateOutboundPackagingTable(data.outboundPackaging, tableBody);
+                        }
+                    } catch (error) {
+                        console.error('Error:', error);
+                        // Show error message in table
+                        tableBody.innerHTML = `
+                            <tr>
+                                <td colspan="6" class="text-center py-4 text-danger">
+                                    <i class="bi bi-exclamation-circle fs-4 d-block mb-2"></i>
+                                    Error loading data. Please try again.
+                                </td>
+                            </tr>
+                        `;
+                    } finally {
+                        // Remove loading state
+                        submitButton.classList.remove('loading');
+                        submitButton.disabled = false;
+                    }
+                });
+            });
+
+            // Helper functions to update tables
+            function updateInboundRawMaterialTable(requests, tableBody) {
+                if (!requests || requests.length === 0) {
+                    tableBody.innerHTML = `
+                        <tr>
+                            <td colspan="7" class="text-center py-4 text-muted">
+                                <i class="bi bi-inbox fs-4 d-block mb-2"></i>
+                                No inbound raw materials found
+                            </td>
+                        </tr>
+                    `;
+                    return;
+                }
+
+                tableBody.innerHTML = requests.map(req => `
+                    <tr>
+                        <td>${new Date(req.date).toLocaleString()}</td>
+                        <td>${req.poSoNumber || '-'}</td>
+                        <td>${req.batchNumber || '-'}</td>
+                        <td><div class="fw-semibold">${req.item}</div></td>
+                        <td>${req.vendor}</td>
+                        <td class="quantity-positive">${req.quantity}</td>
+                        <td>${req.notes || '-'}</td>
+                    </tr>
+                `).join('');
+            }
+
+            function updateInboundPackagingTable(requests, tableBody) {
+                if (!requests || requests.length === 0) {
+                    tableBody.innerHTML = `
+                        <tr>
+                            <td colspan="7" class="text-center py-4 text-muted">
+                                <i class="bi bi-inbox fs-4 d-block mb-2"></i>
+                                No inbound packaging found
+                            </td>
+                        </tr>
+                    `;
+                    return;
+                }
+
+                tableBody.innerHTML = requests.map(req => `
+                    <tr>
+                        <td>${new Date(req.date).toLocaleString()}</td>
+                        <td>${req.poSoNumber || '-'}</td>
+                        <td>${req.batchNumber || '-'}</td>
+                        <td><div class="fw-semibold">${req.item}</div></td>
+                        <td>${req.vendor}</td>
+                        <td class="quantity-positive">${req.quantity}</td>
+                        <td>${req.notes || '-'}</td>
+                    </tr>
+                `).join('');
+            }
+
+            function updateOutboundMaterialTable(productions, tableBody) {
+                if (!productions || productions.length === 0) {
+                    tableBody.innerHTML = `
+                        <tr>
+                            <td colspan="8" class="text-center py-4 text-muted">
+                                <i class="bi bi-inbox fs-4 d-block mb-2"></i>
+                                No outbound raw materials found
+                            </td>
+                        </tr>
+                    `;
+                    return;
+                }
+
+                tableBody.innerHTML = productions.map(prod => `
+                    <tr>
+                        <td>${new Date(prod.date).toLocaleString()}</td>
+                        <td>${prod.soPrn || '-'}</td>
+                        <td>${prod.batchNumber || '-'}</td>
+                        <td>${prod.customer || '-'}</td>
+                        <td>${prod.product || '-'}</td>
+                        <td><div class="fw-semibold">${prod.item}</div></td>
+                        <td class="quantity-negative">${prod.quantity}</td>
+                        <td>${prod.notes || '-'}</td>
+                    </tr>
+                `).join('');
+            }
+
+            function updateOutboundPackagingTable(items, tableBody) {
+                if (!items || items.length === 0) {
+                    tableBody.innerHTML = `
+                        <tr>
+                            <td colspan="8" class="text-center py-4 text-muted">
+                                <i class="bi bi-inbox fs-4 d-block mb-2"></i>
+                                No outbound packaging found
+                            </td>
+                        </tr>
+                    `;
+                    return;
+                }
+
+                tableBody.innerHTML = items.map(item => `
+                    <tr>
+                        <td>${new Date(item.date).toLocaleString()}</td>
+                        <td>${item.soPrn || '-'}</td>
+                        <td>${item.batchNumber || '-'}</td>
+                        <td>${item.customer || '-'}</td>
+                        <td>${item.product || '-'}</td>
+                        <td><div class="fw-semibold">${item.type === 'Product' && item.Packaging ? item.Packaging.name : item.item}</div></td>
+                        <td class="quantity-negative">${item.quantity} PCS</td>
+                        <td>${item.notes || '-'}</td>
+                    </tr>
+                `).join('');
+            }
+        });
+
+        // Handle receive button clicks
+        document.querySelectorAll('.receive-btn').forEach(button => {
+            button.addEventListener('click', async function() {
+                const id = this.dataset.id;
+                const type = this.dataset.type;
+                const url = type === 'raw' ? `/rawMaterial/received/${id}` : `/packaging-request/received/${id}`;
+                
+                try {
+                    const response = await fetch(url, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        }
+                    });
+
+                    if (response.ok) {
+                        // Update the UI
+                        const row = document.querySelector(`#request-row-${id}`);
+                        if (row) {
+                            // Replace receive button with test to QC button
+                            const actionCell = row.querySelector('.d-flex.gap-2');
+                            actionCell.innerHTML = `
+                                <button type="button" class="btn btn-warning test-qc-btn" data-id="${id}" data-type="${type}">
+                                    <i class="bi bi-clipboard-check"></i>
+                                    Test to QC
+                                </button>
+                            `;
+                            
+                            // Add click event listener to the new button
+                            const newButton = actionCell.querySelector('.test-qc-btn');
+                            addTestQCListener(newButton);
+                        }
+                    } else {
+                        throw new Error('Failed to process request');
+                    }
+                } catch (error) {
+                    console.error('Error:', error);
+                    alert('Failed to process the request. Please try again.');
+                }
+            });
+        });
+
+        // Function to add Test QC button listener
+        function addTestQCListener(button) {
+            button.addEventListener('click', async function() {
+                const id = this.dataset.id;
+                const type = this.dataset.type;
+                const url = type === 'raw' ? `/rawMaterial/testToQC/${id}` : `/packaging-request/testToQC/${id}`;
+                
+                try {
+                    const response = await fetch(url, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        }
+                    });
+
+                    if (response.ok) {
+                        // Remove the Test to QC button after successful QC test
+                        this.remove();
+                        
+                        // Update status badges if they exist
+                        const row = document.querySelector(`#request-row-${id}`);
+                        if (row) {
+                            const statusBadge = row.querySelector('.badge');
+                            if (statusBadge) {
+                                statusBadge.className = 'badge badge-pending';
+                                statusBadge.textContent = 'QC Testing';
+                            }
+                        }
+                    } else {
+                        throw new Error('Failed to process QC test');
+                    }
+                } catch (error) {
+                    console.error('Error:', error);
+                    alert('Failed to process QC test. Please try again.');
+                }
+            });
+        }
+
+        // Add listeners to existing Test QC buttons
+        document.querySelectorAll('.test-qc-btn').forEach(button => {
+            addTestQCListener(button);
+        });
+
+        // Handle receive failed material/packaging button clicks
+        document.querySelectorAll('.receive-failed-btn').forEach(button => {
+            button.addEventListener('click', async function() {
+                const id = this.dataset.id;
+                const type = this.dataset.type;
+                const url = type === 'raw' 
+                    ? `/rawMaterial/receivedFailedMaterial/${id}` 
+                    : `/packaging-request/receivedFailedPackaging/${id}`;
+                
+                try {
+                    const response = await fetch(url, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        }
+                    });
+
+                    if (response.ok) {
+                        // Remove the button after successful action
+                        const row = document.querySelector(`#request-row-${id}`);
+                        if (row) {
+                            row.remove();
+                        }
+                    } else {
+                        throw new Error('Failed to process request');
+                    }
+                } catch (error) {
+                    console.error('Error:', error);
+                    alert('Failed to process the request. Please try again.');
+                }
+            });
+        });
+
+        // Handle update stock button clicks
+        document.querySelectorAll('.update-stock-btn').forEach(button => {
+            button.addEventListener('click', async function() {
+                const id = this.dataset.id;
+                const type = this.dataset.type;
+                const container = this.closest('.update-stock-container');
+                const rejectQuantityInput = container?.querySelector('.reject-quantity');
+                const url = type === 'raw' 
+                    ? `/rawMaterial/updateStock/${id}` 
+                    : `/packaging-request/updateStock/${id}`;
+                
+                try {
+                    const data = {};
+                    if (rejectQuantityInput) {
+                        const rejectQuantity = parseFloat(rejectQuantityInput.value);
+                        if (isNaN(rejectQuantity) || rejectQuantity < 0) {
+                            alert('Please enter a valid reject quantity');
+                            return;
+                        }
+                        data.rejectQuantity = rejectQuantity;
+                    }
+
+                    const response = await fetch(url, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify(data)
+                    });
+
+                    if (response.ok) {
+                        // Remove the row after successful stock update
+                        const row = document.querySelector(`#request-row-${this.dataset.id}`);
+                        if (row) {
+                            row.remove();
+                        }
+                    } else {
+                        throw new Error('Failed to update stock');
+                    }
+                } catch (error) {
+                    console.error('Error:', error);
+                    alert('Failed to update stock. Please try again.');
+                }
+            });
+        });
+
+        // Handle receive failed form submissions
+        document.querySelectorAll('.receive-failed-form').forEach(form => {
+            form.addEventListener('submit', async function(e) {
+                e.preventDefault();
+                const id = this.dataset.id;
+                const type = this.dataset.type;
+                
+                try {
+                    const response = await fetch(this.action, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        }
+                    });
+
+                    if (response.ok) {
+                        // Remove the row after successful action
+                        const row = document.querySelector(`#request-row-${id}`);
+                        if (row) {
+                            row.remove();
+                        }
+                    } else {
+                        throw new Error('Failed to process request');
+                    }
+                } catch (error) {
+                    console.error('Error:', error);
+                    alert('Failed to process the request. Please try again.');
+                }
+            });
+        });
+
+        // Handle update stock form submissions
+        document.querySelectorAll('.update-stock-form').forEach(form => {
+            form.addEventListener('submit', async function(e) {
+                e.preventDefault();
+                const formData = new FormData(this);
+                const data = {};
+                formData.forEach((value, key) => {
+                    data[key] = value;
+                });
+                
+                try {
+                    const response = await fetch(this.action, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify(data)
+                    });
+
+                    if (response.ok) {
+                        // Remove the row after successful stock update
+                        const row = document.querySelector(`#request-row-${this.dataset.id}`);
+                        if (row) {
+                            row.remove();
+                        }
+                    } else {
+                        throw new Error('Failed to update stock');
+                    }
+                } catch (error) {
+                    console.error('Error:', error);
+                    alert('Failed to update stock. Please try again.');
+                }
+            });
+        });
+
+        // Add AJAX functionality for mobile view forms
+        document.querySelectorAll('.mobile-view form').forEach(form => {
+            form.addEventListener('submit', async function(e) {
+                e.preventDefault();
+                const formData = new FormData(this);
+                const data = {};
+                formData.forEach((value, key) => {
+                    data[key] = value;
+                });
+                
+                try {
+                    const response = await fetch(this.action, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify(data)
+                    });
+
+                    if (response.ok) {
+                        // Remove the row after successful action
+                        const row = document.querySelector(`#request-row-${this.dataset.id}`);
+                        if (row) {
+                            row.remove();
+                        }
+                    } else {
+                        throw new Error('Failed to process request');
+                    }
+                } catch (error) {
+                    console.error('Error:', error);
+                    alert('Failed to process the request. Please try again.');
+                }
+            });
+        });
+    </script>
+
+    <%- include('../partials/chat', { users: users, userRole: userRole, userId: userId }) %>
+</body>
+</html>

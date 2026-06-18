@@ -1,0 +1,281 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Insert Raw Materials - MIB Flow</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.7.2/font/bootstrap-icons.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary-color: #2e7d32;
+            --primary-light: #4caf50;
+            --primary-dark: #1b5e20;
+            --text-color: #2c3e50;
+            --background-light: #e8f5e9;
+            --shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            --transition: all 0.3s ease;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--background-light);
+            margin: 0;
+            padding: 0;
+            min-height: 100vh;
+        }
+
+        .main-content {
+            margin-left: 280px;
+            padding: 2rem;
+            transition: var(--transition);
+            width: calc(100% - 280px);
+        }
+
+        .page-header {
+            background: white;
+            padding: 1.5rem;
+            border-radius: 15px;
+            box-shadow: var(--shadow);
+            margin-bottom: 2rem;
+        }
+
+        .page-title {
+            margin: 0;
+            color: var(--primary-dark);
+            font-weight: 600;
+            font-size: 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .form-section {
+            background: white;
+            border-radius: 15px;
+            box-shadow: var(--shadow);
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .raw-materials-container {
+            margin-top: 1rem;
+        }
+
+        .raw-material-item {
+            background: var(--background-light);
+            padding: 1rem;
+            border-radius: 8px;
+            margin-bottom: 1rem;
+            position: relative;
+        }
+
+        .remove-material {
+            position: absolute;
+            top: 0.5rem;
+            right: 0.5rem;
+            background: none;
+            border: none;
+            color: #dc3545;
+            cursor: pointer;
+            padding: 0.25rem;
+            border-radius: 4px;
+        }
+
+        .remove-material:hover {
+            background-color: rgba(220, 53, 69, 0.1);
+        }
+
+        .btn-add-material {
+            width: 100%;
+            margin-bottom: 1rem;
+        }
+
+        .form-label {
+            font-weight: 500;
+            color: var(--text-color);
+            margin-bottom: 0.5rem;
+        }
+
+        .form-control, .form-select {
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            padding: 0.5rem;
+            transition: var(--transition);
+        }
+
+        .form-control:focus, .form-select:focus {
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 0.25rem rgba(46, 125, 50, 0.25);
+            outline: none;
+        }
+
+        .btn {
+            padding: 0.5rem 1rem;
+            border-radius: 8px;
+            transition: var(--transition);
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-weight: 500;
+        }
+
+        .btn-primary {
+            background-color: var(--primary-color);
+            border: none;
+        }
+
+        .btn-primary:hover {
+            background-color: var(--primary-dark);
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(46, 125, 50, 0.25);
+        }
+
+        .complain-details {
+            background: var(--background-light);
+            padding: 1rem;
+            border-radius: 8px;
+            margin-bottom: 1.5rem;
+        }
+
+        .complain-details h3 {
+            font-size: 1.1rem;
+            color: var(--primary-dark);
+            margin-bottom: 1rem;
+        }
+
+        .detail-item {
+            margin-bottom: 0.5rem;
+        }
+
+        .detail-label {
+            font-weight: 500;
+            color: var(--text-color);
+        }
+    </style>
+</head>
+<body>
+    <%- include('../partials/sidebar', { userRole: userRole }) %>
+
+    <div class="main-content">
+        <div class="page-header">
+            <h1 class="page-title">
+                <i class="bi bi-flask"></i>
+                Insert Raw Materials
+            </h1>
+            <p class="text-muted mb-0">Add raw materials for rework item</p>
+        </div>
+
+        <div class="form-section">
+            <!-- Complain Item Details -->
+            <div class="complain-details">
+                <h3>Rework Item Details</h3>
+                <div class="detail-item">
+                    <span class="detail-label">SO Number:</span>
+                    <span><%= complainItem.Complain.Order.sonumber %></span>
+                </div>
+                <div class="detail-item">
+                    <span class="detail-label">Customer:</span>
+                    <span><%= complainItem.Complain.Order.customerName %></span>
+                </div>
+                <div class="detail-item">
+                    <span class="detail-label">Product:</span>
+                    <span><%= complainItem.product %></span>
+                </div>
+                <div class="detail-item">
+                    <span class="detail-label">Quantity Rejected:</span>
+                    <span><%= complainItem.quantityRejected %></span>
+                </div>
+                <div class="detail-item">
+                    <span class="detail-label">Notes:</span>
+                    <span><%= complainItem.notes || '-' %></span>
+                </div>
+            </div>
+
+            <form id="rawMaterialsForm" action="/rd/submit-raw-materials" method="POST">
+                <input type="hidden" name="complainItemId" value="<%= complainItem.id %>">
+                
+                <button type="button" class="btn btn-primary btn-add-material" onclick="addRawMaterial()">
+                    <i class="bi bi-plus-circle"></i>
+                    Add Raw Material
+                </button>
+
+                <div id="rawMaterialsContainer" class="raw-materials-container">
+                    <!-- Raw material items will be added here dynamically -->
+                </div>
+
+                <div class="d-flex justify-content-end gap-2 mt-4">
+                    <a href="/dashboard/rd" class="btn btn-secondary">
+                        <i class="bi bi-x-circle"></i>
+                        Cancel
+                    </a>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="bi bi-check-circle"></i>
+                        Submit Raw Materials
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        let materialCount = 0;
+
+        function addRawMaterial() {
+            const container = document.getElementById('rawMaterialsContainer');
+            const materialItem = document.createElement('div');
+            materialItem.className = 'raw-material-item';
+            materialItem.id = `material-${materialCount}`;
+
+            materialItem.innerHTML = `
+                <button type="button" class="remove-material" onclick="removeMaterial(${materialCount})">
+                    <i class="bi bi-x-circle"></i>
+                </button>
+                <div class="row">
+                    <div class="col-md-4 mb-3">
+                        <label class="form-label">Raw Material</label>
+                        <select class="form-select" name="materials[${materialCount}][rawMaterialName]" required>
+                            <option value="">Select Raw Material</option>
+                            <% rawMaterials.forEach(function(material) { %>
+                                <option value="<%= material.name %>"><%= material.name %></option>
+                            <% }); %>
+                        </select>
+                    </div>
+                    <div class="col-md-3 mb-3">
+                        <label class="form-label">Quantity</label>
+                        <input type="number" class="form-control" name="materials[${materialCount}][quantity]" step="0.01" min="0" required>
+                    </div>
+                    <div class="col-md-3 mb-3">
+                        <label class="form-label">Unit</label>
+                        <select class="form-select" name="materials[${materialCount}][unit]" required>
+                            <option value="">Select Unit</option>
+                            <option value="KG">Kilogram (KG)</option>
+                            <option value="L">Liter (L)</option>
+                        </select>
+                    </div>
+                    <div class="col-12">
+                        <label class="form-label">Notes</label>
+                        <textarea class="form-control" name="materials[${materialCount}][notes]" rows="2"></textarea>
+                    </div>
+                </div>
+            `;
+
+            container.appendChild(materialItem);
+            materialCount++;
+        }
+
+        function removeMaterial(id) {
+            const materialItem = document.getElementById(`material-${id}`);
+            materialItem.remove();
+        }
+
+        // Add at least one raw material field when the page loads
+        document.addEventListener('DOMContentLoaded', function() {
+            addRawMaterial();
+        });
+    </script>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

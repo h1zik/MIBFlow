@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Packaging Request History</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.2/font/bootstrap-icons.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary-color: #1b5e20;
+            --primary-light: #388E3C;
+            --background-light: #f4f6f8;
+            --text-color: #333;
+            --shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            --transition: all 0.3s ease;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--background-light);
+            margin: 0;
+            padding: 0;
+            min-height: 100vh;
+        }
+
+        .main-content {
+            margin-left: 0;
+            padding: 1rem;
+            width: 100%;
+            transition: var(--transition);
+        }
+
+        .page-header {
+            background: white;
+            padding: 1rem;
+            border-radius: 15px;
+            box-shadow: var(--shadow);
+            margin-bottom: 1rem;
+        }
+
+        .page-title {
+            margin: 0;
+            color: var(--primary-color);
+            font-weight: 600;
+            font-size: 1.25rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .page-subtitle {
+            color: #6c757d;
+            font-size: 0.875rem;
+            margin-top: 0.5rem;
+        }
+
+        .card {
+            background: white;
+            border-radius: 15px;
+            box-shadow: var(--shadow);
+            margin-bottom: 1rem;
+            border: none;
+            overflow: hidden;
+        }
+
+        .card-header {
+            background-color: var(--background-light);
+            padding: 1rem;
+            border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+        }
+
+        .card-title {
+            color: var(--primary-color);
+            font-weight: 600;
+            font-size: 1rem;
+            margin: 0;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .table {
+            margin: 0;
+        }
+
+        .table thead th {
+            background-color: var(--primary-color);
+            color: white;
+            font-weight: 600;
+            text-transform: uppercase;
+            font-size: 0.75rem;
+            letter-spacing: 0.5px;
+            padding: 1rem;
+            border: none;
+            white-space: nowrap;
+        }
+
+        .table tbody td {
+            padding: 1rem;
+            vertical-align: middle;
+            border-color: rgba(0, 0, 0, 0.05);
+            font-size: 0.875rem;
+        }
+
+        .table tbody tr:hover {
+            background-color: var(--background-light);
+        }
+
+        .badge {
+            padding: 0.35rem 0.65rem;
+            font-size: 0.75rem;
+            font-weight: 500;
+            border-radius: 2rem;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.25rem;
+            margin: 0.125rem;
+        }
+
+        .badge-pass {
+            background-color: #d1e7dd;
+            color: #0f5132;
+        }
+
+        .badge-fail {
+            background-color: #f8d7da;
+            color: #721c24;
+        }
+
+        .badge-pending {
+            background-color: #fff3cd;
+            color: #856404;
+        }
+
+        .badge-reject {
+            background-color: #f8d7da;
+            color: #721c24;
+        }
+
+        @media (min-width: 769px) {
+            .main-content {
+                margin-left: 280px;
+                padding: 2rem;
+                width: calc(100% - 280px);
+            }
+
+            body:has(.sidebar.collapsed) .main-content {
+                margin-left: 70px;
+                width: calc(100% - 70px);
+            }
+        }
+    </style>
+</head>
+<body>
+    <%- include('../partials/sidebar', { userRole: userRole }) %>
+
+    <div class="main-content">
+        <div class="page-header fade-in">
+            <h1 class="page-title">
+                <i class="bi bi-box2"></i>
+                Packaging Request History
+            </h1>
+            <p class="page-subtitle">View history of all packaging requests</p>
+        </div>
+
+        <div class="card fade-in">
+            <div class="card-header">
+                <h2 class="card-title">
+                    <i class="bi bi-list-check"></i>
+                    Request History List
+                </h2>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>PO Number</th>
+                                <th>Packaging</th>
+                                <th>Quantity</th>
+                                <th>Status</th>
+                                <th>Vendor</th>
+                                <th>QC Status</th>
+                                <th>QC Comment</th>
+                                <th>Reject Comment</th>
+                                <th>Reject Quantity</th>
+                                <th>Created Date</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <% if (packagingRequests && packagingRequests.length > 0) { %>
+                                <% packagingRequests.forEach(function(request) { %>
+                                    <tr>
+                                        <td>#<%= request.id %></td>
+                                        <td><%= request.ponumber || 'N/A' %></td>
+                                        <td>
+                                            <div class="fw-semibold"><%= request.PackagingRequest.Packaging.name %></div>
+                                        </td>
+                                        <td><%= request.splitQuantity %> pcs</td>
+                                        <td><%= request.status %></td>
+                                        <td><%= request.Vendor.name %></td>
+                                        <td>
+                                            <% if (request.qcStatus === 'Pass') { %>
+                                                <span class="badge badge-pass">
+                                                    <i class="bi bi-check-circle"></i>
+                                                    Pass
+                                                </span>
+                                            <% } else if (request.qcStatus === 'Fail') { %>
+                                                <span class="badge badge-fail">
+                                                    <i class="bi bi-x-circle"></i>
+                                                    Fail
+                                                </span>
+                                            <% } else if (request.qcStatus === 'Reject Sebagian') { %>
+                                                <span class="badge badge-reject">
+                                                    <i class="bi bi-exclamation-triangle"></i>
+                                                    Partially Rejected
+                                                </span>
+                                            <% } else { %>
+                                                <span class="badge badge-pending">
+                                                    <i class="bi bi-clock"></i>
+                                                    Pending
+                                                </span>
+                                            <% } %>
+                                        </td>
+                                        <td><%= request.qcComment || '-' %></td>
+                                        <td><%= request.rejectComment || '-' %></td>
+                                        <td><%= request.rejectQuantity ? request.rejectQuantity + ' pcs' : '-' %></td>
+                                        <td><%= new Date(request.createdAt).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' }) %></td>
+                                    </tr>
+                                <% }); %>
+                            <% } else { %>
+                                <tr>
+                                    <td colspan="11" class="text-center text-muted">
+                                        <i class="bi bi-inbox fs-4 d-block mb-2"></i>
+                                        No packaging requests found
+                                    </td>
+                                </tr>
+                            <% } %>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

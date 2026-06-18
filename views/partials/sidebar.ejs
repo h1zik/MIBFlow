@@ -1,0 +1,356 @@
+<link href="/css/mibflow.css" rel="stylesheet">
+<link href="/css/sidebar.css" rel="stylesheet">
+<style>
+    /* Override per-page inline styles that set margin-left: 0 */
+    .main-content, .content {
+        margin-left: var(--sidebar-width, 280px);
+        width: calc(100% - var(--sidebar-width, 280px));
+        min-height: 100vh;
+        transition: margin-left 0.2s ease, width 0.2s ease;
+    }
+    body.sidebar-collapsed .main-content,
+    body.sidebar-collapsed .content {
+        margin-left: var(--sidebar-collapsed-width, 70px);
+        width: calc(100% - var(--sidebar-collapsed-width, 70px));
+    }
+    @media (max-width: 768px) {
+        .main-content, .content {
+            margin-left: 0;
+            width: 100%;
+            padding-top: 4.5rem;
+        }
+    }
+</style>
+
+<button class="mobile-toggle d-md-none" id="mobileToggle" aria-label="Open menu">
+    <i class="bi bi-list"></i>
+</button>
+
+<div class="sidebar" id="sidebar">
+    <div class="sidebar-header">
+        <div class="brand-wrapper">
+            <img src="/images/logomib.svg" alt="MibFlow" class="brand-logo" id="brandLogo">
+            <span class="brand-text">MibFlow</span>
+        </div>
+        <button class="sidebar-toggle d-none d-md-flex" id="sidebarToggle" aria-label="Toggle sidebar">
+            <i class="bi bi-list"></i>
+        </button>
+    </div>
+
+    <div class="user-profile">
+        <div class="user-info">
+            <div class="user-role"><%= userRole %></div>
+        </div>
+    </div>
+
+    <nav class="sidebar-menu" aria-label="Main navigation">
+        <% const currentPath = typeof path !== 'undefined' ? path : ''; %>
+        <% if (userRole === 'Marketing') { %>
+            <div class="menu-section">
+                <div class="menu-title">Main</div>
+                <a href="/dashboard/marketing" class="menu-item <%= currentPath === '/dashboard/marketing' ? 'active' : '' %>">
+                    <i class="bi bi-speedometer2"></i><span>Dashboard</span>
+                </a>
+            </div>
+            <div class="menu-section">
+                <div class="menu-title">Orders</div>
+                <a href="/orders/create" class="menu-item <%= currentPath === '/orders/create' ? 'active' : '' %>">
+                    <i class="bi bi-plus-circle"></i><span>Create Order</span>
+                </a>
+                <a href="/orders/delivered" class="menu-item <%= currentPath === '/orders/delivered' ? 'active' : '' %>">
+                    <i class="bi bi-clock-history"></i><span>Order History</span>
+                </a>
+            </div>
+            <div class="menu-section">
+                <div class="menu-title">Customers</div>
+                <a href="/orders/addCustomer" class="menu-item <%= currentPath === '/orders/addCustomer' ? 'active' : '' %>">
+                    <i class="bi bi-person-plus"></i><span>Add Customer</span>
+                </a>
+                <a href="/customers/list" class="menu-item <%= currentPath === '/customers/list' ? 'active' : '' %>">
+                    <i class="bi bi-people"></i><span>Customer List</span>
+                </a>
+            </div>
+            <div class="menu-section">
+                <div class="menu-title">Products</div>
+                <a href="/products/listProduct" class="menu-item <%= currentPath === '/products/listProduct' ? 'active' : '' %>">
+                    <i class="bi bi-box-seam"></i><span>Product List</span>
+                </a>
+            </div>
+            <div class="menu-section">
+                <div class="menu-title">Complains</div>
+                <a href="/complain/create" class="menu-item <%= currentPath === '/complain/create' ? 'active' : '' %>">
+                    <i class="bi bi-exclamation-circle"></i><span>Create Complain</span>
+                </a>
+                <a href="/complain" class="menu-item <%= currentPath === '/complain' ? 'active' : '' %>">
+                    <i class="bi bi-list-check"></i><span>Complain List</span>
+                </a>
+            </div>
+        <% } else if (userRole === 'Production') { %>
+            <div class="menu-section">
+                <div class="menu-title">Main</div>
+                <a href="/dashboard/production" class="menu-item <%= currentPath === '/dashboard/production' ? 'active' : '' %>">
+                    <i class="bi bi-speedometer2"></i><span>Dashboard</span>
+                </a>
+            </div>
+            <div class="menu-section">
+                <div class="menu-title">Equipment</div>
+                <a href="/tank/add" class="menu-item <%= currentPath === '/tank/add' ? 'active' : '' %>">
+                    <i class="bi bi-tools"></i><span>Manage Tank</span>
+                </a>
+                <a href="/tank/tankList" class="menu-item <%= currentPath === '/tank/tankList' ? 'active' : '' %>">
+                    <i class="bi bi-water"></i><span>Tank List</span>
+                </a>
+            </div>
+            <div class="menu-section">
+                <div class="menu-title">Production</div>
+                <a href="/productions/stock-updated" class="menu-item <%= currentPath === '/productions/stock-updated' ? 'active' : '' %>">
+                    <i class="bi bi-clipboard-check"></i><span>Productions History</span>
+                </a>
+                <a href="/productionSchedule" class="menu-item <%= currentPath === '/productionSchedule' ? 'active' : '' %>">
+                    <i class="bi bi-calendar-week"></i><span>Productions Schedule</span>
+                </a>
+            </div>
+        <% } else if (userRole === 'PPIC') { %>
+            <div class="menu-section">
+                <div class="menu-title">Main</div>
+                <a href="/dashboard/ppic" class="menu-item <%= currentPath === '/dashboard/ppic' ? 'active' : '' %>">
+                    <i class="bi bi-speedometer2"></i><span>Dashboard</span>
+                </a>
+            </div>
+            <div class="menu-section">
+                <div class="menu-title">Production</div>
+                <a href="/ppic/requestProduction" class="menu-item <%= currentPath === '/ppic/requestProduction' ? 'active' : '' %>">
+                    <i class="bi bi-gear"></i><span>Request Production</span>
+                </a>
+                <a href="/production/productionRequest/history" class="menu-item <%= currentPath === '/production/productionRequest/history' ? 'active' : '' %>">
+                    <i class="bi bi-clock-history"></i><span>Production Request History</span>
+                </a>
+            </div>
+            <div class="menu-section">
+                <div class="menu-title">Stock</div>
+                <a href="/products/listProduct" class="menu-item <%= currentPath === '/products/listProduct' ? 'active' : '' %>">
+                    <i class="bi bi-box-seam"></i><span>Check Product Stock</span>
+                </a>
+                <a href="/rawMaterials/rawMaterialStock" class="menu-item <%= currentPath === '/rawMaterials/rawMaterialStock' ? 'active' : '' %>">
+                    <i class="bi bi-boxes"></i><span>Check Raw Material Stock</span>
+                </a>
+                <a href="/rawMaterial/requestRawMaterial" class="menu-item <%= currentPath === '/rawMaterial/requestRawMaterial' ? 'active' : '' %>">
+                    <i class="bi bi-truck"></i><span>Request Raw Material</span>
+                </a>
+                <a href="/packaging/list" class="menu-item <%= currentPath === '/packaging/list' ? 'active' : '' %>">
+                    <i class="bi bi-box"></i><span>Packaging List</span>
+                </a>
+                <a href="/packaging-request/requestPackaging" class="menu-item <%= currentPath === '/packaging-request/requestPackaging' ? 'active' : '' %>">
+                    <i class="bi bi-box-arrow-in-down"></i><span>Request Packaging</span>
+                </a>
+            </div>
+            <div class="menu-section">
+                <div class="menu-title">History</div>
+                <a href="/orders/delivered" class="menu-item <%= currentPath === '/orders/delivered' ? 'active' : '' %>">
+                    <i class="bi bi-clock-history"></i><span>Order History</span>
+                </a>
+                <a href="/rawMaterial/history" class="menu-item <%= currentPath === '/rawMaterial/history' ? 'active' : '' %>">
+                    <i class="bi bi-clock-history"></i><span>Raw Material Request History</span>
+                </a>
+                <a href="/packaging-request/history" class="menu-item <%= currentPath === '/packaging-request/history' ? 'active' : '' %>">
+                    <i class="bi bi-clock-history"></i><span>Packaging Request History</span>
+                </a>
+                <a href="/productWarehouse/undelivered" class="menu-item <%= currentPath === '/productWarehouse/undelivered' ? 'active' : '' %>">
+                    <i class="bi bi-truck"></i><span>Undelivered Orders</span>
+                </a>
+            </div>
+            <div class="menu-section">
+                <div class="menu-title">Complains</div>
+                <a href="/complain" class="menu-item <%= currentPath === '/complain' ? 'active' : '' %>">
+                    <i class="bi bi-list-check"></i><span>Complain List</span>
+                </a>
+            </div>
+        <% } else if (userRole === 'R&D') { %>
+            <div class="menu-section">
+                <div class="menu-title">Main</div>
+                <a href="/dashboard/rd" class="menu-item <%= currentPath === '/dashboard/rd' ? 'active' : '' %>">
+                    <i class="bi bi-speedometer2"></i><span>Dashboard</span>
+                </a>
+            </div>
+            <div class="menu-section">
+                <div class="menu-title">Products</div>
+                <a href="/products/addProduct" class="menu-item <%= currentPath === '/products/addProduct' ? 'active' : '' %>">
+                    <i class="bi bi-plus-circle"></i><span>Add Product</span>
+                </a>
+                <a href="/products/listProduct" class="menu-item <%= currentPath === '/products/listProduct' ? 'active' : '' %>">
+                    <i class="bi bi-box-seam"></i><span>List Product</span>
+                </a>
+            </div>
+            <div class="menu-section">
+                <div class="menu-title">Formulas</div>
+                <a href="/formula-requests/list" class="menu-item <%= currentPath === '/formula-requests/list' ? 'active' : '' %>">
+                    <i class="bi bi-droplet-fill"></i><span>Formula Requests</span>
+                </a>
+            </div>
+        <% } else if (userRole === 'Raw Material Warehouse') { %>
+            <div class="menu-section">
+                <div class="menu-title">Main</div>
+                <a href="/dashboard/raw-material-warehouse" class="menu-item <%= currentPath === '/dashboard/raw-material-warehouse' ? 'active' : '' %>">
+                    <i class="bi bi-speedometer2"></i><span>Dashboard</span>
+                </a>
+            </div>
+            <div class="menu-section">
+                <div class="menu-title">Raw Materials</div>
+                <a href="/products/addRawMaterial" class="menu-item <%= currentPath === '/products/addRawMaterial' ? 'active' : '' %>">
+                    <i class="bi bi-plus-circle"></i><span>Add Raw Material</span>
+                </a>
+                <a href="/rawMaterials/rawMaterialStock" class="menu-item <%= currentPath === '/rawMaterials/rawMaterialStock' ? 'active' : '' %>">
+                    <i class="bi bi-boxes"></i><span>Check Raw Material Stock</span>
+                </a>
+                <a href="/raw-material-quarantine/list" class="menu-item <%= currentPath === '/raw-material-quarantine/list' ? 'active' : '' %>">
+                    <i class="bi bi-exclamation-triangle"></i><span>Quarantine List</span>
+                </a>
+            </div>
+            <div class="menu-section">
+                <div class="menu-title">Packaging</div>
+                <a href="/packaging/add" class="menu-item <%= currentPath === '/packaging/add' ? 'active' : '' %>">
+                    <i class="bi bi-box"></i><span>Add Packaging</span>
+                </a>
+                <a href="/packaging/list" class="menu-item <%= currentPath === '/packaging/list' ? 'active' : '' %>">
+                    <i class="bi bi-boxes"></i><span>Packaging List</span>
+                </a>
+            </div>
+        <% } else if (userRole === 'QC') { %>
+            <div class="menu-section">
+                <div class="menu-title">Main</div>
+                <a href="/dashboard/qc" class="menu-item <%= currentPath === '/dashboard/qc' ? 'active' : '' %>">
+                    <i class="bi bi-speedometer2"></i><span>Dashboard</span>
+                </a>
+            </div>
+            <div class="menu-section">
+                <div class="menu-title">Quality Control</div>
+                <a href="/qc/sampleRetainedProductions" class="menu-item <%= currentPath === '/qc/sampleRetainedProductions' ? 'active' : '' %>">
+                    <i class="bi bi-archive-fill"></i><span>Retained Sample</span>
+                </a>
+                <a href="/qc/raw-material-history" class="menu-item <%= currentPath === '/qc/raw-material-history' ? 'active' : '' %>">
+                    <i class="bi bi-boxes"></i><span>Raw Material QC History</span>
+                </a>
+                <a href="/qc/packaging-history" class="menu-item <%= currentPath === '/qc/packaging-history' ? 'active' : '' %>">
+                    <i class="bi bi-box"></i><span>Packaging QC History</span>
+                </a>
+                <a href="/qc/production-history" class="menu-item <%= currentPath === '/qc/production-history' ? 'active' : '' %>">
+                    <i class="bi bi-clipboard-check"></i><span>Production QC History</span>
+                </a>
+            </div>
+        <% } else if (userRole === 'Finance') { %>
+            <div class="menu-section">
+                <div class="menu-title">Main</div>
+                <a href="/dashboard/finance" class="menu-item <%= currentPath === '/dashboard/finance' ? 'active' : '' %>">
+                    <i class="bi bi-speedometer2"></i><span>Dashboard</span>
+                </a>
+            </div>
+            <div class="menu-section">
+                <div class="menu-title">History</div>
+                <a href="/finance/orderHistory" class="menu-item <%= currentPath === '/finance/orderHistory' ? 'active' : '' %>">
+                    <i class="bi bi-cash"></i><span>Selling History</span>
+                </a>
+                <a href="/finance/rawMaterialRequestHistory" class="menu-item <%= currentPath === '/finance/rawMaterialRequestHistory' ? 'active' : '' %>">
+                    <i class="bi bi-cash"></i><span>Buying History</span>
+                </a>
+            </div>
+            <div class="menu-section">
+                <div class="menu-title">Overhead</div>
+                <a href="/overhead/calculate-overhead" class="menu-item <%= currentPath === '/overhead/calculate-overhead' ? 'active' : '' %>">
+                    <i class="bi bi-calculator"></i><span>Overhead Calculation</span>
+                </a>
+                <a href="/overhead/labor/add" class="menu-item <%= currentPath === '/overhead/labor/add' ? 'active' : '' %>">
+                    <i class="bi bi-person-badge"></i><span>Add Labor</span>
+                </a>
+                <a href="/overhead/utility/add" class="menu-item <%= currentPath === '/overhead/utility/add' ? 'active' : '' %>">
+                    <i class="bi bi-lightning"></i><span>Add Utilities</span>
+                </a>
+                <a href="/tank/tankList" class="menu-item <%= currentPath === '/tank/tankList' ? 'active' : '' %>">
+                    <i class="bi bi-water"></i><span>Tank List</span>
+                </a>
+                <a href="/equipment" class="menu-item <%= currentPath === '/equipment' ? 'active' : '' %>">
+                    <i class="bi bi-gear"></i><span>Manage Equipment</span>
+                </a>
+                <a href="/overhead/cogs-calculator" class="menu-item <%= currentPath === '/overhead/cogs-calculator' ? 'active' : '' %>">
+                    <i class="bi bi-calculator"></i><span>COGS Calculator</span>
+                </a>
+            </div>
+            <div class="menu-section">
+                <div class="menu-title">Consumables</div>
+                <a href="/finance/consumables" class="menu-item <%= currentPath === '/finance/consumables' ? 'active' : '' %>">
+                    <i class="bi bi-box-seam"></i><span>Manage Consumables</span>
+                </a>
+            </div>
+        <% } else if (userRole === 'Product Warehouse') { %>
+            <div class="menu-section">
+                <div class="menu-title">Main</div>
+                <a href="/dashboard/productWarehouse" class="menu-item <%= currentPath === '/dashboard/productWarehouse' ? 'active' : '' %>">
+                    <i class="bi bi-speedometer2"></i><span>Dashboard</span>
+                </a>
+            </div>
+            <div class="menu-section">
+                <div class="menu-title">Products</div>
+                <a href="/products/listProduct" class="menu-item <%= currentPath === '/products/listProduct' ? 'active' : '' %>">
+                    <i class="bi bi-box-seam"></i><span>Product List</span>
+                </a>
+                <a href="/product-quarantine/list" class="menu-item <%= currentPath === '/product-quarantine/list' ? 'active' : '' %>">
+                    <i class="bi bi-exclamation-triangle"></i><span>Quarantine List</span>
+                </a>
+            </div>
+        <% } else if (userRole === 'Purchase') { %>
+            <div class="menu-section">
+                <div class="menu-title">Main</div>
+                <a href="/dashboard/purchase" class="menu-item <%= currentPath === '/dashboard/purchase' ? 'active' : '' %>">
+                    <i class="bi bi-speedometer2"></i><span>Dashboard</span>
+                </a>
+            </div>
+            <div class="menu-section">
+                <div class="menu-title">Vendors</div>
+                <a href="/ppic/addVendor" class="menu-item <%= currentPath === '/ppic/addVendor' ? 'active' : '' %>">
+                    <i class="bi bi-person-plus"></i><span>Add Vendor</span>
+                </a>
+                <a href="/vendorList" class="menu-item <%= currentPath === '/vendorList' ? 'active' : '' %>">
+                    <i class="bi bi-people"></i><span>Vendor List</span>
+                </a>
+            </div>
+            <div class="menu-section">
+                <div class="menu-title">Raw Materials</div>
+                <a href="/rawMaterials/rawMaterialStock" class="menu-item <%= currentPath === '/rawMaterials/rawMaterialStock' ? 'active' : '' %>">
+                    <i class="bi bi-boxes"></i><span>Check Raw Material Stock</span>
+                </a>
+                <a href="/rawMaterial/completed" class="menu-item <%= currentPath === '/rawMaterial/completed' ? 'active' : '' %>">
+                    <i class="bi bi-check-circle"></i><span>Completed Requests</span>
+                </a>
+                <a href="/rawMaterial/history" class="menu-item <%= currentPath === '/rawMaterial/history' ? 'active' : '' %>">
+                    <i class="bi bi-clock-history"></i><span>Raw Material Request History</span>
+                </a>
+            </div>
+            <div class="menu-section">
+                <div class="menu-title">Packaging</div>
+                <a href="/packaging/list" class="menu-item <%= currentPath === '/packaging/list' ? 'active' : '' %>">
+                    <i class="bi bi-box"></i><span>Packaging List</span>
+                </a>
+                <a href="/packaging-request/history" class="menu-item <%= currentPath === '/packaging-request/history' ? 'active' : '' %>">
+                    <i class="bi bi-clock-history"></i><span>Packaging Request History</span>
+                </a>
+            </div>
+            <div class="menu-section">
+                <div class="menu-title">Return History</div>
+                <a href="/purchase/returned-packaging-history" class="menu-item <%= currentPath === '/purchase/returned-packaging-history' ? 'active' : '' %>">
+                    <i class="bi bi-box-arrow-in-left"></i><span>Returned Packaging History</span>
+                </a>
+                <a href="/purchase/returned-raw-material-history" class="menu-item <%= currentPath === '/purchase/returned-raw-material-history' ? 'active' : '' %>">
+                    <i class="bi bi-box-arrow-in-left"></i><span>Returned Raw Material History</span>
+                </a>
+            </div>
+        <% } %>
+
+        <div class="menu-section mt-auto">
+            <a href="/auth/logout" class="menu-item text-danger">
+                <i class="bi bi-box-arrow-right"></i><span>Logout</span>
+            </a>
+        </div>
+    </nav>
+</div>
+
+<div class="sidebar-overlay"></div>
+<script src="/js/sidebar.js"></script>

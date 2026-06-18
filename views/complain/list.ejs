@@ -1,0 +1,332 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Complain List - MIB Flow</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.7.2/font/bootstrap-icons.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary-color: #2e7d32;
+            --primary-light: #4caf50;
+            --primary-dark: #1b5e20;
+            --text-color: #2c3e50;
+            --background-light: #e8f5e9;
+            --shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            --transition: all 0.3s ease;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--background-light);
+            margin: 0;
+            padding: 0;
+            min-height: 100vh;
+        }
+
+        .main-content {
+            margin-left: 280px;
+            padding: 2rem;
+            transition: var(--transition);
+            width: calc(100% - 280px);
+        }
+
+        body.sidebar-collapsed .main-content {
+            margin-left: 70px;
+            width: calc(100% - 70px);
+        }
+
+        .page-header {
+            background: white;
+            padding: 1.5rem;
+            border-radius: 15px;
+            box-shadow: var(--shadow);
+            margin-bottom: 2rem;
+            animation: slideDown 0.5s ease-out;
+        }
+
+        .page-title {
+            margin: 0;
+            color: var(--primary-dark);
+            font-weight: 600;
+            font-size: 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .table-container {
+            background: white;
+            border-radius: 15px;
+            box-shadow: var(--shadow);
+            padding: 1.5rem;
+            animation: fadeIn 0.5s ease-out;
+        }
+
+        .table {
+            margin: 0;
+        }
+
+        .table thead th {
+            background-color: var(--background-light);
+            color: var(--primary-dark);
+            font-weight: 600;
+            text-transform: uppercase;
+            font-size: 0.75rem;
+            letter-spacing: 0.5px;
+            padding: 1rem;
+            border: none;
+            white-space: nowrap;
+        }
+
+        .table tbody td {
+            padding: 1rem;
+            vertical-align: middle;
+            border-color: rgba(0,0,0,0.05);
+        }
+
+        .table tbody tr {
+            transition: var(--transition);
+        }
+
+        .table tbody tr:hover {
+            background-color: var(--background-light);
+        }
+
+        .badge {
+            padding: 0.5rem 1rem;
+            border-radius: 50px;
+            font-weight: 500;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.25rem;
+        }
+
+        .badge i {
+            font-size: 0.75rem;
+        }
+
+        .badge-pending {
+            background-color: #fff3cd;
+            color: #856404;
+        }
+
+        .badge-approved {
+            background-color: #d1e7dd;
+            color: #0f5132;
+        }
+
+        .badge-rejected {
+            background-color: #f8d7da;
+            color: #842029;
+        }
+
+        .btn {
+            padding: 0.5rem 1rem;
+            border-radius: 8px;
+            transition: var(--transition);
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-weight: 500;
+        }
+
+        .btn-primary {
+            background-color: var(--primary-color);
+            border: none;
+        }
+
+        .btn-primary:hover {
+            background-color: var(--primary-dark);
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(46, 125, 50, 0.25);
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+        }
+
+        .action-buttons .btn {
+            padding: 0.4rem 0.8rem;
+            font-size: 0.875rem;
+        }
+
+        @keyframes slideDown {
+            from {
+                opacity: 0;
+                transform: translateY(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @media (max-width: 768px) {
+            .main-content {
+                margin-left: 0;
+                padding: 1rem;
+                width: 100%;
+            }
+
+            .page-header {
+                padding: 1rem;
+            }
+
+            .table-container {
+                padding: 1rem;
+            }
+
+            .action-buttons {
+                flex-direction: column;
+            }
+
+            .action-buttons .btn {
+                width: 100%;
+                justify-content: center;
+            }
+        }
+    </style>
+</head>
+<body>
+    <%- include('../partials/sidebar', { userRole: userRole }) %>
+
+    <div class="main-content">
+        <div class="page-header">
+            <h1 class="page-title">
+                <i class="bi bi-exclamation-circle"></i>
+                Complain List
+            </h1>
+            <p class="text-muted mb-0">View and manage product complaints</p>
+        </div>
+
+        <div class="table-container">
+            <% if (userRole === 'Marketing') { %>
+                <div class="d-flex justify-content-end mb-4">
+                    <a href="/complain/create" class="btn btn-primary">
+                        <i class="bi bi-plus-circle"></i>
+                        Create New Complain
+                    </a>
+                </div>
+            <% } %>
+
+            <div class="table-responsive">
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>SO Number</th>
+                            <th>Customer</th>
+                            <th>Status</th>
+                            <th>Date</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <% if (complains && complains.length > 0) { %>
+                            <% complains.forEach(complain => { %>
+                                <tr>
+                                    <td>#<%= complain.id %></td>
+                                    <td><%= complain.sonumber %></td>
+                                    <td>
+                                        <div class="fw-semibold"><%= complain.customerName %></div>
+                                    </td>
+                                    <td>
+                                        <span class="badge badge-<%= complain.status === 'Pending' ? 'pending' : (complain.status === 'Approved' ? 'approved' : 'rejected') %>">
+                                            <i class="bi bi-<%= complain.status === 'Pending' ? 'clock' : (complain.status === 'Approved' ? 'check-circle' : 'x-circle') %>"></i>
+                                            <%= complain.status %>
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <%= new Date(complain.createdAt).toLocaleDateString('en-US', { 
+                                            year: 'numeric', 
+                                            month: 'short', 
+                                            day: 'numeric' 
+                                        }) %>
+                                    </td>
+                                    <td>
+                                        <div class="action-buttons">
+                                            <a href="/complain/view/<%= complain.id %>" class="btn btn-primary">
+                                                <i class="bi bi-eye"></i>
+                                                View
+                                            </a>
+                                            <% if (complain.status === 'Pending' && userRole === 'QC') { %>
+                                                <form action="/complain/approve/<%= complain.id %>" method="POST" class="d-inline">
+                                                    <button type="submit" class="btn btn-success">
+                                                        <i class="bi bi-check-lg"></i>
+                                                        Approve
+                                                    </button>
+                                                </form>
+                                                <form action="/complain/reject/<%= complain.id %>" method="POST" class="d-inline">
+                                                    <button type="submit" class="btn btn-danger">
+                                                        <i class="bi bi-x-lg"></i>
+                                                        Reject
+                                                    </button>
+                                                </form>
+                                            <% } %>
+                                        </div>
+                                    </td>
+                                </tr>
+                            <% }) %>
+                        <% } else { %>
+                            <tr>
+                                <td colspan="7" class="text-center py-4 text-muted">
+                                    <i class="bi bi-inbox fs-4 d-block mb-2"></i>
+                                    No complaints found
+                                </td>
+                            </tr>
+                        <% } %>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Handle sidebar state changes
+            const sidebar = document.querySelector('.sidebar');
+            const observer = new MutationObserver(function(mutations) {
+                mutations.forEach(function(mutation) {
+                    if (mutation.attributeName === 'class') {
+                        if (sidebar.classList.contains('collapsed')) {
+                            document.body.classList.add('sidebar-collapsed');
+                        } else {
+                            document.body.classList.remove('sidebar-collapsed');
+                        }
+                    }
+                });
+            });
+            observer.observe(sidebar, { attributes: true });
+
+            // Form submissions
+            document.querySelectorAll('form').forEach(form => {
+                form.addEventListener('submit', function(e) {
+                    const submitBtn = this.querySelector('button[type="submit"]');
+                    if (submitBtn) {
+                        submitBtn.classList.add('loading');
+                        submitBtn.disabled = true;
+                    }
+                });
+            });
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,453 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Products</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.7.2/font/bootstrap-icons.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary-color: #1b5e20;
+            --primary-light: #388E3C;
+            --background-light: #f4f6f8;
+            --text-color: #333;
+            --shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            --transition: all 0.3s ease;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--background-light);
+            margin: 0;
+            padding: 0;
+            min-height: 100vh;
+        }
+
+        .main-content {
+            margin-left: 0;
+            padding: 1rem;
+            width: 100%;
+            transition: var(--transition);
+        }
+
+        .page-header {
+            background: white;
+            padding: 1rem;
+            border-radius: 15px;
+            box-shadow: var(--shadow);
+            margin-bottom: 1rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+
+        .page-title {
+            margin: 0;
+            color: var(--primary-color);
+            font-weight: 600;
+            font-size: 1.25rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .search-box {
+            position: relative;
+            max-width: 300px;
+            width: 100%;
+        }
+
+        .search-input {
+            width: 100%;
+            padding: 0.75rem 1rem 0.75rem 2.5rem;
+            border: 1px solid rgba(0, 0, 0, 0.1);
+            border-radius: 8px;
+            font-size: 0.875rem;
+            transition: var(--transition);
+        }
+
+        .search-input:focus {
+            outline: none;
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 3px rgba(27, 94, 32, 0.1);
+        }
+
+        .search-icon {
+            position: absolute;
+            left: 0.75rem;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #6c757d;
+            font-size: 1rem;
+        }
+
+        .card {
+            background: white;
+            border-radius: 15px;
+            box-shadow: var(--shadow);
+            margin-bottom: 1rem;
+            border: none;
+            overflow: hidden;
+        }
+
+        .card-header {
+            background-color: var(--background-light);
+            padding: 1rem;
+            border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .card-title {
+            color: var(--primary-color);
+            font-weight: 600;
+            font-size: 1rem;
+            margin: 0;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .card-body {
+            padding: 0;
+        }
+
+        .table-responsive {
+            margin: 0;
+        }
+
+        .table {
+            margin: 0;
+        }
+
+        .table thead th {
+            background-color: var(--primary-color);
+            color: white;
+            font-weight: 600;
+            text-transform: uppercase;
+            font-size: 0.75rem;
+            letter-spacing: 0.5px;
+            padding: 1rem;
+            border: none;
+            white-space: nowrap;
+        }
+
+        .table tbody td {
+            padding: 1rem;
+            vertical-align: middle;
+            border-color: rgba(0, 0, 0, 0.05);
+            font-size: 0.875rem;
+        }
+
+        .table tbody tr:hover {
+            background-color: var(--background-light);
+        }
+
+        .status-badge {
+            padding: 0.35rem 0.65rem;
+            font-size: 0.75rem;
+            font-weight: 500;
+            border-radius: 2rem;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.25rem;
+        }
+
+        .status-active {
+            background-color: #d1e7dd;
+            color: #0f5132;
+        }
+
+        .status-inactive {
+            background-color: #f8d7da;
+            color: #842029;
+        }
+
+        .btn {
+            padding: 0.75rem 1rem;
+            border-radius: 8px;
+            font-weight: 500;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            transition: var(--transition);
+            font-size: 0.875rem;
+        }
+
+        .btn-primary {
+            background-color: var(--primary-color);
+            border: none;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background-color: var(--primary-light);
+            transform: translateY(-1px);
+        }
+
+        .btn-icon {
+            width: 2rem;
+            height: 2rem;
+            padding: 0;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 6px;
+            font-size: 1rem;
+        }
+
+        .btn-icon.btn-edit {
+            background-color: #fff3cd;
+            color: #856404;
+        }
+
+        .btn-icon.btn-delete {
+            background-color: #f8d7da;
+            color: #842029;
+        }
+
+        .btn-icon:hover {
+            transform: translateY(-1px);
+        }
+
+        .fade-in {
+            animation: fadeIn 0.3s ease-in;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Desktop styles */
+        @media (min-width: 769px) {
+            .main-content {
+                margin-left: 280px;
+                padding: 2rem;
+                width: calc(100% - 280px);
+            }
+
+            body:has(.sidebar.collapsed) .main-content {
+                margin-left: 70px;
+                width: calc(100% - 70px);
+            }
+
+            .page-header {
+                padding: 1.5rem;
+                margin-bottom: 2rem;
+            }
+
+            .page-title {
+                font-size: 1.5rem;
+            }
+
+            .card-header {
+                padding: 1.5rem;
+            }
+
+            .card-title {
+                font-size: 1.2rem;
+            }
+
+            .btn {
+                font-size: 1rem;
+            }
+        }
+
+        /* Mobile styles */
+        @media (max-width: 768px) {
+            .table-responsive {
+                margin: 0 -1rem;
+            }
+
+            .table {
+                margin: 0 1rem;
+            }
+
+            .table td {
+                white-space: normal;
+                min-width: 120px;
+            }
+
+            .table td:first-child {
+                position: sticky;
+                left: 0;
+                background-color: white;
+                z-index: 1;
+            }
+
+            .action-buttons {
+                display: flex;
+                gap: 0.5rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <%- include('../partials/sidebar', { userRole: userRole }) %>
+
+    <div class="main-content">
+        <div class="page-header fade-in">
+            <h1 class="page-title">
+                <i class="bi bi-box-seam"></i>
+                Products
+            </h1>
+            <div class="d-flex gap-3 align-items-center">
+                <div class="search-box">
+                    <i class="bi bi-search search-icon"></i>
+                    <input type="text" class="search-input" placeholder="Search products...">
+                </div>
+                <a href="/product/add" class="btn btn-primary">
+                    <i class="bi bi-plus-lg"></i>
+                    Add Product
+                </a>
+            </div>
+        </div>
+
+        <div class="card fade-in">
+            <div class="card-header">
+                <h2 class="card-title">
+                    <i class="bi bi-list"></i>
+                    Product List
+                </h2>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Name</th>
+                                <th>Category</th>
+                                <th>Price</th>
+                                <th>Stock</th>
+                                <th>Status</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <% if (products && products.length > 0) { %>
+                                <% products.forEach(product => { %>
+                                    <tr>
+                                        <td>#<%= product.id %></td>
+                                        <td><%= product.name %></td>
+                                        <td><%= product.category %></td>
+                                        <td>Rp <%= product.price.toLocaleString() %></td>
+                                        <td><%= product.stock %></td>
+                                        <td>
+                                            <span class="status-badge <%= product.status === 'active' ? 'status-active' : 'status-inactive' %>">
+                                                <i class="bi <%= product.status === 'active' ? 'bi-check-circle' : 'bi-x-circle' %>"></i>
+                                                <%= product.status %>
+                                            </span>
+                                        </td>
+                                        <td>
+                                            <div class="action-buttons">
+                                                <a href="/product/<%= product.id %>" class="btn btn-icon btn-edit" title="Edit">
+                                                    <i class="bi bi-pencil"></i>
+                                                </a>
+                                                <button class="btn btn-icon btn-delete" title="Delete" 
+                                                    onclick="deleteProduct('<%= product.id %>')">
+                                                    <i class="bi bi-trash"></i>
+                                                </button>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                <% }); %>
+                            <% } else { %>
+                                <tr>
+                                    <td colspan="7" class="text-center text-muted">
+                                        <i class="bi bi-inbox fs-4 d-block mb-2"></i>
+                                        No products found
+                                    </td>
+                                </tr>
+                            <% } %>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Handle sidebar state changes
+            const sidebar = document.querySelector('.sidebar');
+            const mainContent = document.querySelector('.main-content');
+
+            function updateContentWidth() {
+                if (window.innerWidth > 768) {
+                    if (sidebar.classList.contains('collapsed')) {
+                        mainContent.style.marginLeft = '70px';
+                        mainContent.style.width = 'calc(100% - 70px)';
+                    } else {
+                        mainContent.style.marginLeft = '280px';
+                        mainContent.style.width = 'calc(100% - 280px)';
+                    }
+                } else {
+                    mainContent.style.marginLeft = '0';
+                    mainContent.style.width = '100%';
+                }
+            }
+
+            // Initial width update
+            updateContentWidth();
+
+            // Watch for sidebar class changes
+            const observer = new MutationObserver(function(mutations) {
+                mutations.forEach(function(mutation) {
+                    if (mutation.attributeName === 'class') {
+                        updateContentWidth();
+                    }
+                });
+            });
+
+            observer.observe(sidebar, { attributes: true });
+
+            // Handle window resize
+            window.addEventListener('resize', updateContentWidth);
+
+            // Handle search
+            const searchInput = document.querySelector('.search-input');
+            searchInput.addEventListener('input', function() {
+                const searchTerm = this.value.toLowerCase();
+                const rows = document.querySelectorAll('tbody tr');
+
+                rows.forEach(row => {
+                    const text = row.textContent.toLowerCase();
+                    row.style.display = text.includes(searchTerm) ? '' : 'none';
+                });
+            });
+        });
+
+        // Handle product deletion
+        function deleteProduct(id) {
+            if (confirm('Are you sure you want to delete this product?')) {
+                fetch(`/product/${id}`, {
+                    method: 'DELETE',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        window.location.reload();
+                    } else {
+                        alert('Failed to delete product');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('An error occurred while deleting the product');
+                });
+            }
+        }
+    </script>
+</body>
+</html>

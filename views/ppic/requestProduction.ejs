@@ -1,0 +1,844 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Request Production</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.7.2/font/bootstrap-icons.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary-color: #1b5e20;
+            --primary-light: #388E3C;
+            --background-light: #f4f6f8;
+            --text-color: #333;
+            --shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            --transition: all 0.3s ease;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--background-light);
+            margin: 0;
+            padding: 0;
+            min-height: 100vh;
+        }
+
+        .main-content {
+            margin-left: 0;
+            padding: 1rem;
+            width: 100%;
+            transition: var(--transition);
+        }
+
+        .page-header {
+            background: white;
+            padding: 1rem;
+            border-radius: 15px;
+            box-shadow: var(--shadow);
+            margin-bottom: 1rem;
+        }
+
+        .page-title {
+            margin: 0;
+            color: var(--primary-color);
+            font-weight: 600;
+            font-size: 1.25rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .card {
+            background: white;
+            border-radius: 15px;
+            box-shadow: var(--shadow);
+            margin-bottom: 1rem;
+            border: none;
+            overflow: hidden;
+        }
+
+        .card-body {
+            padding: 1rem;
+        }
+
+        .form-group {
+            margin-bottom: 1rem;
+        }
+
+        .form-label {
+            font-weight: 600;
+            color: var(--primary-color);
+            margin-bottom: 0.5rem;
+            font-size: 0.875rem;
+        }
+
+        .form-control, .form-select {
+            border-radius: 12px;
+            padding: 0.875rem 1.25rem;
+            border: 1px solid rgba(0, 0, 0, 0.1);
+            font-size: 0.925rem;
+            transition: var(--transition);
+            background-color: #f8f9fa;
+        }
+
+        .form-control:focus, .form-select:focus {
+            background-color: #fff;
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 3px rgba(27, 94, 32, 0.15);
+            outline: none;
+        }
+
+        .form-control::placeholder {
+            color: #adb5bd;
+        }
+
+        .form-control:disabled, .form-select:disabled {
+            background-color: #e9ecef;
+            cursor: not-allowed;
+        }
+
+        .form-control[type="file"] {
+            padding: 0.75rem;
+            line-height: 1.5;
+        }
+
+        .form-control[type="file"]::file-selector-button {
+            padding: 0.5rem 1rem;
+            border-radius: 8px;
+            border: none;
+            background-color: var(--primary-color);
+            color: white;
+            cursor: pointer;
+            transition: var(--transition);
+            margin-right: 1rem;
+        }
+
+        .form-control[type="file"]::file-selector-button:hover {
+            background-color: var(--primary-light);
+        }
+
+        .btn {
+            padding: 0.75rem 1rem;
+            border-radius: 8px;
+            font-weight: 500;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            transition: var(--transition);
+            font-size: 0.875rem;
+            width: 100%;
+            justify-content: center;
+        }
+
+        .btn-primary {
+            background-color: var(--primary-color);
+            border: none;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background-color: var(--primary-light);
+            transform: translateY(-1px);
+        }
+
+        .btn-danger {
+            background-color: #dc3545;
+            border: none;
+            color: white;
+        }
+
+        .btn-danger:hover {
+            background-color: #c82333;
+            transform: translateY(-1px);
+        }
+
+        .btn-link {
+            color: var(--primary-color);
+            text-decoration: none;
+            padding: 0.75rem;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-weight: 500;
+            font-size: 0.875rem;
+        }
+
+        .btn-link:hover {
+            color: var(--primary-light);
+            background-color: rgba(27, 94, 32, 0.05);
+            border-radius: 8px;
+        }
+
+        .packaging-row {
+            background-color: #f8f9fa;
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-bottom: 1rem;
+            border: 1px solid rgba(0, 0, 0, 0.05);
+            transition: var(--transition);
+        }
+
+        .packaging-row:hover {
+            background-color: #fff;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+        }
+
+        .raw-materials-list {
+            background-color: #fff;
+            border-radius: 12px;
+            overflow: hidden;
+            border: 1px solid rgba(0, 0, 0, 0.05);
+        }
+
+        .raw-materials-item {
+            padding: 1rem 1.25rem;
+            border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+            font-size: 0.925rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: var(--transition);
+            position: relative;
+        }
+
+        .raw-materials-item:hover {
+            background-color: #f8f9fa;
+        }
+
+        .raw-materials-item:last-child {
+            border-bottom: none;
+        }
+
+        .raw-materials-item.insufficient {
+            color: #dc3545;
+            background-color: rgba(220, 53, 69, 0.05);
+            border-left: 4px solid #dc3545;
+            padding-left: calc(1.25rem - 4px);
+        }
+
+        .raw-materials-item.insufficient:hover {
+            background-color: rgba(220, 53, 69, 0.08);
+        }
+
+        .raw-materials-item span:first-child {
+            font-weight: 500;
+        }
+
+        .raw-materials-item span:last-child {
+            color: #6c757d;
+        }
+
+        .raw-materials-item.insufficient span:last-child {
+            color: inherit;
+        }
+
+        .fade-in {
+            animation: fadeIn 0.3s ease-in;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Desktop styles */
+        @media (min-width: 769px) {
+            .main-content {
+                margin-left: 280px;
+                padding: 2rem;
+                width: calc(100% - 280px);
+            }
+
+            body:has(.sidebar.collapsed) .main-content {
+                margin-left: 70px;
+                width: calc(100% - 70px);
+            }
+
+            .page-header {
+                padding: 1.5rem;
+                margin-bottom: 2rem;
+            }
+
+            .page-title {
+                font-size: 1.5rem;
+            }
+
+            .card-body {
+                padding: 1.5rem;
+            }
+
+            .form-label {
+                font-size: 1rem;
+            }
+
+            .form-control {
+                font-size: 1rem;
+            }
+
+            .btn {
+                font-size: 1rem;
+                width: auto;
+            }
+
+            .raw-materials-item {
+                font-size: 1rem;
+            }
+
+            .btn-group {
+                display: flex;
+                gap: 1rem;
+            }
+        }
+
+        /* Mobile styles */
+        @media (max-width: 768px) {
+            .btn-group {
+                display: grid;
+                gap: 0.5rem;
+            }
+
+            .raw-materials-item {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 0.5rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <%- include('../partials/sidebar', { userRole: userRole }) %>
+
+    <div class="main-content">
+        <div class="page-header fade-in">
+            <h1 class="page-title">
+                <i class="bi bi-gear"></i>
+                Request Production
+            </h1>
+        </div>
+
+        <div class="card fade-in">
+            <div class="card-body">
+                <% if (locals.error) { %>
+                    <div class="alert alert-danger alert-dismissible fade show mb-4" role="alert">
+                        <div class="d-flex align-items-center">
+                            <i class="bi bi-exclamation-triangle-fill me-2"></i>
+                            <div>
+                                <strong>Error:</strong> <%= error %>
+                            </div>
+                        </div>
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                    </div>
+                <% } %>
+                <form id="productionForm" action="/ppic/requestProduction" method="POST" enctype="multipart/form-data">
+                    <div class="form-group">
+                        <label class="form-label" for="prodreqnumber">Production Request Number</label>
+                        <input type="text" class="form-control" id="prodreqnumber" name="prodreqnumber" placeholder="Enter production request number">
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label" for="product">Product Name</label>
+                        <select class="form-control" id="product" name="product" required>
+                            <option value="">-- Select Product --</option>
+                            <% products.forEach(product => { %>
+                            <option value="<%= product.id %>" data-density="<%= product.density %>" data-formula="<%= product.formula || '' %>">
+                                <%= product.name %>
+                            </option>
+                            <% }) %>
+                        </select>
+                    </div>
+
+                    <!-- Formula section with auto-upload option -->
+                    <div class="form-group mt-4" id="formulaSection">
+                        <label class="form-label">Formula</label>
+                        <div class="formula-options mb-3">
+                            <div class="form-check form-check-inline">
+                                <input class="form-check-input" type="radio" name="formulaSource" id="existingFormula" value="existing" checked>
+                                <label class="form-check-label" for="existingFormula">Use existing formula (if available)</label>
+                            </div>
+                            <div class="form-check form-check-inline">
+                                <input class="form-check-input" type="radio" name="formulaSource" id="uploadFormula" value="upload">
+                                <label class="form-check-label" for="uploadFormula">Upload new formula</label>
+                            </div>
+                        </div>
+                        
+                        <div id="existingFormulaSection" class="mb-3">
+                            <div class="alert alert-info" id="noFormulaWarning" style="display: none;">
+                                <i class="bi bi-info-circle"></i> No formula available for this product. Please upload a new formula.
+                            </div>
+                            <div id="existingFormulaInfo" style="display: none;">
+                                <div class="d-flex align-items-center">
+                                    <i class="bi bi-file-earmark-text me-2 text-primary"></i>
+                                    <span id="existingFormulaName"></span>
+                                    <input type="hidden" id="existingFormulaInput" name="existingFormula">
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div id="uploadFormulaSection" style="display: none;">
+                            <input type="file" class="form-control" id="formula" name="formula" accept=".pdf,.doc,.docx,.xls,.xlsx,.csv,.txt">
+                            <small class="text-muted">Accepted file types: PDF, Word, Excel, CSV, TXT</small>
+                        </div>
+                    </div>
+
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label class="form-label" for="unit">Unit</label>
+                                <select class="form-control" id="unit" name="unit" required>
+                                    <option value="Kg">Kg</option>
+                                    <option value="L">L</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label class="form-label" for="quantity">Quantity</label>
+                                <input type="number" class="form-control" id="quantity" name="quantity" required>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mt-4">
+                        <h6 class="mb-3">Packaging</h6>
+                        <div class="packaging-calculation" style="display: none;">
+                            <div class="alert alert-info mb-3">
+                                <div class="d-flex justify-content-between align-items-center mb-2">
+                                    <span><i class="bi bi-info-circle me-2"></i>Total Packaging Volume:</span>
+                                    <strong><span class="total-volume">0</span> L</strong>
+                                </div>
+                                <div class="d-flex justify-content-between align-items-center mb-2">
+                                    <span><i class="bi bi-arrow-right me-2"></i>Required Volume:</span>
+                                    <strong><span class="required-volume">0</span> L</strong>
+                                </div>
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <span><i class="bi bi-arrow-return-right me-2"></i>Difference:</span>
+                                    <strong><span class="volume-difference">0</span> L</strong>
+                                </div>
+                            </div>
+                            <div class="alert alert-warning minimality-warning" style="display: none;"></div>
+                            <div class="alert alert-danger insufficient-volume-warning" style="display: none;"></div>
+                        </div>
+                        <div class="packaging-list">
+                            <div class="packaging-row">
+                                <div class="row g-3">
+                                    <div class="col-md-6">
+                                        <label class="form-label">Packaging</label>
+                                        <select class="form-select" name="packaging[0][packagingId]" onchange="updatePackagingCalculations(this)" required>
+                                            <% packagings.forEach(packaging => { %>
+                                                <option value="<%= packaging.id %>" data-volume="<%= packaging.volume %>" <%= packaging.stock <= 0 ? 'disabled' : '' %>>
+                                                    <%= packaging.name %> (<%= packaging.volume %> L) - Stock: <%= packaging.stock %> <%= packaging.stock <= 0 ? '(Out of Stock)' : '' %>
+                                                </option>
+                                            <% }) %>
+                                        </select>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label class="form-label">Quantity</label>
+                                        <input type="number" class="form-control" name="packaging[0][quantity]" onchange="updatePackagingCalculations(this)" required min="1">
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <button type="button" class="btn btn-outline-secondary btn-sm mt-3" onclick="addPackaging()">
+                            <i class="bi bi-plus-lg"></i>
+                            Add Packaging
+                        </button>
+                    </div>
+
+                    <div id="rawMaterialsContainer" class="form-group mt-4" style="display: none;">
+                        <label class="form-label">Required Raw Materials</label>
+                        <div class="raw-materials-list" id="rawMaterialsList"></div>
+                    </div>
+
+                    <div id="requestRawMaterialContainer" class="form-group" style="display: none;">
+                        <button type="button" class="btn btn-danger" id="requestRawMaterialBtn">
+                            <i class="bi bi-plus-circle"></i>
+                            Request Raw Material
+                        </button>
+                    </div>
+
+
+
+                    <div class="btn-group mt-4">
+                        <button type="submit" class="btn btn-primary" id="submitBtn">
+                            <i class="bi bi-check-lg"></i>
+                            Submit Request
+                        </button>
+                        <a href="/dashboard/ppic" class="btn btn-link">
+                            <i class="bi bi-arrow-left"></i>
+                            Back to Dashboard
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Handle sidebar state changes
+            const sidebar = document.querySelector('.sidebar');
+            const mainContent = document.querySelector('.main-content');
+
+            function updateContentWidth() {
+                if (window.innerWidth > 768) {
+                    if (sidebar.classList.contains('collapsed')) {
+                        mainContent.style.marginLeft = '70px';
+                        mainContent.style.width = 'calc(100% - 70px)';
+                    } else {
+                        mainContent.style.marginLeft = '280px';
+                        mainContent.style.width = 'calc(100% - 280px)';
+                    }
+                } else {
+                    mainContent.style.marginLeft = '0';
+                    mainContent.style.width = '100%';
+                }
+            }
+
+            // Initial width update
+            updateContentWidth();
+
+            // Watch for sidebar class changes
+            const observer = new MutationObserver(function(mutations) {
+                mutations.forEach(function(mutation) {
+                    if (mutation.attributeName === 'class') {
+                        updateContentWidth();
+                    }
+                });
+            });
+
+            observer.observe(sidebar, { attributes: true });
+
+            // Handle window resize
+            window.addEventListener('resize', updateContentWidth);
+        });
+
+        document.getElementById('unit').addEventListener('change', calculateQuantity);
+        document.getElementById('product').addEventListener('change', function() {
+            calculateQuantity();
+            handleProductChange();
+        });
+        
+        // Formula handling code
+        const existingFormulaRadio = document.getElementById('existingFormula');
+        const uploadFormulaRadio = document.getElementById('uploadFormula');
+        const existingFormulaSection = document.getElementById('existingFormulaSection');
+        const uploadFormulaSection = document.getElementById('uploadFormulaSection');
+        const noFormulaWarning = document.getElementById('noFormulaWarning');
+        const existingFormulaInfo = document.getElementById('existingFormulaInfo');
+        const existingFormulaName = document.getElementById('existingFormulaName');
+        const existingFormulaInput = document.getElementById('existingFormulaInput');
+        
+        // Handle formula source selection
+        existingFormulaRadio.addEventListener('change', updateFormulaSection);
+        uploadFormulaRadio.addEventListener('change', updateFormulaSection);
+        
+        function updateFormulaSection() {
+            if (existingFormulaRadio.checked) {
+                existingFormulaSection.style.display = 'block';
+                uploadFormulaSection.style.display = 'none';
+                document.getElementById('formula').removeAttribute('required');
+            } else {
+                existingFormulaSection.style.display = 'none';
+                uploadFormulaSection.style.display = 'block';
+                document.getElementById('formula').setAttribute('required', 'required');
+            }
+        }
+        
+        function updateProductFormula() {
+            const productSelect = document.getElementById('product');
+            if (!productSelect.value) return;
+            
+            const selectedOption = productSelect.options[productSelect.selectedIndex];
+            const formulaFilename = selectedOption.getAttribute('data-formula');
+            
+            if (formulaFilename) {
+                // Product has an existing formula
+                noFormulaWarning.style.display = 'none';
+                existingFormulaInfo.style.display = 'block';
+                existingFormulaName.textContent = formulaFilename;
+                existingFormulaInput.value = formulaFilename;
+                existingFormulaRadio.checked = true;
+            } else {
+                // No formula available
+                noFormulaWarning.style.display = 'block';
+                existingFormulaInfo.style.display = 'none';
+                uploadFormulaRadio.checked = true;
+            }
+            
+            // Update sections visibility based on selection
+            updateFormulaSection();
+        }
+        
+        // Handle product change
+        function handleProductChange() {
+            const productSelect = document.getElementById('product');
+            const selectedOption = productSelect.options[productSelect.selectedIndex];
+            
+            if (productSelect.value) {
+                // Product selected, update other fields as needed
+                updatePackagingCalculations();
+                fetchRawMaterials(calculateQuantity());
+                updateProductFormula(); // Update formula section based on selected product
+            }
+        }
+        document.getElementById('quantity').addEventListener('input', function() {
+            calculateQuantity();
+            updatePackagingCalculations();
+        });
+        
+        // Form validation before submission
+        document.getElementById('productionForm').addEventListener('submit', function(event) {
+            const formulaSource = document.querySelector('input[name="formulaSource"]:checked').value;
+            const existingFormulaInput = document.getElementById('existingFormulaInput');
+            const formulaFileInput = document.getElementById('formula');
+            
+            // Validate formula selection
+            if (formulaSource === 'existing' && !existingFormulaInput.value) {
+                event.preventDefault();
+                alert('No existing formula available. Please upload a new formula.');
+                document.getElementById('uploadFormula').checked = true;
+                updateFormulaSection();
+                return false;
+            }
+            
+            if (formulaSource === 'upload' && !formulaFileInput.files.length) {
+                event.preventDefault();
+                alert('Please select a formula file to upload.');
+                return false;
+            }
+            
+            return true;
+        });
+    
+        function calculateQuantity() {
+            const unit = document.getElementById('unit').value;
+            const productSelect = document.getElementById('product');
+            const productOption = productSelect.options[productSelect.selectedIndex];
+            const density = parseFloat(productOption.getAttribute('data-density')) || 1;
+            let quantity = parseFloat(document.getElementById('quantity').value) || 0;
+    
+            if (unit === 'L') {
+                quantity = quantity * density;
+            }
+    
+            fetchRawMaterials(quantity);
+            return quantity;
+        }
+
+        let packagingIndex = 0;
+        
+        function addPackaging() {
+            packagingIndex++;
+            const packagingList = document.querySelector('.packaging-list');
+            
+            const newPackaging = document.createElement('div');
+            newPackaging.className = 'packaging-row mt-3';
+            newPackaging.innerHTML = `
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <label class="form-label">Packaging</label>
+                        <select class="form-select" name="packaging[${packagingIndex}][packagingId]" onchange="updatePackagingCalculations(this)" required>
+                            <% packagings.forEach(packaging => { %>
+                                <option value="<%= packaging.id %>" data-volume="<%= packaging.volume %>" <%= packaging.stock <= 0 ? 'disabled' : '' %>>
+                                    <%= packaging.name %> (<%= packaging.volume %> L) - Stock: <%= packaging.stock %> <%= packaging.stock <= 0 ? '(Out of Stock)' : '' %>
+                                </option>
+                            <% }) %>
+                        </select>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label">Quantity</label>
+                        <input type="number" class="form-control" name="packaging[${packagingIndex}][quantity]" onchange="updatePackagingCalculations(this)" required min="1">
+                    </div>
+                </div>
+                <button type="button" class="btn btn-outline-danger btn-sm mt-2" onclick="removePackaging(this)">
+                    <i class="bi bi-trash"></i>
+                    Remove
+                </button>
+            `;
+            packagingList.appendChild(newPackaging);
+            updatePackagingCalculations();
+        }
+
+        function removePackaging(button) {
+            button.closest('.packaging-row').remove();
+            updatePackagingCalculations();
+        }
+
+        function updatePackagingCalculations() {
+            const quantity = calculateQuantity();
+            const unit = document.getElementById('unit').value;
+            const productSelect = document.getElementById('product');
+            const selectedProductOption = productSelect.options[productSelect.selectedIndex];
+            const density = parseFloat(selectedProductOption.getAttribute('data-density'));
+
+            if (quantity > 0) {
+                // Convert quantity to liters if needed
+                const requiredVolume = (unit === 'Kg') ? quantity / density : quantity;
+
+                // Calculate total packaging volume
+                let totalPackagingVolume = 0;
+                const packagingRows = document.querySelectorAll('.packaging-row');
+                packagingRows.forEach(row => {
+                    const packagingSelect = row.querySelector('select');
+                    const selectedPackagingOption = packagingSelect.options[packagingSelect.selectedIndex];
+                    const packVol = parseFloat(selectedPackagingOption.getAttribute('data-volume'));
+                    const packQty = parseFloat(row.querySelector('input[type="number"]').value) || 0;
+                    totalPackagingVolume += packVol * packQty;
+                });
+
+                // Update display
+                const packagingCalculation = document.querySelector('.packaging-calculation');
+                const totalVolumeSpan = packagingCalculation.querySelector('.total-volume');
+                const requiredVolumeSpan = packagingCalculation.querySelector('.required-volume');
+                const volumeDifferenceSpan = packagingCalculation.querySelector('.volume-difference');
+                const insufficientWarningDiv = packagingCalculation.querySelector('.insufficient-volume-warning');
+                const minimalityWarningDiv = packagingCalculation.querySelector('.minimality-warning');
+
+                totalVolumeSpan.textContent = totalPackagingVolume.toFixed(2);
+                requiredVolumeSpan.textContent = requiredVolume.toFixed(2);
+                const difference = totalPackagingVolume - requiredVolume;
+                volumeDifferenceSpan.textContent = difference.toFixed(2);
+
+                packagingCalculation.style.display = 'block';
+
+                // Show warnings if needed
+                if (totalPackagingVolume < requiredVolume) {
+                    insufficientWarningDiv.textContent = `Warning: Packaging volume is insufficient. Required: ${requiredVolume.toFixed(2)} L, Provided: ${totalPackagingVolume.toFixed(2)} L.`;
+                    insufficientWarningDiv.style.display = 'block';
+                } else {
+                    insufficientWarningDiv.style.display = 'none';
+                }
+
+                // Check for minimality
+                let minimalityIssue = false;
+                packagingRows.forEach(row => {
+                    const packagingSelect = row.querySelector('select');
+                    const selectedPackagingOption = packagingSelect.options[packagingSelect.selectedIndex];
+                    const packVol = parseFloat(selectedPackagingOption.getAttribute('data-volume'));
+                    const packQty = parseFloat(row.querySelector('input[type="number"]').value) || 0;
+                    if (packQty > 0) {
+                        const reducedTotal = totalPackagingVolume - packVol;
+                        if (reducedTotal >= requiredVolume) {
+                            minimalityIssue = true;
+                        }
+                    }
+                });
+
+                if (minimalityIssue) {
+                    minimalityWarningDiv.textContent = `Warning: The packaging configuration is not minimal. Please reduce the packaging quantity to the minimum required.`;
+                    minimalityWarningDiv.style.display = 'block';
+                } else {
+                    minimalityWarningDiv.style.display = 'none';
+                }
+            } else {
+                document.querySelector('.packaging-calculation').style.display = 'none';
+            }
+        }
+    
+        function fetchRawMaterials(quantity) {
+            const productId = document.getElementById('product').value;
+    
+            if (productId && quantity > 0) {
+                fetch(`/ppic/rawMaterials?productId=${productId}&quantity=${quantity}`)
+                    .then(response => response.json())
+                    .then(data => {
+                        const rawMaterialsContainer = document.getElementById('rawMaterialsContainer');
+                        const rawMaterialsList = document.getElementById('rawMaterialsList');
+                        const requestRawMaterialContainer = document.getElementById('requestRawMaterialContainer');
+                        let insufficientStock = false;
+    
+                        rawMaterialsList.innerHTML = '';
+    
+                        data.rawMaterials.forEach(material => {
+                            const div = document.createElement('div');
+                            const neededQuantity = material.quantity;
+                            const currentStock = material.stock;
+                            const insufficientAmount = Math.max(0, neededQuantity - currentStock);
+                            
+                            div.className = `raw-materials-item${insufficientAmount > 0 ? ' insufficient' : ''}`;
+                            // Only round up the insufficient amount (what needs to be requested)
+                            const roundedInsufficientAmount = Math.ceil(insufficientAmount);
+                            
+                            div.innerHTML = `
+                                <span>${material.name}</span>
+                                <span>${neededQuantity.toFixed(2)} Kg (Stock: ${currentStock})${insufficientAmount > 0 ? ` - Need to request: ${roundedInsufficientAmount} Kg` : ''}</span>
+                                ${insufficientAmount > 0 && roundedInsufficientAmount !== insufficientAmount ? `<small class="text-muted d-block">(Request rounded up from ${insufficientAmount.toFixed(2)} Kg)</small>` : ''}
+                            `;
+    
+                            if (insufficientAmount > 0) {
+                                insufficientStock = true;
+                            }
+    
+                            rawMaterialsList.appendChild(div);
+                        });
+    
+                        rawMaterialsContainer.style.display = 'block';
+                        requestRawMaterialContainer.style.display = insufficientStock ? 'block' : 'none';
+                    })
+                    .catch(error => {
+                        console.error('Error fetching raw materials:', error);
+                        document.getElementById('rawMaterialsContainer').style.display = 'none';
+                        document.getElementById('requestRawMaterialContainer').style.display = 'none';
+                    });
+            } else {
+                document.getElementById('rawMaterialsContainer').style.display = 'none';
+                document.getElementById('requestRawMaterialContainer').style.display = 'none';
+            }
+        }
+    
+        document.getElementById('requestRawMaterialBtn').addEventListener('click', function() {
+            const productId = document.getElementById('product').value;
+            const quantity = parseFloat(document.getElementById('quantity').value) || 0;
+            const unit = document.getElementById('unit').value;
+            const productSelect = document.getElementById('product');
+            const productOption = productSelect.options[productSelect.selectedIndex];
+            const density = parseFloat(productOption.getAttribute('data-density')) || 1;
+    
+            let finalQuantity = quantity;
+            if (unit === 'L') {
+                finalQuantity = quantity * density;
+            }
+    
+            if (productId && finalQuantity > 0) {
+                // Calculate which raw materials actually need to be requested
+                fetch(`/ppic/rawMaterials?productId=${productId}&quantity=${finalQuantity}`)
+                    .then(response => response.json())
+                    .then(data => {
+                        const materialsToRequest = data.rawMaterials.filter(material => 
+                            material.quantity > material.stock
+                        );
+
+                        if (materialsToRequest.length > 0) {
+                            return fetch(`/ppic/requestRawMaterial`, {
+                                method: 'POST',
+                                headers: {
+                                    'Content-Type': 'application/json',
+                                },
+                                body: JSON.stringify({
+                                    productId,
+                                    quantity: finalQuantity
+                                }),
+                            });
+                        } else {
+                            alert('No raw materials need to be requested - sufficient stock available');
+                            return Promise.reject('No request needed');
+                        }
+                    })
+                .then(response => response.json())
+                .then(data => {
+                    alert('Raw Material Request created successfully!');
+                    window.location.reload();
+                })
+                .catch(error => {
+                    console.error('Error creating raw material request:', error);
+                    alert('Failed to create raw material request. Please try again.');
+                });
+            }
+        });
+    </script>
+</body>
+</html>

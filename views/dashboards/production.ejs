@@ -1,0 +1,1541 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Production Dashboard - MIB Flow</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.7.2/font/bootstrap-icons.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary-color: #2e7d32;
+            --primary-light: #4caf50;
+            --primary-dark: #1b5e20;
+            --text-color: #2c3e50;
+            --background-light: #e8f5e9;
+            --shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            --transition: all 0.3s ease;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--background-light);
+            margin: 0;
+            padding: 0;
+            min-height: 100vh;
+        }
+
+        .main-content {
+            margin-left: 280px;
+            padding: 2rem;
+            transition: var(--transition);
+            width: calc(100% - 280px);
+        }
+
+        /* When sidebar is collapsed */
+        body.sidebar-collapsed .main-content {
+            margin-left: 70px;
+            width: calc(100% - 70px);
+        }
+
+        .page-header {
+            background: white;
+            padding: 1.5rem;
+            border-radius: 15px;
+            box-shadow: var(--shadow);
+            margin-bottom: 2rem;
+            animation: slideDown 0.5s ease-out;
+        }
+
+        @keyframes slideDown {
+            from {
+                opacity: 0;
+                transform: translateY(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .page-title {
+            margin: 0;
+            color: var(--primary-dark);
+            font-weight: 600;
+            font-size: 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .dashboard-section {
+            background: white;
+            border-radius: 15px;
+            box-shadow: var(--shadow);
+            margin-bottom: 2rem;
+            overflow: hidden;
+            animation: fadeIn 0.5s ease-out;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .section-header {
+            padding: 1.5rem;
+            background-color: var(--background-light);
+            border-bottom: 1px solid rgba(0,0,0,0.1);
+            cursor: pointer;
+            transition: var(--transition);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .section-header:hover {
+            background-color: #d7ecd8;
+        }
+
+        .section-title {
+            margin: 0;
+            color: var(--primary-dark);
+            font-weight: 600;
+            font-size: 1.2rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .section-content {
+            padding: 1.5rem;
+            display: none;
+        }
+
+        .section-content.show {
+            display: block;
+            animation: slideDown 0.3s ease-out;
+        }
+
+        .table {
+            margin: 0;
+        }
+
+        .table thead th {
+            background-color: var(--background-light);
+            color: var(--primary-dark);
+            font-weight: 600;
+            text-transform: uppercase;
+            font-size: 0.75rem;
+            letter-spacing: 0.5px;
+            padding: 1rem;
+            border: none;
+            white-space: nowrap;
+        }
+
+        .table tbody td {
+            padding: 1rem;
+            vertical-align: middle;
+            border-color: rgba(0,0,0,0.05);
+        }
+
+        .table tbody tr {
+            transition: var(--transition);
+        }
+
+        .table tbody tr:hover {
+            background-color: var(--background-light);
+        }
+
+        .badge {
+            padding: 0.5rem 1rem;
+            border-radius: 50px;
+            font-weight: 500;
+        }
+
+        .badge-pending {
+            background-color: #fff3cd;
+            color: #856404;
+        }
+
+        .badge-scheduled {
+            background-color: #d1e7dd;
+            color: #0f5132;
+        }
+
+        .badge-declined {
+            background-color: #f8d7da;
+            color: #842029;
+        }
+
+        .badge-pass {
+            background-color: #d1e7dd;
+            color: #0f5132;
+        }
+
+        .badge-fail {
+            background-color: #f8d7da;
+            color: #842029;
+        }
+
+        .badge-tank {
+            background-color: #e2e3e5;
+            color: #383d41;
+        }
+
+        .btn {
+            padding: 0.5rem 1rem;
+            border-radius: 8px;
+            transition: var(--transition);
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-weight: 500;
+        }
+
+        .btn-primary {
+            background-color: var(--primary-color);
+            border: none;
+        }
+
+        .btn-primary:hover {
+            background-color: var(--primary-dark);
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(46, 125, 50, 0.25);
+        }
+
+        .btn-danger {
+            background-color: #dc3545;
+            border: none;
+        }
+
+        .btn-danger:hover {
+            background-color: #bb2d3b;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(220, 53, 69, 0.25);
+        }
+
+        .btn-warning {
+            background-color: #ffc107;
+            border: none;
+            color: #000;
+        }
+
+        .btn-warning:hover {
+            background-color: #ffca2c;
+            color: #000;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(255, 193, 7, 0.25);
+        }
+
+        .form-control {
+            padding: 0.5rem;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            transition: var(--transition);
+        }
+
+        .form-control:focus {
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 0.25rem rgba(46, 125, 50, 0.25);
+            outline: none;
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+        }
+
+        .action-buttons .btn {
+            padding: 0.4rem 0.8rem;
+            font-size: 0.875rem;
+        }
+
+        /* Loading Animation */
+        .loading {
+            pointer-events: none;
+            position: relative;
+        }
+
+        .loading::after {
+            content: '';
+            position: absolute;
+            width: 20px;
+            height: 20px;
+            top: 50%;
+            left: 50%;
+            margin: -10px 0 0 -10px;
+            border: 3px solid rgba(255,255,255,0.3);
+            border-radius: 50%;
+            border-top-color: #fff;
+            animation: spin 1s ease-in-out infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* Enhanced Mobile Styles */
+        @media (max-width: 768px) {
+            /* Layout Improvements */
+            .main-content {
+                margin-left: 0;
+                padding: 0.75rem;
+                width: 100%;
+            }
+
+            .dashboard-section {
+                margin-bottom: 1rem;
+                border-radius: 10px;
+            }
+
+            .section-header {
+                padding: 0.875rem;
+            }
+
+            .section-content {
+                padding: 0.75rem;
+            }
+
+            /* Mobile Table Improvements */
+            .table-responsive {
+                border-radius: 8px;
+                background: white;
+                box-shadow: var(--shadow);
+                margin-bottom: 1rem;
+            }
+
+            .table {
+                display: block;
+            }
+
+            .table thead {
+                display: none; /* Hide headers on mobile */
+            }
+
+            .table tbody {
+                display: block;
+            }
+
+            .table tr {
+                display: block;
+                margin-bottom: 1rem;
+                border: 1px solid var(--background-light);
+                border-radius: 8px;
+                background: white;
+            }
+
+            .table td {
+                display: flex;
+                padding: 0.75rem;
+                align-items: center;
+                border: none;
+                border-bottom: 1px solid rgba(0,0,0,0.05);
+            }
+
+            .table td:last-child {
+                border-bottom: none;
+            }
+
+            .table td::before {
+                content: attr(data-label);
+                font-weight: 600;
+                width: 120px;
+                min-width: 120px;
+                color: var(--primary-dark);
+                font-size: 0.85rem;
+            }
+
+            .table td > * {
+                flex: 1;
+                margin-left: 1rem;
+            }
+
+            /* Form Controls */
+            .form-control {
+                height: 40px;
+                font-size: 16px; /* Prevents iOS zoom */
+                padding: 0.5rem;
+                width: 100%;
+            }
+
+            select.form-control {
+                padding-right: 24px;
+            }
+
+            /* Button Improvements */
+            .action-buttons {
+                flex-direction: column;
+                gap: 0.5rem;
+            }
+
+            .action-buttons .btn {
+                width: 100%;
+                justify-content: center;
+                height: 40px;
+                padding: 0 1rem;
+                margin: 0.25rem 0;
+                font-size: 0.9rem;
+                display: inline-flex;
+                align-items: center;
+                min-width: 100px;
+                touch-action: manipulation;
+            }
+
+            /* Badge Adjustments */
+            .badge {
+                font-size: 0.8rem;
+                padding: 0.4rem 0.8rem;
+            }
+
+            /* Loading State */
+            .loading {
+                min-height: 40px;
+            }
+
+            .loading::after {
+                width: 24px;
+                height: 24px;
+                margin: -12px 0 0 -12px;
+                border-width: 2px;
+            }
+        }
+
+        /* Touch-friendly Improvements */
+        @media (hover: none) and (pointer: coarse) {
+            .btn, 
+            .form-control,
+            select,
+            .section-header {
+                cursor: pointer;
+                -webkit-tap-highlight-color: transparent;
+            }
+
+            .btn:active,
+            .section-header:active {
+                transform: scale(0.98);
+            }
+
+            .table tbody tr:active {
+                background-color: var(--background-light);
+            }
+
+            .form-control:focus,
+            select:focus {
+                outline: none;
+                border-color: var(--primary-color);
+                box-shadow: 0 0 0 2px rgba(46, 125, 50, 0.2);
+            }
+        }
+    </style>
+</head>
+<body>
+    <%- include('../partials/sidebar', { userRole: userRole }) %>
+
+    <div class="main-content">
+        <div class="page-header">
+            <h1 class="page-title">
+                <i class="bi bi-gear-fill"></i>
+                Production Dashboard
+            </h1>
+            <p class="text-muted mb-0">Manage production requests and processes</p>
+        </div>
+
+        <!-- Production Request List Section -->
+        <div class="dashboard-section">
+            <div class="section-header" data-bs-toggle="collapse" data-bs-target="#productionRequests">
+                <h2 class="section-title">
+                    <i class="bi bi-list-check"></i>
+                    Production Requests
+                    <% if (requests && requests.length > 0) { %>
+                        <span class="badge rounded-pill bg-danger ms-2"><%= requests.length %></span>
+                    <% } %>
+                </h2>
+                <i class="bi bi-chevron-down"></i>
+            </div>
+            <div id="productionRequests" class="section-content collapse">
+                <div class="table-responsive">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Number</th>
+                                <th>Product</th>
+                                <th>Quantity</th>
+                                <th>Formula</th>
+                                <th>Status</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <% if (requests && requests.length > 0) { %>
+                                <% requests.forEach(function(request) { %>
+                                    <tr>
+                                        <td data-label="ID">#<%= request.id %></td>
+                                        <td data-label="Number">
+                                            <% if (request.Order) { %>
+                                                <%= request.Order.sonumber %>
+                                            <% } else { %>
+                                                <%= request.prodreqnumber || '-' %>
+                                            <% } %>
+                                        </td>
+                                        <td data-label="Product">
+                                            <div class="fw-semibold"><%= request.product %></div>
+                                        </td>
+                                        <td data-label="Quantity"><%= request.quantity %> Kg</td>
+                                        <td data-label="Formula">
+                                            <a href="/uploads/<%= request.formula %>" target="_blank" class="btn btn-sm btn-outline-primary">
+                                                <i class="bi bi-file-pdf"></i>
+                                                View Formula
+                                            </a>
+                                        </td>
+                                        <td data-label="Status">
+                                            <% if (request.status === 'Pending') { %>
+                                                <span class="badge badge-pending">
+                                                    <i class="bi bi-clock"></i>
+                                                    Pending
+                                                </span>
+                                            <% } else if (request.status === 'Scheduled') { %>
+                                                <span class="badge badge-scheduled">
+                                                    <i class="bi bi-calendar-check"></i>
+                                                    Scheduled
+                                                </span>
+                                            <% } else if (request.status === 'Declined') { %>
+                                                <span class="badge badge-declined">
+                                                    <i class="bi bi-x-circle"></i>
+                                                    Declined
+                                                </span>
+                                            <% } %>
+                                        </td>
+                                        <td data-label="Actions">
+                                            <div class="action-buttons">
+                                                <% if (request.status === 'Pending') { %>
+                                                    <form action="/production/schedule/<%= request.id %>" method="GET">
+                                                        <button type="submit" class="btn btn-primary">
+                                                            <i class="bi bi-calendar-plus"></i>
+                                                            Schedule
+                                                        </button>
+                                                    </form>
+                                                    <form action="/production/decline/<%= request.id %>" method="POST">
+                                                        <button type="submit" class="btn btn-danger">
+                                                            <i class="bi bi-x-lg"></i>
+                                                            Decline
+                                                        </button>
+                                                    </form>
+                                                <% } %>
+                                                <a href="/production/<%= request.id %>/view" class="btn btn-primary">
+                                                    <i class="bi bi-eye"></i>
+                                                    View
+                                                </a>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                <% }); %>
+                            <% } else { %>
+                                <tr>
+                                    <td colspan="7" class="text-center py-4 text-muted">
+                                        <i class="bi bi-inbox fs-4 d-block mb-2"></i>
+                                        No production requests found
+                                    </td>
+                                </tr>
+                            <% } %>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Ongoing Processes Section -->
+        <div class="dashboard-section">
+            <div class="section-header" data-bs-toggle="collapse" data-bs-target="#ongoingProcesses">
+                <h2 class="section-title">
+                    <i class="bi bi-play-circle"></i>
+                    Ongoing Processes
+                    <% if (ongoingProcesses && ongoingProcesses.length > 0) { %>
+                        <span class="badge rounded-pill bg-danger ms-2"><%= ongoingProcesses.length %></span>
+                    <% } %>
+                </h2>
+                <i class="bi bi-chevron-down"></i>
+            </div>
+            <div id="ongoingProcesses" class="section-content collapse">
+                <div class="table-responsive">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>Batch</th>
+                                <th>Product</th>
+                                <th>Quantity</th>
+                                <th>Tanks</th>
+                                <th>Dates</th>
+                                <th>QC Status</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <% if (ongoingProcesses && ongoingProcesses.length > 0) { %>
+                                <% ongoingProcesses.forEach(function(production) { %>
+                                    <tr data-product-formulas='<%= JSON.stringify(production.Product.ProductFormulas || []) %>'>
+                                        <td data-label="Batch">
+                                            <div class="fw-semibold">#<%= production.batchNumber || 'Not Started' %></div>
+                                            <small class="text-muted">ID: <%= production.id %></small>
+                                            <% if (production.ProductionRequest) { %>
+                                                <small class="text-muted d-block">
+                                                    <% if (production.ProductionRequest.Order) { %>
+                                                        SO: <%= production.ProductionRequest.Order.sonumber %>
+                                                    <% } else { %>
+                                                        PRN: <%= production.ProductionRequest.prodreqnumber || '-' %>
+                                                    <% } %>
+                                                </small>
+                                            <% } %>
+                                        </td>
+                                        <td data-label="Product"><%= production.Product.name %></td>
+                                        <td data-label="Quantity"><%= production.quantity %> Kg</td>
+                                        <td data-label="Tanks">
+                                            <div class="d-flex flex-wrap gap-1">
+                                                <% production.Tanks.forEach(tank => { %>
+                                                    <span class="badge badge-tank">
+                                                        <%= tank.name %> (<%= tank.volume %> L)
+                                                    </span>
+                                                <% }) %>
+                                            </div>
+                                        </td>
+                                        <td data-label="Dates">
+                                            <div>Start: <%= new Date(production.startDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) %></div>
+                                            <div>Due: <%= new Date(production.deadlineDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) %></div>
+                                        </td>
+                                        <td data-label="QC Status">
+                                            <% if (production.qcStatus === 'Pass') { %>
+                                                <span class="badge badge-pass">
+                                                    <i class="bi bi-check-circle"></i>
+                                                    Pass
+                                                </span>
+                                            <% } else if (production.qcStatus === 'Fail') { %>
+                                                <span class="badge badge-fail">
+                                                    <i class="bi bi-x-circle"></i>
+                                                    Fail
+                                                </span>
+                                            <% } %>
+                                            <% if (production.qcComment) { %>
+                                                <div class="small text-muted mt-1">
+                                                    <%= production.qcComment %>
+                                                </div>
+                                            <% } %>
+                                        </td>
+                                        <td data-label="Actions">
+                                            <div class="action-buttons">
+                                                <% if (!production.batchNumber) { %>
+                                                    <form action="/production/produceBatch/<%= production.id %>" method="POST" class="start-production-form">
+                                                        <button type="submit" class="btn btn-warning">
+                                                            <i class="bi bi-play-fill"></i>
+                                                            Start Production
+                                                        </button>
+                                                    </form>
+                                                <% } %>
+                                                <% if (!production.qcStatus) { %>
+                                                    <% if (production.isPrinted && production.status != "In Production" ) { %>
+                                                        <button type="button" class="btn btn-info bg-received mb-2" data-production-id="<%= production.id %>">
+                                                            <i class="bi bi-box-seam"></i>
+                                                            BG Received
+                                                        </button>
+                                                    <% } %>
+                                                    <% if (production.status === 'In Production' && production.isPrinted) { %>
+                                                        <form id="testToQCForm-<%= production.id %>" action="/production/sendToQC/<%= production.id %>" method="POST">
+                                                            <button type="submit" id="testToQCBtn-<%= production.id %>" class="btn btn-primary">
+                                                                <i class="bi bi-clipboard-check"></i>
+                                                                Test to QC
+                                                            </button>
+                                                        </form>
+                                                    <% } %>
+                                                <% } %>
+                                                <% if (production.batchNumber && production.qcStatus === 'Fail') { %>
+                                                    <div class="d-flex gap-2 flex-column">
+                                                        <% if (production.rawMaterialChoice === 'pending') { %>
+                                                            <div class="d-flex gap-2" id="rawMaterialChoice-<%= production.id %>">
+                                                                <button type="button" class="btn btn-primary raw-material-choice" data-production-id="<%= production.id %>" data-choice="add">
+                                                                    <i class="bi bi-plus-circle"></i>
+                                                                    Add Raw Material
+                                                                </button>
+                                                                <button type="button" class="btn btn-secondary raw-material-choice" data-production-id="<%= production.id %>" data-choice="skip">
+                                                                    <i class="bi bi-skip-forward"></i>
+                                                                    Don't Add
+                                                                </button>
+                                                            </div>
+                                                        <% } else if (production.rawMaterialChoice === 'add' && !production.rawMaterialAdded) { %>
+                                                            <div class="d-flex gap-2" id="rawMaterialForm-<%= production.id %>">
+                                                                <select name="rawMaterialId" class="form-control" required>
+                                                                    <option value="">Select Raw Material</option>
+                                                                    <% if (production.Product && production.Product.ProductFormulas) { %>
+                                                                        <% production.Product.ProductFormulas.forEach(formula => { %>
+                                                                            <option value="<%= formula.RawMaterial.id %>">
+                                                                                <%= formula.RawMaterial.name %> (Stock: <%= formula.RawMaterial.stock %> Kg)
+                                                                            </option>
+                                                                        <% }) %>
+                                                                    <% } %>
+                                                                </select>
+                                                                <input type="number" name="quantity" class="form-control" placeholder="Quantity (Kg)" required step="0.01" min="0">
+                                                                <button type="button" class="btn btn-primary add-raw-material" data-production-id="<%= production.id %>">
+                                                                    <i class="bi bi-plus-circle"></i>
+                                                                    Add Raw Material
+                                                                </button>
+                                                            </div>
+                                                        <% } %>
+                                                        <% if (production.rawMaterialChoice === 'skip' || production.rawMaterialAdded) { %>
+                                                            <div class="d-flex gap-2 flex-column" id="qcButtons-<%= production.id %>">
+                                                                <form id="testToQCForm-<%= production.id %>" action="/production/sendToQC/<%= production.id %>" method="POST">
+                                                                    <button type="submit" id="testToQCBtn-<%= production.id %>" class="btn btn-primary">
+                                                                        <i class="bi bi-clipboard-check"></i>
+                                                                        Test to QC
+                                                                    </button>
+                                                                </form>
+                                                                <button type="button" class="btn btn-danger quarantine-production" data-production-id="<%= production.id %>">
+                                                                    <i class="bi bi-exclamation-triangle"></i>
+                                                                    Quarantine
+                                                                </button>
+                                                            </div>
+                                                        <% } %>
+                                                    </div>
+                                                <% } %>
+                                                <% if (production.qcStatus === 'Pass' && !production.stockUpdated) { %>
+                                                    <form id="updateStockForm-<%= production.id %>" action="/production/updateStock/<%= production.id %>" method="POST" class="d-flex gap-2">
+                                                        <input type="number" name="realQuantity" class="form-control" placeholder="Real Quantity (Kg)" required step="0.01" min="0" value="<%= production.quantity %>">
+                                                        <button type="submit" class="btn btn-primary">
+                                                            <i class="bi bi-arrow-clockwise"></i> Update Stock
+                                                        </button>
+                                                    </form>                                                                                                        
+                                                <% } %>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                <% }); %>
+                            <% } else { %>
+                                <tr>
+                                    <td colspan="7" class="text-center py-4 text-muted">
+                                        <i class="bi bi-inbox fs-4 d-block mb-2"></i>
+                                        No ongoing processes found
+                                    </td>
+                                </tr>
+                            <% } %>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Upcoming Processes Section -->
+        <div class="dashboard-section">
+            <div class="section-header" data-bs-toggle="collapse" data-bs-target="#upcomingProcesses">
+                <h2 class="section-title">
+                    <i class="bi bi-calendar-event"></i>
+                    Upcoming Processes
+                    <% if (upcomingProcesses && upcomingProcesses.length > 0) { %>
+                        <span class="badge rounded-pill bg-danger ms-2"><%= upcomingProcesses.length %></span>
+                    <% } %>
+                </h2>
+                <i class="bi bi-chevron-down"></i>
+            </div>
+            <div id="upcomingProcesses" class="section-content collapse">
+                <div class="table-responsive">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Product</th>
+                                <th>Quantity</th>
+                                <th>Tanks</th>
+                                <th>Dates</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <% if (upcomingProcesses && upcomingProcesses.length > 0) { %>
+                                <% upcomingProcesses.forEach(function(production) { %>
+                                    <tr>
+                                        <td data-label="ID">#<%= production.id %></td>
+                                        <td data-label="Product">
+                                            <div class="fw-semibold"><%= production.Product.name %></div>
+                                        </td>
+                                        <td data-label="Quantity"><%= production.quantity %> Kg</td>
+                                        <td data-label="Tanks">
+                                            <div class="d-flex flex-wrap gap-1">
+                                                <% production.Tanks.forEach(tank => { %>
+                                                    <span class="badge badge-tank">
+                                                        <%= tank.name %> (<%= tank.volume %> L)
+                                                    </span>
+                                                <% }) %>
+                                            </div>
+                                        </td>
+                                        <td data-label="Dates">
+                                            <div>Start: <%= new Date(production.startDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) %></div>
+                                            <div>Due: <%= new Date(production.deadlineDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) %></div>
+                                        </td>
+                                    </tr>
+                                <% }); %>
+                            <% } else { %>
+                                <tr>
+                                    <td colspan="5" class="text-center py-4 text-muted">
+                                        <i class="bi bi-inbox fs-4 d-block mb-2"></i>
+                                        No upcoming processes found
+                                    </td>
+                                </tr>
+                            <% } %>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Rework Items Section -->
+        <div class="dashboard-section">
+            <div class="section-header" data-bs-toggle="collapse" data-bs-target="#reworkItems">
+                <h2 class="section-title">
+                    <i class="bi bi-tools"></i>
+                    Rework Items
+                    <% if (reworkItems && reworkItems.length > 0) { %>
+                        <span class="badge rounded-pill bg-danger ms-2"><%= reworkItems.length %></span>
+                    <% } %>
+                </h2>
+                <i class="bi bi-chevron-down"></i>
+            </div>
+            <div id="reworkItems" class="section-content collapse">
+                <div class="table-responsive">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>PO Number</th>
+                                <th>Customer Name</th>
+                                <th>Product</th>
+                                <th>Quantity Rejected</th>
+                                <th>Notes</th>
+                                <th>Status</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <% if (reworkItems && reworkItems.length > 0) { %>
+                                <% reworkItems.forEach(function(item) { %>
+                                    <tr>
+                                        <td data-label="PO Number"><%= item.Complain.Order.sonumber %></td>
+                                        <td data-label="Customer Name"><%= item.Complain.Order.customerName %></td>
+                                        <td data-label="Product"><%= item.product %></td>
+                                        <td data-label="Quantity Rejected"><%= item.quantityRejected %> KG</td>
+                                        <td data-label="Notes"><%= item.notes || '-' %></td>
+                                        <td data-label="Status"><%= item.status %></td>
+                                        <td data-label="Actions">
+                                            <div class="action-buttons">
+                                                <a href="/complain/scheduleRework/<%= item.id %>" class="btn btn-primary">
+                                                    <i class="bi bi-calendar-plus"></i>
+                                                    Schedule
+                                                </a>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                <% }); %>
+                            <% } else { %>
+                                <tr>
+                                    <td colspan="7" class="text-center py-4 text-muted">
+                                        <i class="bi bi-inbox fs-4 d-block mb-2"></i>
+                                        No rework items found
+                                    </td>
+                                </tr>
+                            <% } %>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Rework Production Section -->
+        <div class="dashboard-section">
+            <div class="section-header" data-bs-toggle="collapse" data-bs-target="#reworkProduction">
+                <h2 class="section-title">
+                    <i class="bi bi-arrow-repeat"></i>
+                    Rework Production
+                    <% if (reworkProductions && reworkProductions.length > 0) { %>
+                        <span class="badge rounded-pill bg-danger ms-2"><%= reworkProductions.length %></span>
+                    <% } %>
+                </h2>
+                <i class="bi bi-chevron-down"></i>
+            </div>
+            <div id="reworkProduction" class="section-content collapse">
+                <div class="table-responsive">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>Batch</th>
+                                <th>Product</th>
+                                <th>Quantity</th>
+                                <th>Tanks</th>
+                                <th>Dates</th>
+                                <th>QC Status</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <% if (reworkProductions && reworkProductions.length > 0) { %>
+                                <% reworkProductions.forEach(function(rework) { %>
+                                    <tr data-product-formulas='<%= JSON.stringify(rework.ComplainItem?.Product?.ProductFormulas || []) %>'>
+                                        <td data-label="Batch">
+                                            <div class="fw-semibold">#<%= rework.batchNumber || 'Not Started' %></div>
+                                            <small class="text-muted">ID: <%= rework.id %></small>
+                                            <small class="text-muted d-block">
+                                                SO: <%= rework.ComplainItem.Complain.Order.sonumber %>
+                                            </small>
+                                        </td>
+                                        <td data-label="Product"><%= rework.ComplainItem.product %></td>
+                                        <td data-label="Quantity"><%= rework.quantity %> Kg</td>
+                                        <td data-label="Tanks">
+                                            <div class="d-flex flex-wrap gap-1">
+                                                <% rework.Tanks.forEach(tank => { %>
+                                                    <span class="badge badge-tank">
+                                                        <%= tank.name %> (<%= tank.volume %> L)
+                                                    </span>
+                                                <% }) %>
+                                            </div>
+                                        </td>
+                                        <td data-label="Dates">
+                                            <div>Start: <%= new Date(rework.startDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) %></div>
+                                            <div>Due: <%= new Date(rework.deadlineDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) %></div>
+                                        </td>
+                                        <td data-label="QC Status">
+                                            <% if (rework.qcStatus === 'Pass') { %>
+                                                <span class="badge badge-pass">
+                                                    <i class="bi bi-check-circle"></i>
+                                                    Pass
+                                                </span>
+                                            <% } else if (rework.qcStatus === 'Fail') { %>
+                                                <span class="badge badge-fail">
+                                                    <i class="bi bi-x-circle"></i>
+                                                    Fail
+                                                </span>
+                                            <% } %>
+                                            <% if (rework.qcComment) { %>
+                                                <div class="small text-muted mt-1">
+                                                    <%= rework.qcComment %>
+                                                </div>
+                                            <% } %>
+                                        </td>
+                                        <td data-label="Actions">
+                                            <div class="action-buttons">
+                                                <% if (!rework.batchNumber) { %>
+                                                    <button type="button" class="btn btn-warning start-rework" data-rework-id="<%= rework.id %>">
+                                                        <i class="bi bi-play-fill"></i>
+                                                        Start Rework
+                                                    </button>
+                                                <% } %>
+                                                <% if (rework.batchNumber && !rework.qcStatus) { %>
+                                                    <form id="testToQCForm-<%= rework.id %>" action="/complain/sendToQC/<%= rework.id %>" method="POST">
+                                                        <button type="submit" id="testToQCBtn-<%= rework.id %>" class="btn btn-primary">
+                                                            <i class="bi bi-clipboard-check"></i>
+                                                            Test to QC
+                                                        </button>
+                                                    </form>
+                                                <% } else if (rework.qcStatus === 'Fail') { %>
+                                                    <div class="d-flex gap-2 flex-column">
+                                                        <% if (!rework.rawMaterialChoice || rework.rawMaterialChoice === 'pending') { %>
+                                                            <div class="d-flex gap-2">
+                                                                <form action="/complain/setRawMaterialChoice/<%= rework.id %>" method="POST">
+                                                                    <input type="hidden" name="choice" value="add">
+                                                                    <button type="submit" class="btn btn-primary">
+                                                                        <i class="bi bi-plus-circle"></i>
+                                                                        Add Raw Material
+                                                                    </button>
+                                                                </form>
+                                                                <form action="/complain/setRawMaterialChoice/<%= rework.id %>" method="POST">
+                                                                    <input type="hidden" name="choice" value="skip">
+                                                                    <button type="submit" class="btn btn-secondary">
+                                                                        <i class="bi bi-skip-forward"></i>
+                                                                        Don't Add
+                                                                    </button>
+                                                                </form>
+                                                            </div>
+                                                        <% } else if (rework.rawMaterialChoice === 'add' && !rework.rawMaterialAdded) { %>
+                                                            <form action="/complain/addRawMaterial/<%= rework.id %>" method="POST" class="d-flex gap-2">
+                                                                <select name="rawMaterialId" class="form-control" required>
+                                                                    <option value="">Select Raw Material</option>
+                                                    <% if (rework.ComplainItem?.Product?.ProductFormulas) { %>
+                                                        <% rework.ComplainItem.Product.ProductFormulas.forEach(formula => { %>
+                                                            <option value="<%= formula.RawMaterial.id %>">
+                                                                <%= formula.RawMaterial.name %> (Stock: <%= formula.RawMaterial.stock %> Kg)
+                                                            </option>
+                                                        <% }); %>
+                                                    <% } %>
+                                                                </select>
+                                                                <input type="number" name="quantity" class="form-control" placeholder="Quantity (Kg)" required step="0.01" min="0">
+                                                                <button type="submit" class="btn btn-primary">
+                                                                    <i class="bi bi-plus-circle"></i>
+                                                                    Add Raw Material
+                                                                </button>
+                                                            </form>
+                                                        <% } %>
+                                                        <% if (rework.rawMaterialChoice === 'skip' || rework.rawMaterialAdded) { %>
+                                                            <form id="testToQCForm-<%= rework.id %>" action="/complain/sendToQC/<%= rework.id %>" method="POST">
+                                                                <button type="submit" id="testToQCBtn-<%= rework.id %>" class="btn btn-primary">
+                                                                    <i class="bi bi-clipboard-check"></i>
+                                                                    Test to QC
+                                                                </button>
+                                                            </form>
+                                                            <form action="/complain/quarantine/<%= rework.id %>" method="POST">
+                                                                <button type="submit" class="btn btn-danger">
+                                                                    <i class="bi bi-exclamation-triangle"></i>
+                                                                    Quarantine
+                                                                </button>
+                                                            </form>
+                                                        <% } %>
+                                                    </div>
+                                                <% } else if (rework.qcStatus === 'Pass' && rework.status !== 'Completed') { %>
+                                                    <form action="/complain/proceedToDeliver/<%= rework.id %>" method="POST">
+                                                        <button type="submit" class="btn btn-success">
+                                                            <i class="bi bi-truck"></i>
+                                                            Proceed to Deliver
+                                                        </button>
+                                                    </form>
+                                                <% } %>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                <% }); %>
+                            <% } else { %>
+                                <tr>
+                                    <td colspan="7" class="text-center py-4 text-muted">
+                                        <i class="bi bi-inbox fs-4 d-block mb-2"></i>
+                                        No rework productions found
+                                    </td>
+                                </tr>
+                            <% } %>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <%- include('../partials/chat', { users: users, userRole: userRole, userId: userId }) %>
+
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Handle sidebar state changes
+            const sidebar = document.querySelector('.sidebar');
+            const observer = new MutationObserver(function(mutations) {
+                mutations.forEach(function(mutation) {
+                    if (mutation.attributeName === 'class') {
+                        if (sidebar.classList.contains('collapsed')) {
+                            document.body.classList.add('sidebar-collapsed');
+                        } else {
+                            document.body.classList.remove('sidebar-collapsed');
+                        }
+                    }
+                });
+            });
+            observer.observe(sidebar, { attributes: true });
+
+            // Initialize collapsible sections
+            const sections = document.querySelectorAll('.dashboard-section');
+            sections.forEach(section => {
+                const content = section.querySelector('.section-content');
+                const icon = section.querySelector('.bi-chevron-down');
+
+                // Set initial state
+                if (content.classList.contains('show')) {
+                    icon.style.transform = 'rotate(180deg)';
+                }
+
+                // Use Bootstrap's collapse events
+                content.addEventListener('show.bs.collapse', () => {
+                    icon.style.transform = 'rotate(180deg)';
+                });
+
+                content.addEventListener('hide.bs.collapse', () => {
+                    icon.style.transform = 'rotate(0)';
+                });
+            });
+
+            // Handle print button and Test to QC button visibility
+            const printButtons = document.querySelectorAll('.print-btn');
+            printButtons.forEach(button => {
+                const buttonId = button.id;
+                const productionId = buttonId.split('-')[1];
+                const qcButtonId = 'testToQCBtn-' + productionId;
+                const storageKey = 'printBtnHidden-' + productionId;
+
+                if (localStorage.getItem(storageKey) === 'hidden') {
+                    button.style.display = 'none';
+                    document.getElementById(qcButtonId).style.display = 'inline-block';
+                }
+
+                button.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    button.style.display = 'none';
+                    document.getElementById(qcButtonId).style.display = 'inline-block';
+                    localStorage.setItem(storageKey, 'hidden');
+                    e.target.closest('form').submit();
+                });
+            });
+
+            // Start Production form handler
+            $(document).on('submit', '.start-production-form', function(e) {
+                e.preventDefault();
+                const form = $(this);
+                const btn = form.find('button[type="submit"]');
+                
+                // Add loading state
+                btn.addClass('loading').prop('disabled', true);
+
+                // Make AJAX request
+                $.ajax({
+                    url: form.attr('action'),
+                    method: 'POST',
+                    success: function(response) {
+                        // Remove the start production form without page reload
+                        form.remove();
+                    },
+                    error: function() {
+                        alert('Error starting production. Please try again.');
+                        btn.removeClass('loading').prop('disabled', false);
+                    }
+                });
+            });
+
+            // Start Rework handler
+            $(document).on('click', '.start-rework', function() {
+                const btn = $(this);
+                const reworkId = btn.data('rework-id');
+                
+                // Add loading state
+                btn.addClass('loading').prop('disabled', true);
+
+                // Make POST request
+                fetch(`/complain/produceBatch/${reworkId}`, {
+                    method: 'POST',
+                })
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Network response was not ok');
+                    }
+                    // Remove the start rework button without page reload
+                    btn.remove();
+                })
+                .catch(error => {
+                    // Restore button state and show error
+                    btn.removeClass('loading').prop('disabled', false);
+                    alert('Error starting rework. Please try again.');
+                });
+            });
+
+            // Handle update stock form submissions
+            $(document).on('submit', '#updateStockForm-\\d+', function(e) {
+                e.preventDefault();
+                const form = $(this);
+                const submitBtn = form.find('button[type="submit"]');
+                
+                submitBtn.prop('disabled', true).addClass('loading');
+                
+                $.ajax({
+                    url: form.attr('action'),
+                    method: 'POST',
+                    data: form.serialize(),
+                    success: function() {
+                        form.remove(); // Remove the form after successful update
+                    },
+                    error: function() {
+                        alert('Error updating stock. Please try again.');
+                    },
+                    complete: function() {
+                        submitBtn.prop('disabled', false).removeClass('loading');
+                    }
+                });
+            });
+
+            // Handle raw material quantity form submissions
+            $(document).on('submit', 'form[action*="addRawMaterial"]', function(e) {
+                e.preventDefault();
+                const form = $(this);
+                const submitBtn = form.find('button[type="submit"]');
+                
+                submitBtn.prop('disabled', true).addClass('loading');
+                
+                $.ajax({
+                    url: form.attr('action'),
+                    method: 'POST',
+                    data: form.serialize(),
+                    success: function() {
+                        form.closest('.d-flex.gap-2.flex-column').html(`
+                            <form id="testToQCForm-${form.attr('action').match(/\d+$/)[0]}" action="/production/sendToQC/${form.attr('action').match(/\d+$/)[0]}" method="POST">
+                                <button type="submit" class="btn btn-primary">
+                                    <i class="bi bi-clipboard-check"></i>
+                                    Test to QC
+                                </button>
+                            </form>
+                        `);
+                    },
+                    error: function() {
+                        alert('Error adding raw material. Please try again.');
+                    },
+                    complete: function() {
+                        submitBtn.prop('disabled', false).removeClass('loading');
+                    }
+                });
+            });
+
+            // Handle raw material choice buttons
+            $(document).on('click', '.raw-material-choice', function() {
+                const btn = $(this);
+                const productionId = btn.data('production-id');
+                const choice = btn.data('choice');
+                
+                btn.addClass('loading').prop('disabled', true);
+                
+                $.ajax({
+                    url: `/production/setRawMaterialChoice/${productionId}`,
+                    method: 'POST',
+                    data: { choice },
+                    success: function() {
+                        const container = $(`#rawMaterialChoice-${productionId}`);
+                        if (choice === 'add') {
+                            // Show raw material form
+                            container.replaceWith(`
+                                <div class="d-flex gap-2" id="rawMaterialForm-${productionId}">
+                                    <select name="rawMaterialId" class="form-control" required>
+                                        <option value="">Select Raw Material</option>
+                                        ${$(`tr[data-product-formulas]`).data('product-formulas').map(formula => `
+                                            <option value="${formula.RawMaterial.id}">
+                                                ${formula.RawMaterial.name} (Stock: ${formula.RawMaterial.stock} Kg)
+                                            </option>
+                                        `).join('')}
+                                    </select>
+                                    <input type="number" name="quantity" class="form-control" placeholder="Quantity (Kg)" required step="0.01" min="0">
+                                    <button type="button" class="btn btn-primary add-raw-material" data-production-id="${productionId}">
+                                        <i class="bi bi-plus-circle"></i>
+                                        Add Raw Material
+                                    </button>
+                                </div>
+                            `);
+                        } else {
+                            // Show QC buttons
+                            container.replaceWith(`
+                                <div class="d-flex gap-2 flex-column" id="qcButtons-${productionId}">
+                                    <form id="testToQCForm-${productionId}" action="/production/sendToQC/${productionId}" method="POST">
+                                        <button type="submit" id="testToQCBtn-${productionId}" class="btn btn-primary">
+                                            <i class="bi bi-clipboard-check"></i>
+                                            Test to QC
+                                        </button>
+                                    </form>
+                                    <button type="button" class="btn btn-danger quarantine-production" data-production-id="${productionId}">
+                                        <i class="bi bi-exclamation-triangle"></i>
+                                        Quarantine
+                                    </button>
+                                </div>
+                            `);
+                        }
+                    },
+                    error: function() {
+                        alert('Error setting raw material choice. Please try again.');
+                        btn.removeClass('loading').prop('disabled', false);
+                    }
+                });
+            });
+
+            // Handle add raw material button
+            $(document).on('click', '.add-raw-material', function() {
+                const btn = $(this);
+                const productionId = btn.data('production-id');
+                const form = btn.closest('.d-flex');
+                const rawMaterialId = form.find('select[name="rawMaterialId"]').val();
+                const quantity = form.find('input[name="quantity"]').val();
+                
+                if (!rawMaterialId || !quantity) {
+                    alert('Please fill in all fields');
+                    return;
+                }
+                
+                btn.addClass('loading').prop('disabled', true);
+                
+                $.ajax({
+                    url: `/production/addRawMaterial/${productionId}`,
+                    method: 'POST',
+                    data: { rawMaterialId, quantity },
+                    success: function() {
+                        form.replaceWith(`
+                            <div class="d-flex gap-2 flex-column" id="qcButtons-${productionId}">
+                                <form id="testToQCForm-${productionId}" action="/production/sendToQC/${productionId}" method="POST">
+                                    <button type="submit" id="testToQCBtn-${productionId}" class="btn btn-primary">
+                                        <i class="bi bi-clipboard-check"></i>
+                                        Test to QC
+                                    </button>
+                                </form>
+                                <button type="button" class="btn btn-danger quarantine-production" data-production-id="${productionId}">
+                                    <i class="bi bi-exclamation-triangle"></i>
+                                    Quarantine
+                                </button>
+                            </div>
+                        `);
+                    },
+                    error: function() {
+                        alert('Error adding raw material. Please try again.');
+                        btn.removeClass('loading').prop('disabled', false);
+                    }
+                });
+            });
+
+            // Handle Test to QC form submissions
+            $(document).on('submit', '#testToQCForm-\\d+', function(e) {
+                e.preventDefault();
+                const form = $(this);
+                const submitBtn = form.find('button[type="submit"]');
+                
+                submitBtn.addClass('loading').prop('disabled', true);
+                
+                $.ajax({
+                    url: form.attr('action'),
+                    method: 'POST',
+                    success: function() {
+                        // Remove the Test to QC form without page reload
+                        form.remove();
+                    },
+                    error: function() {
+                        alert('Error sending to QC. Please try again.');
+                        submitBtn.removeClass('loading').prop('disabled', false);
+                    }
+                });
+            });
+
+            // Handle BG Received button
+            $(document).on('click', '.bg-received', function() {
+                const btn = $(this);
+                const productionId = btn.data('production-id');
+                
+                btn.addClass('loading').prop('disabled', true);
+                
+                $.ajax({
+                    url: `/production/setBGReceived/${productionId}`,
+                    method: 'POST',
+                    success: function() {
+                        // Remove BG Received button and add Test to QC button
+                        const testToQCButton = `
+                            <form id="testToQCForm-${productionId}" action="/production/sendToQC/${productionId}" method="POST">
+                                <button type="submit" id="testToQCBtn-${productionId}" class="btn btn-primary">
+                                    <i class="bi bi-clipboard-check"></i>
+                                    Test to QC
+                                </button>
+                            </form>
+                        `;
+                        btn.replaceWith(testToQCButton);
+                    },
+                    error: function() {
+                        alert('Error updating BG status. Please try again.');
+                        btn.removeClass('loading').prop('disabled', false);
+                    }
+                });
+            });
+
+
+            // Handle quarantine button
+            $(document).on('click', '.quarantine-production', function() {
+                const btn = $(this);
+                const productionId = btn.data('production-id');
+                
+                if (!confirm('Are you sure you want to quarantine this production?')) {
+                    return;
+                }
+                
+                btn.addClass('loading').prop('disabled', true);
+                
+                $.ajax({
+                    url: `/production/quarantine/${productionId}`,
+                    method: 'POST',
+                    success: function() {
+                        // Remove the quarantine button and its container
+                        btn.closest('.d-flex.gap-2.flex-column').remove();
+                    },
+                    error: function() {
+                        alert('Error quarantining production. Please try again.');
+                        btn.removeClass('loading').prop('disabled', false);
+                    }
+                });
+            });
+        });
+    </script>
+    <script>
+        // Set up SSE for notifications
+        const evtSource = new EventSource('/notifications');
+        const audio = new Audio('/audio/production.mp3');
+
+        evtSource.onmessage = function(event) {
+            const data = JSON.parse(event.data);
+            
+            if (data.type === 'productionPrinted') {
+                // Show notification for printed production
+                const notification = `Production ${data.batchNumber} has been printed`;
+                showNotification(notification);
+                
+                // Play audio if specified
+                if (data.audio) {
+                    audio.play().catch(e => console.error('Error playing audio:', e));
+                }
+
+                // Refresh the page to show updated status
+                setTimeout(() => {
+                    location.reload();
+                }, 3000);
+            } else if (data.type === 'qcStatusUpdated') {
+                // Show notification for QC status update
+                const notification = `Production ${data.batchNumber} QC status: ${data.status}`;
+                showNotification(notification);
+                
+                // Play audio if specified
+                if (data.audio) {
+                    audio.play().catch(e => console.error('Error playing audio:', e));
+                }
+
+                // Refresh the page to show updated status
+                setTimeout(() => {
+                    location.reload();
+                }, 3000);
+            } else if (data.type === 'reworkQcStatus') {
+                // Show notification for rework QC status update
+                const notification = `Rework ${data.batchNumber} QC status: ${data.status}`;
+                showNotification(notification);
+                
+                // Play audio if specified
+                if (data.audio) {
+                    audio.play().catch(e => console.error('Error playing audio:', e));
+                }
+
+                // Refresh the page to show updated status
+                setTimeout(() => {
+                    location.reload();
+                }, 3000);
+            } else if (data.type === 'rework') {
+                // Show notification for new rework request
+                const notification = `New rework request: ${data.product} (${data.sonumber} - ${data.customerName})`;
+                showNotification(notification);
+                
+                // Play audio if specified
+                if (data.audio) {
+                    audio.play().catch(e => console.error('Error playing audio:', e));
+                }
+
+                // Refresh the page to show the new rework request
+                setTimeout(() => {
+                    location.reload();
+                }, 3000);
+            } else if (data.type === 'newProductionRequest') {
+                // Show notification for new production request
+                let notification = `New production request: ${data.productName} (${data.quantity} ${data.unit || 'Kg'})`;
+                if (data.prodreqnumber) {
+                    notification = `New production request #${data.prodreqnumber}: ${data.productName} (${data.quantity} Kg)`;
+                }
+                showNotification(notification);
+                
+                // Play audio if specified
+                if (data.audio) {
+                    audio.play().catch(e => console.error('Error playing audio:', e));
+                }
+
+                // Refresh the page to show the new request
+                setTimeout(() => {
+                    location.reload();
+                }, 3000);
+            }
+        };
+
+        function showNotification(message) {
+            const notificationDiv = document.createElement('div');
+            notificationDiv.className = 'alert alert-info alert-dismissible fade show';
+            notificationDiv.style.position = 'fixed';
+            notificationDiv.style.top = '20px';
+            notificationDiv.style.right = '20px';
+            notificationDiv.style.zIndex = '9999';
+            notificationDiv.innerHTML = `
+                ${message}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            `;
+            document.body.appendChild(notificationDiv);
+
+            // Auto-remove after 5 seconds
+            setTimeout(() => {
+                notificationDiv.remove();
+            }, 5000);
+        }
+
+document.addEventListener("DOMContentLoaded", function() {
+    // Single event handler for all Test to QC forms using event delegation
+    document.body.addEventListener("submit", function(event) {
+        const form = event.target;
+        
+        // Handle Test to QC forms
+        if (form.matches('form[id^="testToQCForm-"]')) {
+            event.preventDefault();
+            console.log("Test to QC form submitted:", form.id);
+            
+            const submitBtn = form.querySelector("button");
+            submitBtn.disabled = true;
+            submitBtn.classList.add('loading');
+            
+            fetch(form.action, {
+                method: "POST",
+                headers: {
+                    "X-Requested-With": "XMLHttpRequest",
+                    "Content-Type": "application/x-www-form-urlencoded"
+                },
+                body: new URLSearchParams(new FormData(form))
+            })
+            .then(function(response) {
+                console.log("Response status:", response.status);
+                if (response.ok) {
+                    // Remove the form on success
+                    form.remove();
+                } else {
+                    throw new Error("Network response was not ok");
+                }
+            })
+            .catch(function(error) {
+                console.error("Error during Test to QC submission:", error);
+                alert('Error sending to QC. Please try again.');
+                submitBtn.disabled = false;
+                submitBtn.classList.remove('loading');
+            });
+        }
+        
+        // Handle update stock forms
+        if (form.matches('form[id^="updateStockForm-"]')) {
+            event.preventDefault();
+            const submitBtn = form.querySelector("button[type='submit']");
+            submitBtn.disabled = true;
+            submitBtn.classList.add('loading');
+            
+            fetch(form.action, {
+                method: "POST",
+                headers: {
+                    "X-Requested-With": "XMLHttpRequest",
+                    "Content-Type": "application/x-www-form-urlencoded"
+                },
+                body: new URLSearchParams(new FormData(form))
+            })
+            .then(function(response) {
+                if (response.ok) {
+                    form.remove();
+                } else {
+                    throw new Error("Network response was not ok");
+                }
+            })
+            .catch(function(error) {
+                console.error("Error during stock update:", error);
+                alert('Error updating stock. Please try again.');
+                submitBtn.disabled = false;
+                submitBtn.classList.remove('loading');
+            });
+        }
+    });
+});
+</script>
+</body>
+</html>

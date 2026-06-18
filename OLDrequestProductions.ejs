@@ -1,0 +1,684 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Request Production</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.7.2/font/bootstrap-icons.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary-color: #1b5e20;
+            --primary-light: #388E3C;
+            --background-light: #f4f6f8;
+            --text-color: #333;
+            --shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            --transition: all 0.3s ease;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--background-light);
+            margin: 0;
+            padding: 0;
+            min-height: 100vh;
+        }
+
+        .main-content {
+            margin-left: 0;
+            padding: 1rem;
+            width: 100%;
+            transition: var(--transition);
+        }
+
+        .page-header {
+            background: white;
+            padding: 1rem;
+            border-radius: 15px;
+            box-shadow: var(--shadow);
+            margin-bottom: 1rem;
+            text-align: center;
+        }
+
+        .page-title {
+            margin: 0;
+            color: var(--primary-color);
+            font-weight: 600;
+            font-size: 1.25rem;
+        }
+
+        .product-card {
+            background: white;
+            border-radius: 15px;
+            box-shadow: var(--shadow);
+            margin-bottom: 1rem;
+            border: none;
+            overflow: hidden;
+        }
+
+        .product-header {
+            background-color: var(--background-light);
+            padding: 1rem;
+            border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+        }
+
+        .product-title {
+            color: var(--primary-color);
+            font-weight: 600;
+            font-size: 1rem;
+            margin: 0;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .product-body {
+            padding: 1rem;
+        }
+
+        .form-group {
+            margin-bottom: 1rem;
+        }
+
+        .form-label {
+            font-weight: 600;
+            color: var(--primary-color);
+            margin-bottom: 0.5rem;
+            font-size: 0.875rem;
+        }
+
+        .form-control {
+            border-radius: 8px;
+            padding: 0.75rem 1rem;
+            border: 1px solid rgba(0, 0, 0, 0.1);
+            font-size: 0.875rem;
+            transition: var(--transition);
+        }
+
+        .form-control:focus {
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 0.2rem rgba(27, 94, 32, 0.25);
+        }
+
+        .form-control-file {
+            padding: 0.75rem;
+            background-color: #f8f9fa;
+            border-radius: 8px;
+            border: 1px solid rgba(0, 0, 0, 0.1);
+            width: 100%;
+        }
+
+        .raw-materials-list {
+            margin-top: 1rem;
+        }
+
+        .raw-material-row {
+            padding: 0.75rem;
+            border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 1rem;
+            font-size: 0.875rem;
+        }
+
+        .raw-material-row:last-child {
+            border-bottom: none;
+        }
+
+        .raw-material-name {
+            flex: 1;
+            min-width: 150px;
+            font-weight: 500;
+        }
+
+        .raw-material-quantity {
+            width: 120px;
+        }
+
+        .raw-material-stock {
+            color: #6c757d;
+            font-size: 0.875rem;
+        }
+
+        .btn {
+            padding: 0.75rem 1rem;
+            border-radius: 8px;
+            font-weight: 500;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            transition: var(--transition);
+            font-size: 0.875rem;
+            width: 100%;
+            justify-content: center;
+        }
+
+        .btn-primary {
+            background-color: var(--primary-color);
+            border: none;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background-color: var(--primary-light);
+            transform: translateY(-1px);
+        }
+
+        .btn-warning {
+            background-color: #ffc107;
+            border: none;
+            color: #000;
+        }
+
+        .btn-warning:hover {
+            background-color: #ffca2c;
+            transform: translateY(-1px);
+        }
+
+        .btn-secondary {
+            background-color: #6c757d;
+            border: none;
+            color: white;
+        }
+
+        .btn-secondary:hover {
+            background-color: #5a6268;
+            transform: translateY(-1px);
+        }
+
+        .error {
+            color: #dc3545;
+            background-color: #f8d7da;
+            border: 1px solid #f5c6cb;
+            border-radius: 8px;
+            padding: 1rem;
+            margin-bottom: 1rem;
+            font-size: 0.875rem;
+            display: none;
+        }
+
+        .fade-in {
+            animation: fadeIn 0.3s ease-in;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Desktop styles */
+        @media (min-width: 769px) {
+            .main-content {
+                margin-left: 280px;
+                padding: 2rem;
+                width: calc(100% - 280px);
+            }
+
+            body:has(.sidebar.collapsed) .main-content {
+                margin-left: 70px;
+                width: calc(100% - 70px);
+            }
+
+            .page-header {
+                padding: 1.5rem;
+                margin-bottom: 2rem;
+            }
+
+            .page-title {
+                font-size: 1.5rem;
+            }
+
+            .product-header {
+                padding: 1.5rem;
+            }
+
+            .product-title {
+                font-size: 1.2rem;
+            }
+
+            .product-body {
+                padding: 1.5rem;
+            }
+
+            .form-label {
+                font-size: 1rem;
+            }
+
+            .form-control {
+                font-size: 1rem;
+            }
+
+            .btn {
+                font-size: 1rem;
+                width: auto;
+            }
+
+            .raw-material-row {
+                font-size: 1rem;
+            }
+
+            .btn-group {
+                display: flex;
+                gap: 1rem;
+            }
+        }
+
+        /* Mobile styles */
+        @media (max-width: 768px) {
+            .btn-group {
+                display: grid;
+                gap: 0.5rem;
+            }
+
+            .raw-material-row {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+
+            .raw-material-quantity {
+                width: 100%;
+            }
+
+            .raw-material-stock {
+                width: 100%;
+                text-align: left;
+            }
+        }
+    </style>
+</head>
+<body>
+    <%- include('../partials/sidebar', { userRole: userRole }) %>
+
+    <div class="main-content">
+        <div class="page-header fade-in">
+            <h1 class="page-title">
+                <i class="bi bi-gear"></i>
+                Request Production for Order #<%= order.id %>
+            </h1>
+        </div>
+
+        <form id="productionRequestForm" action="/production/request" method="POST" enctype="multipart/form-data" class="fade-in">
+            <input type="hidden" name="orderId" value="<%= order.id %>">
+
+            <% productsToProduce.forEach(product => { %>
+            <div class="product-card">
+                <div class="product-header">
+                    <h2 class="product-title">
+                        <i class="bi bi-box-seam"></i>
+                        <%= product.productName %> (Needed: <%= product.neededQuantity %>Kg)
+                    </h2>
+                </div>
+                <div class="product-body">
+                    <input type="hidden" name="products[<%= product.productId %>][name]" value="<%= product.productName %>">
+                    <input type="hidden" name="products[<%= product.productId %>][neededQuantity]" value="<%= product.neededQuantity %>">
+
+                    <div class="form-group">
+                        <label class="form-label" for="product-<%= product.productId %>">Quantity to Produce</label>
+                        <input type="number" class="form-control production-quantity" id="product-<%= product.productId %>" name="products[<%= product.productId %>][quantity]" value="<%= product.neededQuantity %>" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label" for="formula-<%= product.productId %>">Formula (Excel)</label>
+                        <input type="file" class="form-control" id="formula-<%= product.productId %>" name="products[<%= product.productId %>][formula]" accept=".xlsx" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Raw Materials</label>
+                        <div id="rawMaterialContainer-<%= product.productId %>" class="raw-materials-list">
+                            <% product.rawMaterials.forEach(rawMaterial => { %>
+                            <div class="raw-material-row" data-raw-material-id="<%= rawMaterial.id %>" data-raw-material-percentage="<%= rawMaterial.percentage %>" data-raw-material-stock="<%= rawMaterial.stock %>">
+                                <span class="raw-material-name"><%= rawMaterial.name %></span>
+                                <input type="number" class="form-control raw-material-quantity" name="products[<%= product.productId %>][rawMaterials][<%= rawMaterial.id %>][quantity]" value="<%= rawMaterial.quantity %>" readonly>
+                                <span class="raw-material-stock">Current Stock: <%= rawMaterial.stock %> Kg</span>
+                                <% if (rawMaterial.quantity > rawMaterial.stock) { %>
+                                <button type="button" class="btn btn-warning request-raw-material-btn" data-material-id="<%= rawMaterial.id %>" data-material-name="<%= rawMaterial.name %>" data-quantity="<%= rawMaterial.quantity %>">
+                                    <i class="bi bi-plus-circle"></i>
+                                    Request Raw Material
+                                </button>
+                                <% } %>
+                            </div>
+                            <% }) %>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Packaging Requirements</label>
+                        <div id="packagingContainer-<%= product.productId %>" class="raw-materials-list">
+                            <% product.packagings && product.packagings.forEach(packaging => { %>
+                            <div class="raw-material-row" data-packaging-id="<%= packaging.id %>" data-packaging-stock="<%= packaging.stock %>">
+                                <span class="raw-material-name"><%= packaging.name %></span>
+                                <% const neededPackaging = Math.ceil(packaging.quantity / packaging.volume); %>
+                                <% const requestQuantity = neededPackaging > packaging.stock ? neededPackaging - packaging.stock : 0; %>
+                                <input type="number" class="form-control raw-material-quantity" name="products[<%= product.productId %>][packagings][<%= packaging.id %>][quantity]" value="<%= neededPackaging %>" readonly>
+                                <span class="raw-material-stock">Current Stock: <%= packaging.stock %> pcs | Need to Request: <%= requestQuantity %> pcs (Volume: <%= packaging.volume %>L)</span>
+                                <% if (requestQuantity > 0) { %>
+                                <button type="button" class="btn btn-warning request-packaging-btn" data-packaging-id="<%= packaging.id %>" data-packaging-name="<%= packaging.name %>" data-quantity="<%= requestQuantity %>">
+                                    <i class="bi bi-plus-circle"></i>
+                                    Request Packaging
+                                </button>
+                                <% } %>
+                            </div>
+                            <% }) %>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <% }) %>
+
+            <div class="error" id="error-message"></div>
+
+            <div class="btn-group mt-4">
+                <button type="button" id="submitRawMaterialRequests" class="btn btn-warning">
+                    <i class="bi bi-plus-circle"></i>
+                    Submit Raw Material Requests
+                </button>
+                <button type="button" id="submitPackagingRequests" class="btn btn-warning">
+                    <i class="bi bi-plus-circle"></i>
+                    Submit Packaging Requests
+                </button>
+                <button type="submit" class="btn btn-primary">
+                    <i class="bi bi-check-lg"></i>
+                    Submit Production Request
+                </button>
+                <a href="/dashboard/ppic" class="btn btn-secondary">
+                    <i class="bi bi-arrow-left"></i>
+                    Back to Dashboard
+                </a>
+            </div>
+        </form>
+    </div>
+
+    <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Handle sidebar state changes
+            const sidebar = document.querySelector('.sidebar');
+            const mainContent = document.querySelector('.main-content');
+
+            function updateContentWidth() {
+                if (window.innerWidth > 768) {
+                    if (sidebar.classList.contains('collapsed')) {
+                        mainContent.style.marginLeft = '70px';
+                        mainContent.style.width = 'calc(100% - 70px)';
+                    } else {
+                        mainContent.style.marginLeft = '280px';
+                        mainContent.style.width = 'calc(100% - 280px)';
+                    }
+                } else {
+                    mainContent.style.marginLeft = '0';
+                    mainContent.style.width = '100%';
+                }
+            }
+
+            // Initial width update
+            updateContentWidth();
+
+            // Watch for sidebar class changes
+            const observer = new MutationObserver(function(mutations) {
+                mutations.forEach(function(mutation) {
+                    if (mutation.attributeName === 'class') {
+                        updateContentWidth();
+                    }
+                });
+            });
+
+            observer.observe(sidebar, { attributes: true });
+
+            // Handle window resize
+            window.addEventListener('resize', updateContentWidth);
+        });
+
+        // Form validation
+        document.getElementById('productionRequestForm').addEventListener('submit', function(event) {
+            const products = JSON.parse('<%- JSON.stringify(productsToProduce) %>');
+            let hasError = false;
+            let errorMessage = '';
+            const tolerance = 0.01;
+
+            products.forEach(product => {
+                const productQuantity = parseFloat(document.getElementById(`product-${product.productId}`).value);
+                let totalRawMaterialQuantity = 0;
+
+                document.querySelectorAll(`[name^="products[${product.productId}][rawMaterials]"][name$="[quantity]"]`).forEach(input => {
+                    const rawMaterialQuantity = parseFloat(input.value);
+                    if (!isNaN(rawMaterialQuantity)) {
+                        totalRawMaterialQuantity += rawMaterialQuantity;
+                    }
+                });
+
+                if (Math.abs(totalRawMaterialQuantity - productQuantity) > tolerance) {
+                    hasError = true;
+                    errorMessage += `Total raw material quantity does not match the production quantity for product: ${product.productName}<br>`;
+                }
+            });
+
+            if (hasError) {
+                event.preventDefault();
+                const errorDiv = document.getElementById('error-message');
+                errorDiv.innerHTML = errorMessage;
+                errorDiv.style.display = 'block';
+                errorDiv.scrollIntoView({ behavior: 'smooth' });
+            } else {
+                document.getElementById('error-message').style.display = 'none';
+            }
+        });
+
+        // Raw material and packaging requests handling
+        const rawMaterialRequests = {};
+        const packagingRequests = {};
+        const stockUsed = {};
+
+        document.querySelectorAll('.request-raw-material-btn').forEach(button => {
+            button.addEventListener('click', function() {
+                const materialId = this.getAttribute('data-material-id');
+                const materialName = this.getAttribute('data-material-name');
+                const neededQuantity = parseFloat(this.getAttribute('data-quantity'));
+                const currentStock = parseFloat(this.closest('.raw-material-row').getAttribute('data-raw-material-stock'));
+
+                let requestQuantity = neededQuantity;
+                
+                // Only use stock for the first request of each material
+                if (!stockUsed[materialId] && currentStock > 0) {
+                    requestQuantity = Math.max(0, neededQuantity - currentStock);
+                    stockUsed[materialId] = true;
+                    console.log(`Using ${currentStock}KG stock for ${materialName}. Need ${neededQuantity}KG, requesting ${requestQuantity}KG`);
+                } else {
+                    console.log(`No stock available for ${materialName}. Requesting full ${requestQuantity}KG`);
+                }
+
+                if (!rawMaterialRequests[materialId]) {
+                    rawMaterialRequests[materialId] = {
+                        name: materialName,
+                        quantity: requestQuantity,
+                    };
+                } else {
+                    rawMaterialRequests[materialId].quantity += requestQuantity;
+                }
+
+                console.log(`Total request for ${materialName}: ${rawMaterialRequests[materialId].quantity}KG`);
+                
+                this.disabled = true;
+                this.innerHTML = '<i class="bi bi-check-lg"></i> Request Added';
+            });
+        });
+
+        // Handle packaging request buttons
+        document.querySelectorAll('.request-packaging-btn').forEach(button => {
+            button.addEventListener('click', function() {
+                const packagingId = this.getAttribute('data-packaging-id');
+                const packagingName = this.getAttribute('data-packaging-name');
+                const neededQuantity = parseInt(this.getAttribute('data-quantity'));
+                const currentStock = parseInt(this.closest('.raw-material-row').getAttribute('data-packaging-stock'));
+                const requestQuantity = parseInt(this.getAttribute('data-quantity'));
+
+                if (!packagingRequests[packagingId]) {
+                    packagingRequests[packagingId] = {
+                        name: packagingName,
+                        quantity: requestQuantity,
+                    };
+                } else {
+                    packagingRequests[packagingId].quantity += requestQuantity;
+                }
+
+                this.disabled = true;
+                this.innerHTML = '<i class="bi bi-check-lg"></i> Request Added';
+            });
+        });
+
+        // Submit packaging requests
+        document.getElementById('submitPackagingRequests').addEventListener('click', function() {
+            const orderId = document.querySelector('input[name="orderId"]').value;
+            const requests = Object.keys(packagingRequests).map(packagingId => {
+                return fetch('/packaging-request', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        orderId: orderId,
+                        packagingName: packagingRequests[packagingId].name,
+                        quantity: packagingRequests[packagingId].quantity
+                    })
+                });
+            });
+
+            Promise.all(requests)
+                .then(responses => {
+                    if (responses.some(response => !response.ok)) {
+                        throw new Error('Failed to create one or more packaging requests');
+                    }
+                    alert('Packaging requests created successfully!');
+                    this.disabled = true;
+                    this.innerHTML = '<i class="bi bi-check-lg"></i> Requests Submitted';
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('Error creating packaging request.');
+                });
+        });
+
+        // Submit raw material requests
+        document.getElementById('submitRawMaterialRequests').addEventListener('click', function() {
+            const orderId = document.querySelector('input[name="orderId"]').value;
+            const requests = Object.keys(rawMaterialRequests).map(materialId => {
+                const requestData = {
+                    orderId: orderId,
+                    materialName: rawMaterialRequests[materialId].name,
+                    quantity: rawMaterialRequests[materialId].quantity
+                };
+                console.log('Sending request:', requestData);
+                return fetch('/rawMaterial/requestRawMaterial', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(requestData)
+                });
+            });
+
+            console.log('Raw material requests to be sent:', Object.values(rawMaterialRequests));
+            Promise.all(requests)
+                .then(responses => {
+                    // Check if any response is not ok (status not in 200-299 range)
+                    if (responses.some(response => !response.ok)) {
+                        throw new Error('Failed to create one or more raw material requests');
+                    }
+                    // If we get here, all requests were successful
+                    alert('Raw material requests created successfully!');
+                    this.disabled = true;
+                    this.innerHTML = '<i class="bi bi-check-lg"></i> Requests Submitted';
+                })
+                .catch(error => {
+                    console.error('Error details:', error);
+                    alert('Error creating raw material request. Please try again.');
+                });
+        });
+
+        // Production quantity handling
+        document.querySelectorAll('.production-quantity').forEach(input => {
+            input.addEventListener('input', function() {
+                const productId = this.id.split('-')[1];
+                const newQuantity = parseFloat(this.value);
+
+                if (!isNaN(newQuantity)) {
+                    const rawMaterialRows = document.querySelectorAll(`#rawMaterialContainer-${productId} .raw-material-row`);
+
+                    rawMaterialRows.forEach(row => {
+                        const percentage = parseFloat(row.getAttribute('data-raw-material-percentage'));
+                        const currentStock = parseFloat(row.getAttribute('data-raw-material-stock'));
+
+                        if (!isNaN(percentage)) {
+                            const newRawMaterialQuantity = (percentage / 100) * newQuantity;
+                            row.querySelector('.raw-material-quantity').value = newRawMaterialQuantity.toFixed(2);
+
+                            if (newRawMaterialQuantity > currentStock) {
+                                let requestButton = row.querySelector('.request-raw-material-btn');
+                                if (!requestButton) {
+                                    requestButton = document.createElement('button');
+                                    requestButton.type = 'button';
+                                    requestButton.className = 'btn btn-warning request-raw-material-btn';
+                                    requestButton.innerHTML = '<i class="bi bi-plus-circle"></i> Request Raw Material';
+                                    requestButton.setAttribute('data-material-id', row.getAttribute('data-raw-material-id'));
+                                    requestButton.setAttribute('data-material-name', row.querySelector('.raw-material-name').textContent);
+                                    requestButton.setAttribute('data-quantity', newRawMaterialQuantity.toFixed(2));
+                                    row.appendChild(requestButton);
+
+                                    requestButton.addEventListener('click', function() {
+                                        const materialId = this.getAttribute('data-material-id');
+                                        const materialName = this.getAttribute('data-material-name');
+                                        const neededQuantity = parseFloat(this.getAttribute('data-quantity'));
+                                        const currentStock = parseFloat(this.closest('.raw-material-row').getAttribute('data-raw-material-stock'));
+
+                                        let requestQuantity = neededQuantity;
+                                        
+                                        // Only use stock for the first request of each material
+                                        if (!stockUsed[materialId] && currentStock > 0) {
+                                            requestQuantity = Math.max(0, neededQuantity - currentStock);
+                                            stockUsed[materialId] = true;
+                                            console.log(`Using ${currentStock}KG stock for ${materialName}. Need ${neededQuantity}KG, requesting ${requestQuantity}KG`);
+                                        } else {
+                                            console.log(`No stock available for ${materialName}. Requesting full ${requestQuantity}KG`);
+                                        }
+
+                                        if (!rawMaterialRequests[materialId]) {
+                                            rawMaterialRequests[materialId] = {
+                                                name: materialName,
+                                                quantity: requestQuantity,
+                                            };
+                                        } else {
+                                            rawMaterialRequests[materialId].quantity += requestQuantity;
+                                        }
+
+                                        console.log(`Total request for ${materialName}: ${rawMaterialRequests[materialId].quantity}KG`);
+                                        
+                                        this.disabled = true;
+                                        this.innerHTML = '<i class="bi bi-check-lg"></i> Request Added';
+                                    });
+                                }
+                                requestButton.setAttribute('data-quantity', newRawMaterialQuantity.toFixed(2));
+                            } else {
+                                const requestButton = row.querySelector('.request-raw-material-btn');
+                                if (requestButton) {
+                                    requestButton.remove();
+                                }
+                            }
+                        }
+                    });
+                } else {
+                    const rawMaterialRows = document.querySelectorAll(`#rawMaterialContainer-${productId} .raw-material-row`);
+                    rawMaterialRows.forEach(row => {
+                        row.querySelector('.raw-material-quantity').value = '';
+                        const requestButton = row.querySelector('.request-raw-material-btn');
+                        if (requestButton) {
+                            requestButton.remove();
+                        }
+                    });
+                }
+            });
+        });
+    </script>
+</body>
+</html>

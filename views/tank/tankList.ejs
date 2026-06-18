@@ -1,0 +1,386 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tank List</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.7.2/font/bootstrap-icons.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary-color: #1b5e20;
+            --primary-light: #388E3C;
+            --background-light: #f4f6f8;
+            --text-color: #333;
+            --shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            --transition: all 0.3s ease;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--background-light);
+            margin: 0;
+            padding: 0;
+            min-height: 100vh;
+        }
+
+        .main-content {
+            margin-left: 0;
+            padding: 1rem;
+            width: 100%;
+            transition: var(--transition);
+        }
+
+        .page-header {
+            background: white;
+            padding: 1rem;
+            border-radius: 15px;
+            box-shadow: var(--shadow);
+            margin-bottom: 1rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .page-title {
+            margin: 0;
+            color: var(--primary-color);
+            font-weight: 600;
+            font-size: 1.25rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .btn-add {
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 0.5rem 1rem;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            text-decoration: none;
+            transition: var(--transition);
+        }
+
+        .btn-add:hover {
+            background-color: var(--primary-light);
+            transform: translateY(-1px);
+            color: white;
+        }
+
+        .tank-card {
+            background: white;
+            border-radius: 15px;
+            box-shadow: var(--shadow);
+            margin-bottom: 1rem;
+            overflow: hidden;
+            transition: var(--transition);
+        }
+
+        .tank-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        .tank-header {
+            background-color: var(--background-light);
+            padding: 1rem;
+            border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .tank-name {
+            color: var(--primary-color);
+            font-weight: 600;
+            font-size: 1.1rem;
+            margin: 0;
+        }
+
+        .tank-body {
+            padding: 1rem;
+        }
+
+        .tank-info {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .info-item {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .info-label {
+            color: #6c757d;
+            font-size: 0.875rem;
+            margin-bottom: 0.25rem;
+        }
+
+        .info-value {
+            font-weight: 500;
+            color: var(--text-color);
+        }
+
+        .tank-actions {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .btn-action {
+            padding: 0.5rem;
+            border-radius: 8px;
+            border: none;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: var(--transition);
+            text-decoration: none;
+        }
+
+        .btn-edit {
+            background-color: #ffc107;
+            color: #000;
+        }
+
+        .btn-edit:hover {
+            background-color: #ffca2c;
+            color: #000;
+        }
+
+        .btn-delete {
+            background-color: #dc3545;
+            color: white;
+        }
+
+        .btn-delete:hover {
+            background-color: #bb2d3b;
+            color: white;
+        }
+
+        .search-bar {
+            background: white;
+            padding: 1rem;
+            border-radius: 15px;
+            box-shadow: var(--shadow);
+            margin-bottom: 1rem;
+        }
+
+        .search-input {
+            width: 100%;
+            padding: 0.5rem 1rem;
+            border: 1px solid rgba(0, 0, 0, 0.1);
+            border-radius: 8px;
+            font-size: 0.875rem;
+            transition: var(--transition);
+        }
+
+        .search-input:focus {
+            outline: none;
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 2px rgba(27, 94, 32, 0.1);
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 2rem;
+            background: white;
+            border-radius: 15px;
+            box-shadow: var(--shadow);
+        }
+
+        .empty-icon {
+            font-size: 3rem;
+            color: #6c757d;
+            margin-bottom: 1rem;
+        }
+
+        .empty-text {
+            color: #6c757d;
+            margin-bottom: 1rem;
+        }
+
+        @media (min-width: 769px) {
+            .main-content {
+                margin-left: 280px;
+                padding: 2rem;
+                width: calc(100% - 280px);
+            }
+
+            body:has(.sidebar.collapsed) .main-content {
+                margin-left: 70px;
+                width: calc(100% - 70px);
+            }
+        }
+
+        @media (max-width: 768px) {
+            .tank-info {
+                grid-template-columns: 1fr;
+            }
+
+            .page-header {
+                flex-direction: column;
+                gap: 1rem;
+                align-items: stretch;
+            }
+
+            .btn-add {
+                width: 100%;
+                justify-content: center;
+            }
+        }
+    </style>
+</head>
+<body>
+    <%- include('../partials/sidebar', { userRole: userRole }) %>
+
+    <div class="main-content">
+        <div class="page-header">
+            <h1 class="page-title">
+                <i class="bi bi-water"></i>
+                Tank Management
+            </h1>
+            <a href="/tank/add" class="btn-add">
+                <i class="bi bi-plus-lg"></i>
+                Add New Tank
+            </a>
+        </div>
+
+        <div class="search-bar">
+            <input type="text" class="search-input" id="searchTank" placeholder="Search tanks by name...">
+        </div>
+
+        <% if (tanks && tanks.length > 0) { %>
+            <div class="tank-grid">
+                <% tanks.forEach(tank => { %>
+                    <div class="tank-card">
+                        <div class="tank-header">
+                            <h2 class="tank-name"><%= tank.name %></h2>
+                            <div class="tank-actions">
+                                <a href="/tank/edit/<%= tank.id %>" class="btn-action btn-edit" title="Edit Tank">
+                                    <i class="bi bi-pencil"></i>
+                                </a>
+                                <button class="btn-action btn-delete" onclick="deleteTank('<%= tank.id %>')" title="Delete Tank">
+                                    <i class="bi bi-trash"></i>
+                                </button>
+                            </div>
+                        </div>
+                        <div class="tank-body">
+                            <div class="tank-info">
+                                <div class="info-item">
+                                    <span class="info-label">Volume</span>
+                                    <span class="info-value"><%= tank.volume %> L</span>
+                                </div>
+                                <% if (userRole === 'Finance') { %>
+                                <div class="info-item">
+                                    <span class="info-label">Price</span>
+                                    <span class="info-value">Rp <%= tank.price ? tank.price.toLocaleString() : '0' %></span>
+                                </div>
+                                <% } %>
+                            </div>
+                        </div>
+                    </div>
+                <% }); %>
+            </div>
+        <% } else { %>
+            <div class="empty-state">
+                <i class="bi bi-water empty-icon"></i>
+                <p class="empty-text">No tanks found. Add your first tank to get started.</p>
+                <a href="/tank/add" class="btn-add">
+                    <i class="bi bi-plus-lg"></i>
+                    Add New Tank
+                </a>
+            </div>
+        <% } %>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Handle sidebar state changes
+            const sidebar = document.querySelector('.sidebar');
+            const mainContent = document.querySelector('.main-content');
+
+            function updateContentWidth() {
+                if (window.innerWidth > 768) {
+                    if (sidebar.classList.contains('collapsed')) {
+                        mainContent.style.marginLeft = '70px';
+                        mainContent.style.width = 'calc(100% - 70px)';
+                    } else {
+                        mainContent.style.marginLeft = '280px';
+                        mainContent.style.width = 'calc(100% - 280px)';
+                    }
+                } else {
+                    mainContent.style.marginLeft = '0';
+                    mainContent.style.width = '100%';
+                }
+            }
+
+            // Initial width update
+            updateContentWidth();
+
+            // Watch for sidebar class changes
+            const observer = new MutationObserver(function(mutations) {
+                mutations.forEach(function(mutation) {
+                    if (mutation.attributeName === 'class') {
+                        updateContentWidth();
+                    }
+                });
+            });
+
+            observer.observe(sidebar, { attributes: true });
+
+            // Handle window resize
+            window.addEventListener('resize', updateContentWidth);
+
+            // Search functionality
+            const searchInput = document.getElementById('searchTank');
+            const tankCards = document.querySelectorAll('.tank-card');
+
+            searchInput.addEventListener('input', function(e) {
+                const searchTerm = e.target.value.toLowerCase();
+
+                tankCards.forEach(card => {
+                    const tankName = card.querySelector('.tank-name').textContent.toLowerCase();
+                    if (tankName.includes(searchTerm)) {
+                        card.style.display = 'block';
+                    } else {
+                        card.style.display = 'none';
+                    }
+                });
+            });
+        });
+
+        // Delete tank functionality
+        function deleteTank(tankId) {
+            if (confirm('Are you sure you want to delete this tank?')) {
+                fetch(`/tank/delete/${tankId}`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        window.location.reload();
+                    } else {
+                        alert(data.message || 'Failed to delete tank');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('An error occurred while deleting the tank. Please try again.');
+                });
+            }
+        }
+    </script>
+</body>
+</html>

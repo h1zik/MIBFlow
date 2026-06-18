@@ -1,0 +1,419 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quarantined Raw Materials - MIB Flow</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.7.2/font/bootstrap-icons.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary-color: #2e7d32;
+            --primary-light: #4caf50;
+            --primary-dark: #1b5e20;
+            --text-color: #2c3e50;
+            --background-light: #e8f5e9;
+            --shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            --transition: all 0.3s ease;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--background-light);
+            margin: 0;
+            padding: 0;
+            min-height: 100vh;
+        }
+
+        .main-content {
+            margin-left: 280px;
+            padding: 2rem;
+            transition: var(--transition);
+            width: calc(100% - 280px);
+        }
+
+        body.sidebar-collapsed .main-content {
+            margin-left: 70px;
+            width: calc(100% - 70px);
+        }
+
+        .page-header {
+            background: white;
+            padding: 1.5rem;
+            border-radius: 15px;
+            box-shadow: var(--shadow);
+            margin-bottom: 2rem;
+            animation: slideDown 0.5s ease-out;
+        }
+
+        .page-title {
+            margin: 0;
+            color: var(--primary-dark);
+            font-weight: 600;
+            font-size: 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .table-container {
+            background: white;
+            border-radius: 15px;
+            box-shadow: var(--shadow);
+            padding: 1.5rem;
+            animation: fadeIn 0.5s ease-out;
+            margin-bottom: 2rem;
+        }
+
+        .search-box {
+            margin-bottom: 1rem;
+            position: relative;
+        }
+
+        .search-box i {
+            position: absolute;
+            left: 1rem;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #6c757d;
+        }
+
+        .search-input {
+            padding: 0.5rem 1rem 0.5rem 2.5rem;
+            border-radius: 8px;
+            border: 1px solid #ced4da;
+            width: 100%;
+            transition: var(--transition);
+        }
+
+        .search-input:focus {
+            outline: none;
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 0.2rem rgba(46, 125, 50, 0.25);
+        }
+
+        .table {
+            margin: 0;
+        }
+
+        .table thead th {
+            background-color: var(--background-light);
+            color: var(--primary-dark);
+            font-weight: 600;
+            text-transform: uppercase;
+            font-size: 0.75rem;
+            letter-spacing: 0.5px;
+            padding: 1rem;
+            border: none;
+            white-space: nowrap;
+        }
+
+        .table tbody td {
+            padding: 1rem;
+            vertical-align: middle;
+            border-color: rgba(0,0,0,0.05);
+        }
+
+        .table tbody tr {
+            transition: var(--transition);
+        }
+
+        .table tbody tr:hover {
+            background-color: var(--background-light);
+        }
+
+        @keyframes slideDown {
+            from {
+                opacity: 0;
+                transform: translateY(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @media (max-width: 768px) {
+            .main-content {
+                margin-left: 0;
+                padding: 1rem;
+                width: 100%;
+            }
+
+            .page-header {
+                padding: 1rem;
+            }
+
+            .table-container {
+                padding: 1rem;
+            }
+        }
+
+        /* Badge styles */
+        .badge {
+            padding: 0.5rem 1rem;
+            border-radius: 50px;
+            font-weight: 500;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .badge i {
+            font-size: 0.875rem;
+        }
+
+        .badge-pass {
+            background-color: #d1e7dd;
+            color: #0f5132;
+        }
+
+        .badge-fail {
+            background-color: #f8d7da;
+            color: #842029;
+        }
+
+        .badge-pending {
+            background-color: #fff3cd;
+            color: #856404;
+        }
+
+        .badge-danger {
+            background-color: #f8d7da;
+            color: #842029;
+        }
+
+        .badge-success {
+            background-color: #d1e7dd;
+            color: #0f5132;
+        }
+
+        .badge-secondary {
+            background-color: #e2e3e5;
+            color: #383d41;
+        }
+    </style>
+</head>
+<body>
+    <%- include('../partials/sidebar', { userRole: userRole }) %>
+
+    <div class="main-content">
+        <div class="page-header">
+            <h1 class="page-title">
+                <i class="bi bi-exclamation-triangle"></i>
+                Quarantined Raw Materials
+            </h1>
+            <p class="text-muted mb-0">View quarantined raw material requests</p>
+        </div>
+
+        <!-- Quarantined Raw Materials -->
+        <div class="table-container">
+            <div class="search-box">
+                <i class="bi bi-search"></i>
+                <input type="text" class="search-input" id="rawMaterialSearch" placeholder="Search raw materials...">
+            </div>
+            <div class="table-responsive">
+                <table class="table" id="rawMaterialsTable">
+                    <thead>
+                        <tr>
+                            <th>Raw Material</th>
+                            <th>Vendor</th>
+                            <th>Quantity</th>
+                            <th>QC Status</th>
+                            <th>QC Comment</th>
+                            <th>Date</th>
+                            <th>Status</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <% if (quarantinedRawMaterials && quarantinedRawMaterials.length > 0) { %>
+                            <% quarantinedRawMaterials.forEach(material => { %>
+                                <tr>
+                                    <td><%= material.RawMaterialRequest.RawMaterial ? material.RawMaterialRequest.RawMaterial.name : 'N/A' %></td>
+                                    <td><%= material.Vendor ? material.Vendor.name : 'N/A' %></td>
+                                    <td>
+                                        <%= material.rejectQuantity > 0 ? material.rejectQuantity : material.splitQuantity %> Kg
+                                        <% if (material.rejectQuantity > 0) { %>
+                                            <small class="text-danger">(Rejected)</small>
+                                        <% } %>
+                                    </td>
+                                    <td>
+                                        <% if (material.qcStatus === 'Pass') { %>
+                                            <span class="badge badge-pass">
+                                                <i class="bi bi-check-circle"></i>
+                                                Pass
+                                            </span>
+                                        <% } else if (material.qcStatus === 'Fail') { %>
+                                            <span class="badge badge-fail">
+                                                <i class="bi bi-x-circle"></i>
+                                                Fail
+                                            </span>
+                                        <% } else { %>
+                                            <span class="badge badge-pending">
+                                                <i class="bi bi-clock"></i>
+                                                <%= material.qcStatus || 'Pending' %>
+                                            </span>
+                                        <% } %>
+                                    </td>
+                                    <td><%= material.qcComment || '-' %></td>
+                                    <td><%= new Date(material.createdAt).toLocaleDateString('en-US', { 
+                                        year: 'numeric', 
+                                        month: 'short', 
+                                        day: 'numeric' 
+                                    }) %></td>
+                                    <td>
+                                        <% if (material.status === 'Quarantined') { %>
+                                            <span class="badge badge-danger">
+                                                <i class="bi bi-exclamation-triangle"></i>
+                                                Quarantined
+                                            </span>
+                                        <% } else if (material.status === 'Pending') { %>
+                                            <span class="badge badge-pending">
+                                                <i class="bi bi-clock"></i>
+                                                Pending
+                                            </span>
+                                        <% } else if (material.status === 'Completed') { %>
+                                            <span class="badge badge-success">
+                                                <i class="bi bi-check-circle"></i>
+                                                Completed
+                                            </span>
+                                        <% } else { %>
+                                            <span class="badge badge-secondary">
+                                                <i class="bi bi-circle"></i>
+                                                <%= material.status %>
+                                            </span>
+                                        <% } %>
+                                    </td>
+                                    <td>
+                                        <% if (material.status === 'Quarantined') { %>
+                                            <div class="btn-group" role="group">
+                                                <button class="btn btn-danger btn-sm me-2" onclick="handleDestroy('<%= material.id %>')">
+                                                    <i class="bi bi-trash"></i> Destroy
+                                                </button>
+                                                <button class="btn btn-success btn-sm" onclick="handleReuse('<%= material.id %>')">
+                                                    <i class="bi bi-recycle"></i> Reuse
+                                                </button>
+                                            </div>
+                                        <% } %>
+                                    </td>
+                                </tr>
+                            <% }); %>
+                        <% } else { %>
+                            <tr>
+                                <td colspan="7" class="text-center py-4 text-muted">
+                                    <i class="bi bi-inbox fs-4 d-block mb-2"></i>
+                                    No quarantined raw materials found
+                                </td>
+                            </tr>
+                        <% } %>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Function to handle destroy action
+        async function handleDestroy(id) {
+            if (confirm('Are you sure you want to destroy this raw material?')) {
+                try {
+                    const response = await fetch(`/raw-material-quarantine/${id}/destroy`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        }
+                    });
+                    
+                    if (response.ok) {
+                        window.location.reload();
+                    } else {
+                        const data = await response.json();
+                        alert(data.message || 'Error occurred while destroying material');
+                    }
+                } catch (error) {
+                    console.error('Error:', error);
+                    alert('An error occurred while processing your request');
+                }
+            }
+        }
+
+        // Function to handle reuse action
+        async function handleReuse(id) {
+            if (confirm('Are you sure you want to reuse this raw material?')) {
+                try {
+                    const response = await fetch(`/raw-material-quarantine/${id}/reuse`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        }
+                    });
+                    
+                    if (response.ok) {
+                        window.location.reload();
+                    } else {
+                        const data = await response.json();
+                        alert(data.message || 'Error occurred while reusing material');
+                    }
+                } catch (error) {
+                    console.error('Error:', error);
+                    alert('An error occurred while processing your request');
+                }
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', function() {
+            // Handle sidebar state changes
+            const sidebar = document.querySelector('.sidebar');
+            const observer = new MutationObserver(function(mutations) {
+                mutations.forEach(function(mutation) {
+                    if (mutation.attributeName === 'class') {
+                        if (sidebar.classList.contains('collapsed')) {
+                            document.body.classList.add('sidebar-collapsed');
+                        } else {
+                            document.body.classList.remove('sidebar-collapsed');
+                        }
+                    }
+                });
+            });
+            observer.observe(sidebar, { attributes: true });
+
+            // Search functionality
+            document.getElementById('rawMaterialSearch').addEventListener('input', function(e) {
+                const searchText = e.target.value.toLowerCase();
+                const table = document.getElementById('rawMaterialsTable');
+                const rows = table.getElementsByTagName('tr');
+
+                for (let i = 1; i < rows.length; i++) {
+                    const row = rows[i];
+                    if (!row.classList.contains('no-results')) {
+                        const cells = row.getElementsByTagName('td');
+                        let found = false;
+                        for (let cell of cells) {
+                            if (cell.textContent.toLowerCase().includes(searchText)) {
+                                found = true;
+                                break;
+                            }
+                        }
+                        row.style.display = found ? '' : 'none';
+                    }
+                }
+            });
+        });
+    </script>
+</body>
+</html>

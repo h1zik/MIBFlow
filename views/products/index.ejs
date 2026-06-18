@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Products</title>
+</head>
+<body>
+    <h2>Add Product</h2>
+    <form action="/products/addProduct" method="POST">
+        <label for="name">Product Name:</label>
+        <input type="text" name="name" required>
+        <label for="stock">Stock:</label>
+        <input type="number" name="stock" required>
+        <button type="submit">Add Product</button>
+    </form>
+
+    <h2>Add Raw Material</h2>
+    <form action="/products/addRawMaterial" method="POST">
+        <label for="name">Raw Material Name:</label>
+        <input type="text" name="name" required>
+        <label for="stock">Stock:</label>
+        <input type="number" name="stock" required>
+        <button type="submit">Add Raw Material</button>
+    </form>
+</body>
+</html>

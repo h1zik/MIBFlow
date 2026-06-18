@@ -1,0 +1,1307 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Purchase Dashboard - MIB Flow</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.7.2/font/bootstrap-icons.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/css/stylepurchase.css">
+</head>
+<body>
+    <%- include('../partials/sidebar', { userRole: userRole }) %>
+    <div class="main-content">
+        <div class="page-header">
+            <h1 class="page-title">
+                <i class="bi bi-cart-fill"></i>
+                Purchase Dashboard
+            </h1>
+            <p class="text-muted mb-0">Manage raw material requests and vendor assignments</p>
+        </div>
+
+        <!-- Analytics Section -->
+        <div class="row mb-4">
+            <!-- Raw Material Purchases Chart -->
+            <div class="col-md-6">
+                <div class="dashboard-section h-100">
+                    <div class="section-header">
+                        <h2 class="section-title">
+                            <i class="bi bi-pie-chart"></i>
+                            Raw Material Purchases
+                        </h2>
+                        <div class="btn-group">
+                            <button type="button" class="btn btn-sm btn-outline-primary active" data-chart-type="pie">
+                                <i class="bi bi-pie-chart"></i>
+                            </button>
+                            <button type="button" class="btn btn-sm btn-outline-primary" data-chart-type="bar">
+                                <i class="bi bi-bar-chart"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="section-content show">
+                        <div class="chart-container" style="height: 400px;">
+                            <canvas id="rawMaterialChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Top 5 Vendors -->
+            <div class="col-md-6">
+                <div class="dashboard-section h-100">
+                    <div class="section-header">
+                        <h2 class="section-title">
+                            <i class="bi bi-trophy"></i>
+                            Top 5 Vendors
+                        </h2>
+                    </div>
+                    <div class="section-content show">
+                        <div class="list-group list-group-flush">
+                            <% topVendors.forEach((vendor, index) => { %>
+                                <div class="list-group-item d-flex justify-content-between align-items-center">
+                                    <div>
+                                        <span class="badge bg-primary rounded-pill me-2"><%= index + 1 %></span>
+                                        <%= vendor.name %>
+                                    </div>
+                                    <div class="text-end">
+                                        <div class="fw-bold">Rp <%= vendor.totalAmount.toLocaleString() %></div>
+                                        <small class="text-muted"><%= vendor.totalOrders %> orders</small>
+                                    </div>
+                                </div>
+                            <% }); %>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="dashboard-section">
+            <div class="section-header" data-bs-toggle="collapse" data-bs-target="#rawMaterialRequests" aria-expanded="true" aria-controls="rawMaterialRequests">
+                <h2 class="section-title">
+                    <i class="bi bi-box-seam"></i>
+                    Raw Material Requests
+                    <% if (rawMaterialRequests && rawMaterialRequests.length > 0) { %>
+                        <span class="badge rounded-pill bg-danger ms-2"><%= rawMaterialRequests.length %></span>
+                    <% } %>
+                </h2>
+                <i class="bi bi-chevron-down"></i>
+            </div>
+            <div id="rawMaterialRequests" class="collapse section-content">
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>PO Number</th>
+                            <th>Material Name</th>
+                            <th>Quantity</th>
+                            <th>Real Quantity</th>
+                            <th>Vendor Split</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <% if (rawMaterialRequests && rawMaterialRequests.length > 0) { %>
+                            <% rawMaterialRequests.forEach(request => { %>
+                                <tr>
+                                    <td data-label="ID"><%= request.id %></td>
+                                    <td data-label="PO Number"><%= request.ponumber %></td>
+                                    <td data-label="Material Name"><%= request.RawMaterial.name %></td>
+                                    <td data-label="Quantity">
+                                        <%= request.quantity %>
+                                        <select class="unit-selection" data-density="<%= request.RawMaterial.density %>" data-quantity="<%= request.quantity %>">
+                                            <option value="Kg">Kg</option>
+                                            <option value="L">L</option>
+                                        </select>
+                                    </td>
+                                    <td data-label="Real Quantity">
+                                        <% if (request.realQuantity) { %>
+                                            <%= request.realQuantity %> Kg
+                                            <select class="unit-selection-realQuantity" data-density="<%= request.RawMaterial.density %>" data-quantity="<%= request.realQuantity %>">
+                                                <option value="Kg">Kg</option>
+                                                <option value="L">L</option>
+                                            </select>
+                                            <input type="hidden" name="realQuantityHidden" value="<%= request.realQuantity %>">
+                                        <% } else { %>
+                                            <form action="/purchase/setRealQuantity/<%= request.id %>" method="POST" class="d-flex ajax-real-quantity" data-density="<%= request.RawMaterial.density %>" data-request-id="<%= request.id %>">
+                                                <input type="number" name="realQuantity" class="form-control me-2" placeholder="Real Quantity" required>
+                                                <select name="unit" class="form-control me-2" required>
+                                                    <option value="Kg">Kg</option>
+                                                    <option value="L">L</option>
+                                                </select>
+                                                <button type="submit" class="btn btn-success">Submit</button>
+                                            </form>
+                                        <% } %>
+                                    </td>
+                                    <td data-label="Vendor Split">
+                                        <!-- Pre-render vendor-split container; hide if no real quantity or if already assigned -->
+<div id="vendor-split-container-<%= request.id %>" class="vendor-split-container" style="display: <%= request.realQuantity && request.status !== 'Vendor Assigned' ? 'block' : 'none' %>">
+                                            <% if (request.RawMaterial && request.RawMaterial.Vendors && request.RawMaterial.Vendors.length > 0) { %>
+                                                <form action="/rawMaterial/splitQuantity/<%= request.id %>" method="POST" class="ajax-vendor-split">
+                                                    <div id="split-rows-<%= request.id %>">
+                                                        <div class="split-row row">
+                                                            <div class="col-md-4">
+                                                                <select name="vendorIds[]" class="form-control" required>
+                                                                    <% request.RawMaterial.Vendors.forEach(vendor => { %>
+                                                                        <option value="<%= vendor.id %>"><%= vendor.name %></option>
+                                                                    <% }) %>
+                                                                </select>
+                                                            </div>
+                                                            <div class="col-md-3">
+                                                                <input type="number" name="splitQuantities[]" class="form-control" placeholder="Quantity (Kg)" required>
+                                                            </div>
+                                                            <div class="col-md-3">
+                                                                <select name="taxes[]" class="form-control" required>
+                                                                    <option value="PPN 11%">PPN 11%</option>
+                                                                    <option value="PPh 23">PPh 23</option>
+                                                                    <option value="Non Pajak">Non Pajak</option>
+                                                                </select>
+                                                            </div>
+                                                            <div class="col-md-2">
+                                                                <select name="paymentTypes[]" class="form-control" required>
+                                                                    <option value="CBD">CBD</option>
+                                                                    <option value="DP">DP</option>
+                                                                    <option value="TOP15">TOP 15 Days</option>
+                                                                    <option value="TOP30">TOP 30 Days</option>
+                                                                    <option value="TOP45">TOP 45 Days</option>
+                                                                    <option value="TOP60">TOP 60 Days</option>
+                                                                </select>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                    <button type="button" class="btn btn-success mt-3 btn-add-split">Add Vendor</button>
+                                                    <button type="submit" class="btn btn-success mt-3">Submit Vendor Splits</button>
+                                                </form>
+                                            <% } else { %>
+                                                <p>No vendors available for this raw material. Please assign vendors in the <a href="/rawMaterials/rawMaterialStock">raw material list</a>.</p>
+                                            <% } %>
+                                        </div>
+                                        <% if (!request.realQuantity) { %>
+                                            <p id="vendor-split-msg-<%= request.id %>">Submit the real quantity to enable vendor splitting.</p>
+                                        <% } %>
+                                    </td>
+                                </tr>
+                            <% }); %>
+                        <% } else { %>
+                            <tr>
+                                <td colspan="6">No raw material requests found.</td>
+                            </tr>
+                        <% } %>
+                    </tbody>        
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Raw Material Request Vendor Section -->
+        <div class="dashboard-section">
+            <div class="section-header" data-bs-toggle="collapse" data-bs-target="#rawMaterialRequestVendors" aria-expanded="true" aria-controls="rawMaterialRequestVendors">
+                <h2 class="section-title">
+                    <i class="bi bi-box-seam"></i>
+                    Raw Material Request Vendor
+                    <% if (rawMaterialRequestVendors && rawMaterialRequestVendors.length > 0) { %>
+                        <span class="badge rounded-pill bg-danger ms-2"><%= rawMaterialRequestVendors.length %></span>
+                    <% } %>
+                </h2>
+                <i class="bi bi-chevron-down"></i>
+            </div>
+            <div id="rawMaterialRequestVendors" class="collapse section-content">
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>PO Number</th>
+                            <th>Material Name</th>
+                            <th>Vendor</th>
+                            <th>Split Quantity</th>
+                            <th>Tax</th>
+                            <th>Payment Type</th>
+                            <th>Status</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <% if (rawMaterialRequestVendors && rawMaterialRequestVendors.length > 0) { %>
+                            <% rawMaterialRequestVendors.forEach(vendor => { %>
+                                        <tr>
+                                    <td data-label="ID"><%= vendor.id %></td>
+                                    <td data-label="PO Number">
+                                                <div class="d-flex align-items-center">
+                                                    <span id="ponumber-<%= vendor.id %>"><%= vendor.ponumber || 'N/A' %></span>
+                                                    <button class="btn btn-sm btn-link ms-2" onclick="editPoNumber('<%= vendor.id %>')">
+                                                        <i class="bi bi-pencil"></i>
+                                                    </button>
+                                                </div>
+                                                <form id="edit-ponumber-form-<%= vendor.id %>" style="display: none;" 
+                                                      action="/rawMaterial/updatePoNumber/<%= vendor.id %>" method="POST"
+                                                      class="mt-2">
+                                                    <div class="input-group">
+                                                        <input type="text" name="ponumber" class="form-control form-control-sm" 
+                                                               value="<%= vendor.ponumber || '' %>" required>
+                                                        <button type="submit" class="btn btn-sm btn-success">Save</button>
+                                                        <button type="button" class="btn btn-sm btn-secondary" 
+                                                                onclick="cancelEdit('<%= vendor.id %>')">Cancel</button>
+                                                    </div>
+                                                </form>
+                                            </td>
+                                            <td data-label="Material Name"><%= vendor.RawMaterialRequest.materialName %></td>
+                                            <td data-label="Vendor"><%= vendor.Vendor ? vendor.Vendor.name : 'N/A' %></td>
+                                            <td data-label="Split Quantity"><%= vendor.splitQuantity %> Kg</td>
+                                            <td data-label="Tax"><%= vendor.tax %></td>
+                                            <td data-label="Payment Type"><%= vendor.paymentType %></td>
+                                            <td data-label="Status"><%= vendor.status %></td>
+                                            <td data-label="Actions">
+                                            </td>
+                                        </tr>
+                            <% }); %>
+                        <% } else { %>
+                            <tr>
+                                <td colspan="9">No raw material request vendors found.</td>
+                            </tr>
+                        <% } %>
+                    </tbody>        
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Packaging Requests Section -->
+<div class="dashboard-section">
+    <div class="section-header" data-bs-toggle="collapse" data-bs-target="#packagingRequests" aria-expanded="true" aria-controls="packagingRequests">
+      <h2 class="section-title">
+        <i class="bi bi-box2"></i>
+        Packaging Requests
+        <% if (packagingRequests && packagingRequests.length > 0) { %>
+            <span class="badge rounded-pill bg-danger ms-2"><%= packagingRequests.length %></span>
+        <% } %>
+      </h2>
+      <i class="bi bi-chevron-down"></i>
+    </div>
+    <div id="packagingRequests" class="collapse section-content">
+      <div class="table-responsive">
+        <table class="table table-hover">
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>PO Number</th>
+              <th>Packaging Name</th>
+              <th>Quantity</th>
+              <th>Real Quantity</th>
+              <th>Status</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            <% if (packagingRequests && packagingRequests.length > 0) { %>
+              <% packagingRequests.forEach(request => { %>
+                <tr id="packaging-row-<%= request.id %>">
+                  <td data-label="ID"><%= request.id %></td>
+                  <td data-label="PO Number"><%= request.ponumber %></td>
+                  <td data-label="Packaging Name"><%= request.packagingName %></td>
+                  <td data-label="Quantity"><%= request.quantity %> pcs</td>
+                  <td data-label="Real Quantity" id="real-quantity-cell-<%= request.id %>">
+                    <% if (request.realQuantity) { %>
+                      <%= request.realQuantity %> pcs
+                      <input type="hidden" name="realQuantityHidden" value="<%= request.realQuantity %>">
+                    <% } else { %>
+                      <form action="/packaging-request/purchase/setRealQuantity/<%= request.id %>" method="POST" class="d-flex ajax-real-quantity-packaging" data-request-id="<%= request.id %>">
+                        <input type="number" name="realQuantity" class="form-control me-2" placeholder="Real Quantity" required>
+                        <button type="submit" class="btn btn-success ms-2">Submit</button>
+                      </form>
+                    <% } %>
+                  </td>
+                  <td data-label="Status">
+                    <span class="badge badge-<%= request.status === 'Pending' ? 'pending' : 'success' %>">
+                      <i class="bi bi-<%= request.status === 'Pending' ? 'clock' : 'check-circle' %>"></i>
+                      <%= request.status %>
+                    </span>
+                  </td>
+                  <td data-label="Actions">
+                    <!-- Pre-render vendor-split container; hide if no real quantity or if already assigned -->
+<div id="vendor-split-container-<%= request.id %>" class="vendor-split-container" style="display: <%= request.realQuantity && request.status !== 'Vendor Assigned' ? 'block' : 'none' %>">
+                      <% if (request.Packaging && request.Packaging.Vendors && request.Packaging.Vendors.length > 0) { %>
+                        <form action="/packaging-request/purchase/submitSplitQuantities/<%= request.id %>" method="POST" class="ajax-vendor-split-packaging">
+                          <div id="split-rows-<%= request.id %>">
+                            <div class="split-row row">
+                              <div class="col-md-4">
+                                <select name="vendorIds[]" class="form-control" required>
+                                  <% request.Packaging.Vendors.forEach(vendor => { %>
+                                    <option value="<%= vendor.id %>"><%= vendor.name %></option>
+                                  <% }) %>
+                                </select>
+                              </div>
+                              <div class="col-md-3">
+                                <input type="number" name="splitQuantities[]" class="form-control" placeholder="Quantity (pcs)" required>
+                              </div>
+                              <div class="col-md-3">
+                                <select name="taxes[]" class="form-control" required>
+                                  <option value="PPN 11%">PPN 11%</option>
+                                  <option value="PPh 23">PPh 23</option>
+                                  <option value="Non Pajak">Non Pajak</option>
+                                </select>
+                              </div>
+                              <div class="col-md-2">
+                                <select name="paymentTypes[]" class="form-control" required>
+                                  <option value="CBD">CBD</option>
+                                  <option value="DP">DP</option>
+                                  <option value="TOP15">TOP 15 Days</option>
+                                  <option value="TOP30">TOP 30 Days</option>
+                                  <option value="TOP45">TOP 45 Days</option>
+                                  <option value="TOP60">TOP 60 Days</option>
+                                </select>
+                              </div>
+                            </div>
+                          </div>
+                          <button type="button" class="btn btn-success mt-3 btn-add-split">Add Vendor</button>
+                          <button type="submit" class="btn btn-success mt-3">Submit Vendor Splits</button>
+                        </form>
+                      <% } else { %>
+                        <p>No vendors available for this packaging. Please assign vendors in the <a href="/packaging/list">packaging list</a>.</p>
+                      <% } %>
+                    </div>
+                    <% if (!request.realQuantity) { %>
+                        <p id="vendor-split-msg-<%= request.id %>">Submit the real quantity to enable vendor splitting.</p>
+                    <% } %>
+                  </td>
+                </tr>
+              <% }) %>
+            <% } else { %>
+              <tr>
+                <td colspan="6">No packaging requests found.</td>
+              </tr>
+            <% } %>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+  
+        <!-- Packaging Request Vendor Section -->
+        <div class="dashboard-section">
+            <div class="section-header" data-bs-toggle="collapse" data-bs-target="#packagingRequestVendors" aria-expanded="true" aria-controls="packagingRequestVendors">
+                <h2 class="section-title">
+                    <i class="bi bi-box2"></i>
+                    Packaging Request Vendor
+                    <% if (packagingRequestVendors && packagingRequestVendors.length > 0) { %>
+                        <span class="badge rounded-pill bg-danger ms-2"><%= packagingRequestVendors.length %></span>
+                    <% } %>
+                </h2>
+                <i class="bi bi-chevron-down"></i>
+            </div>
+            <div id="packagingRequestVendors" class="collapse section-content">
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>PO Number</th>
+                            <th>Packaging Name</th>
+                            <th>Vendor</th>
+                            <th>Split Quantity</th>
+                            <th>Tax</th>
+                            <th>Payment Type</th>
+                            <th>Status</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <% if (packagingRequestVendors && packagingRequestVendors.length > 0) { %>
+                            <% packagingRequestVendors.forEach(vendor => { %>
+                                <tr>
+                                    <td data-label="ID"><%= vendor.id %></td>
+                                    <td data-label="PO Number">
+                                        <div class="d-flex align-items-center">
+                                            <span id="ponumber-pkg-<%= vendor.id %>"><%= vendor.ponumber || 'N/A' %></span>
+                                            <button class="btn btn-sm btn-link ms-2" onclick="editPoNumber('pkg-<%= vendor.id %>')">
+                                                <i class="bi bi-pencil"></i>
+                                            </button>
+                                        </div>
+                                        <form id="edit-ponumber-form-pkg-<%= vendor.id %>" style="display: none;" 
+                                              action="/packaging-request/purchase/updatePoNumber/<%= vendor.id %>" method="POST"
+                                              class="mt-2">
+                                            <div class="input-group">
+                                                <input type="text" name="ponumber" class="form-control form-control-sm" 
+                                                       value="<%= vendor.ponumber || '' %>" required>
+                                                <button type="submit" class="btn btn-sm btn-success">Save</button>
+                                                <button type="button" class="btn btn-sm btn-secondary" 
+                                                        onclick="cancelEdit('pkg-<%= vendor.id %>')">Cancel</button>
+                                            </div>
+                                        </form>
+                                    </td>
+                                    <td data-label="Packaging Name"><%= vendor.PackagingRequest.packagingName %></td>
+                                    <td data-label="Vendor"><%= vendor.Vendor ? vendor.Vendor.name : 'N/A' %></td>
+                                    <td data-label="Split Quantity"><%= vendor.splitQuantity %> pcs</td>
+                                    <td data-label="Tax"><%= vendor.tax %></td>
+                                    <td data-label="Payment Type"><%= vendor.paymentType %></td>
+                                    <td data-label="Status"><%= vendor.status %></td>
+                                    <td data-label="Actions">
+                                        <!-- No action needed for vendor status -->
+                                    </td>
+                                </tr>
+                            <% }); %>
+                        <% } else { %>
+                            <tr>
+                                <td colspan="9">No packaging request vendors found.</td>
+                            </tr>
+                        <% } %>
+                    </tbody>        
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Failed Packaging Requests Section -->
+        <div class="dashboard-section">
+            <div class="section-header" data-bs-toggle="collapse" data-bs-target="#failedPackagingRequests" aria-expanded="false" aria-controls="failedPackagingRequests">
+                <h2 class="section-title">
+                    <i class="bi bi-exclamation-triangle"></i>
+                    Failed Packaging Requests
+                    <% if (failedPackagingRequests && failedPackagingRequests.length > 0) { %>
+                        <span class="badge rounded-pill bg-danger ms-2"><%= failedPackagingRequests.length %></span>
+                    <% } %>
+                </h2>
+                <i class="bi bi-chevron-down"></i>
+            </div>
+            <div id="failedPackagingRequests" class="collapse section-content">
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>PO Number</th>
+                            <th>Packaging Name</th>
+                            <th>Vendor</th>
+                            <th>Quantity</th>
+                            <th>Status</th>
+                            <th>QC Comment</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <% if (failedPackagingRequests && failedPackagingRequests.length > 0) { %>
+                            <% failedPackagingRequests.forEach(requestVendor => { %>
+                                <tr>
+                                    <td data-label="ID"><%= requestVendor.id %></td>
+                                    <td data-label="PO Number"><%= requestVendor.ponumber %></td>
+                                    <td data-label="Packaging Name"><%= requestVendor.PackagingRequest.Packaging.name %></td>
+                                    <td data-label="Vendor"><%= requestVendor.Vendor.name %></td>
+                                    <td data-label="Quantity"><%= requestVendor.rejectQuantity > 0 ? requestVendor.rejectQuantity : requestVendor.splitQuantity %> pcs</td>
+                                    <td data-label="Status"><%= requestVendor.status %></td>
+                                    <td data-label="QC Comment">
+                                        <% if (requestVendor.qcComment) { %>
+                                            <%= requestVendor.qcComment %>
+                                        <% } %>
+                                        <% if (requestVendor.rejectComment) { %>
+                                            <div class="text-danger mt-1">
+                                                <strong>Reject Reason:</strong> <%= requestVendor.rejectComment %>
+                                            </div>
+                                            <% if (requestVendor.rejectQuantity) { %>
+                                                <div class="text-danger">
+                                                    <strong>Reject Quantity:</strong> <%= requestVendor.rejectQuantity %> pcs
+                                                </div>
+                                            <% } %>
+                                        <% } %>
+                                    </td>
+                                    <td data-label="Actions">
+                                        <% if (!requestVendor.status || requestVendor.status !== 'No Return') { %>
+                                            <form action="/packaging-request/vendor/<%= requestVendor.id %>/return" method="POST" style="display: inline;">
+                                                <button type="submit" class="btn btn-success">Return</button>
+                                            </form>
+                                            <form action="/packaging-request/vendor/<%= requestVendor.id %>/no-return" method="POST" style="display: inline;">
+                                                <button type="submit" class="btn btn-danger">No Return</button>
+                                            </form>
+                                        <% } else { %>
+                                            <span class="badge badge-danger">No Return</span>
+                                        <% } %>
+                                    </td>
+                                </tr>
+                            <% }) %>
+                        <% } else { %>
+                            <tr>
+                                <td colspan="7">No failed packaging requests found.</td>
+                            </tr>
+                        <% } %>
+                    </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Failed Raw Material Requests Section -->
+        <div class="dashboard-section">
+            <div class="section-header" data-bs-toggle="collapse" data-bs-target="#failedRequests" aria-expanded="false" aria-controls="failedRequests">
+                <h2 class="section-title">
+                    <i class="bi bi-exclamation-triangle"></i>
+                    Failed Raw Material Requests
+                    <% if (failedRawMaterialRequestsVendors && failedRawMaterialRequestsVendors.length > 0) { %>
+                        <span class="badge rounded-pill bg-danger ms-2"><%= failedRawMaterialRequestsVendors.length %></span>
+                    <% } %>
+                </h2>
+                <i class="bi bi-chevron-down"></i>
+            </div>
+            <div id="failedRequests" class="collapse section-content">
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>PO Number</th>
+                            <th>Material Name</th>
+                            <th>Vendor</th>
+                            <th>Quantity</th>
+                            <th>Status</th>
+                            <th>QC Comment</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <% if (failedRawMaterialRequestsVendors && failedRawMaterialRequestsVendors.length > 0) { %>
+                            <% failedRawMaterialRequestsVendors.forEach(function(requestVendor) { %>
+                                <tr>
+                                    <td data-label="ID"><%= requestVendor.id %></td>
+                                    <td data-label="PO Number"><%= requestVendor.ponumber %></td>
+                                    <td data-label="Material Name"><%= requestVendor.RawMaterialRequest.materialName %></td>
+                                    <td data-label="Vendor"><%= requestVendor.Vendor.name %></td>
+                                    <td data-label="Quantity"><%= requestVendor.rejectQuantity > 0 ? requestVendor.rejectQuantity : requestVendor.splitQuantity %></td>
+                                    <td data-label="Status"><%= requestVendor.status %></td>
+                                    <td data-label="QC Comment">
+                                        <% if (requestVendor.qcComment) { %>
+                                            <%= requestVendor.qcComment %>
+                                        <% } %>
+                                        <% if (requestVendor.rejectComment) { %>
+                                            <div class="text-danger mt-1">
+                                                <strong>Reject Reason:</strong> <%= requestVendor.rejectComment %>
+                                            </div>
+                                            <% if (requestVendor.rejectQuantity) { %>
+                                                <div class="text-danger">
+                                                    <strong>Reject Quantity:</strong> <%= requestVendor.rejectQuantity %> Kg
+                                                </div>
+                                            <% } %>
+                                        <% } %>
+                                    </td>
+                                    <td data-label="Actions">
+                                        <% if (!requestVendor.status || requestVendor.status !== 'No Return') { %>
+                                            <form action="/purchase/returnMaterial/<%= requestVendor.id %>" method="POST" style="display: inline;">
+                                                <button type="submit" class="btn btn-success">Return</button>
+                                            </form>
+                                            <form action="/purchase/noReturnMaterial/<%= requestVendor.id %>" method="POST" style="display: inline;">
+                                                <button type="submit" class="btn btn-danger">No Return</button>
+                                            </form>
+                                        <% } else { %>
+                                            <span class="badge badge-danger">No Return</span>
+                                        <% } %>
+                                    </td>
+                                </tr>
+                            <% }); %>
+                        <% } else { %>
+                            <tr>
+                                <td colspan="7">No failed raw material requests found.</td>
+                            </tr>
+                        <% } %>
+                    </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script></script>
+    <script>
+        // Check if jQuery is loaded
+        if (typeof jQuery === 'undefined') {
+            console.error('jQuery is not loaded!');
+        } else {
+            console.log('jQuery is loaded, version:', jQuery.fn.jquery);
+        }
+
+        // Set up SSE for notifications
+        const evtSource = new EventSource('/notifications');
+        const audio = new Audio('/audio/purchase.mp3');
+
+        evtSource.onmessage = function(event) {
+            const data = JSON.parse(event.data);
+            
+            if (data.type === 'newRawMaterialRequest') {
+                // Show notification for new raw material request
+                const notification = `New raw material request: ${data.materialName} (${data.quantity} Kg)`;
+                showNotification(notification);
+                
+                // Play audio if specified
+                if (data.audio) {
+                    audio.play();
+                }
+            } else if (data.type === 'newPackagingRequest') {
+                // Show notification for new packaging request
+                const notification = `New packaging request: ${data.packagingName} (${data.quantity} pcs)`;
+                showNotification(notification);
+                
+                // Play audio if specified
+                if (data.audio) {
+                    audio.play();
+                }
+            } else if (data.type === 'newIndividualPackagingRequest') {
+                // Show notification for new individual packaging request
+                const notification = `New packaging request: ${data.packagingName} (${data.quantity} pcs)`;
+                showNotification(notification);
+                
+                // Play audio if specified
+                if (data.audio) {
+                    audio.play();
+                }
+            } else if (data.type === 'newIndividualRawMaterialRequest') {
+                // Show notification for new individual packaging request
+                const notification = `New raw material request request: ${data.materialName} (${data.quantity} pcs)`;
+                showNotification(notification);
+                
+                // Play audio if specified
+                if (data.audio) {
+                    audio.play();
+                }
+            } else if (data.type === 'qcFailRawMaterial') {
+                // Show notification for QC failed raw material
+                const notification = `QC Failed: ${data.materialName} (${data.status})`;
+                showNotification(notification);
+                
+                // Play audio if specified
+                if (data.audio) {
+                    audio.play();
+                }
+            } else if (data.type === 'qcFailPackaging') {
+                // Show notification for QC failed Packaging
+                const notification = `QC Failed: ${data.packagingName} (${data.status})`;
+                showNotification(notification);
+                
+                // Play audio if specified
+                if (data.audio) {
+                    audio.play();
+                }
+            } else if (data.type === 'qcRejectSebagianRawMaterial') {
+                // Show notification for QC failed raw material
+                const notification = `QC Failed: ${data.materialName} (${data.status})`;
+                showNotification(notification);
+                
+                // Play audio if specified
+                if (data.audio) {
+                    audio.play();
+                }
+            } 
+        };
+
+        function showNotification(message) {
+            const notificationDiv = document.createElement('div');
+            notificationDiv.className = 'alert alert-info alert-dismissible fade show';
+            notificationDiv.style.position = 'fixed';
+            notificationDiv.style.top = '20px';
+            notificationDiv.style.right = '20px';
+            notificationDiv.style.zIndex = '9999';
+            notificationDiv.innerHTML = `
+                ${message}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            `;
+            document.body.appendChild(notificationDiv);
+
+            // Auto-remove after 5 seconds
+            setTimeout(() => {
+                notificationDiv.remove();
+            }, 5000);
+        }
+
+        // Add global error handler
+        window.onerror = function(msg, url, line) {
+            console.error('JavaScript error:', msg);
+            console.error('URL:', url);
+            console.error('Line:', line);
+        };
+
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('DOM Content Loaded');
+            const rawMaterialLabels = JSON.parse('<%- JSON.stringify(rawMaterialLabels) %>');
+            const rawMaterialData = JSON.parse('<%- JSON.stringify(rawMaterialData) %>');
+            const colors = [
+                '#4CAF50', '#2196F3', '#FFC107', '#9C27B0', 
+                '#FF5722', '#795548', '#607D8B'
+            ];
+            let currentChart = null;
+
+            function createChart(type) {
+                // Get the container and ensure it's visible
+                const container = document.querySelector('.chart-container');
+                if (!container.offsetParent) {
+                    container.style.display = 'block';
+                }
+
+                // Get the canvas and clear any existing chart
+                const canvas = document.getElementById('rawMaterialChart');
+                const ctx = canvas.getContext('2d');
+
+                if (currentChart) {
+                    currentChart.destroy();
+                    currentChart = null;
+                }
+
+                // Force a reflow to ensure the canvas is ready
+                void canvas.offsetWidth;
+
+                // Format data for better display
+                const formattedData = rawMaterialData.map(value => parseFloat(value).toFixed(2));
+
+                // Create the new chart
+                currentChart = new Chart(ctx, {
+                    type: type,
+                    data: {
+                        labels: rawMaterialLabels,
+                        datasets: [{
+                            data: formattedData,
+                            backgroundColor: type === 'pie' ? colors : colors.map(color => `${color}CC`),
+                            borderColor: type === 'pie' ? '#ffffff' : colors,
+                            borderWidth: type === 'pie' ? 2 : 1,
+                            maxBarThickness: 50,
+                            label: 'Quantity (Kg)',
+                            hoverBackgroundColor: colors,
+                            hoverBorderColor: type === 'pie' ? '#ffffff' : colors,
+                            hoverBorderWidth: 2
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        animation: {
+                            duration: 750,
+                            easing: 'easeInOutQuart'
+                        },
+                        plugins: {
+                            legend: {
+                                display: type === 'pie',
+                                position: window.innerWidth > 768 ? 'right' : 'bottom',
+                                labels: {
+                                    boxWidth: 12,
+                                    padding: 15,
+                                    font: {
+                                        size: 11,
+                                        weight: 500
+                                    },
+                                    generateLabels: function(chart) {
+                                        const data = chart.data;
+                                        if (data.labels.length && data.datasets.length) {
+                                            return data.labels.map((label, i) => {
+                                                const value = data.datasets[0].data[i];
+                                                return {
+                                                    text: `${label}: ${value} Kg`,
+                                                    fillStyle: colors[i],
+                                                    strokeStyle: '#ffffff',
+                                                    lineWidth: 2,
+                                                    hidden: false,
+                                                    index: i
+                                                };
+                                            });
+                                        }
+                                        return [];
+                                    }
+                                }
+                            },
+                            tooltip: {
+                                callbacks: {
+                                    label: function(context) {
+                                        const label = context.label || '';
+                                        const value = context.raw || 0;
+                                        return `${label}: ${value} Kg`;
+                                    }
+                                }
+                            }
+                        },
+                        ...(type === 'pie' ? {
+                            cutout: '60%',
+                            radius: '90%'
+                        } : {
+                            scales: {
+                                y: {
+                                    beginAtZero: true,
+                                    grid: {
+                                        display: true,
+                                        drawBorder: false,
+                                        color: 'rgba(0,0,0,0.1)'
+                                    },
+                                    ticks: {
+                                        font: {
+                                            size: 11,
+                                            weight: 500
+                                        },
+                                        callback: function(value) {
+                                            return value + ' Kg';
+                                        }
+                                    },
+                                    title: {
+                                        display: true,
+                                        text: 'Quantity (Kg)',
+                                        font: {
+                                            size: 12,
+                                            weight: 600
+                                        }
+                                    }
+                                },
+                                x: {
+                                    grid: {
+                                        display: false
+                                    },
+                                    ticks: {
+                                        font: {
+                                            size: 11,
+                                            weight: 500
+                                        },
+                                        maxRotation: 45,
+                                        minRotation: 45
+                                    }
+                                }
+                            }
+                        })
+                    }
+                });
+            }
+
+            // Make sure analytics sections are open by default
+            const analyticsSection = document.querySelector('.analytics-section');
+            if (analyticsSection) {
+                const contents = analyticsSection.querySelectorAll('.section-content');
+                contents.forEach(content => {
+                    content.classList.add('show');
+                });
+            }
+
+            // Initialize chart after ensuring container is visible
+            setTimeout(() => {
+                createChart('pie');
+            }, 0);
+
+            // Handle chart type toggle
+            document.querySelectorAll('[data-chart-type]').forEach(button => {
+                button.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    
+                    if (this.classList.contains('active')) return;
+                    
+                    document.querySelectorAll('[data-chart-type]').forEach(btn => {
+                        btn.classList.remove('active');
+                    });
+                    this.classList.add('active');
+                    
+                    requestAnimationFrame(() => {
+                        createChart(this.dataset.chartType);
+                    });
+                });
+            });
+
+            // Handle responsive legend position
+            window.addEventListener('resize', () => {
+                if (currentChart) {
+                    currentChart.options.plugins.legend.position = window.innerWidth > 768 ? 'right' : 'bottom';
+                    currentChart.update();
+                }
+            });
+
+    // Remove any existing event handlers
+    $(document).off('click', '.btn-add-split, .remove-split');
+
+    // Add new vendor split row - single handler for both raw material and packaging
+    $(document).on('click', '.btn-add-split', function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        
+        const form = $(this).closest('form');
+        const requestId = form.attr('action').split('/').pop();
+        const container = form.find(`#split-rows-${requestId}`);
+        
+        // Clone the first row
+        const newRow = container.find('.split-row').first().clone();
+        
+        // Clear input values and reset selects
+        newRow.find('input').val('');
+        newRow.find('select').prop('selectedIndex', 0);
+        
+        // Add a remove button
+        const removeBtn = $('<button type="button" class="btn btn-danger btn-sm mt-2 remove-split">Remove</button>');
+        newRow.append(removeBtn);
+        
+        // Append the new row
+        container.append(newRow);
+    });
+
+    // Remove vendor split row
+    $(document).on('click', '.remove-split', function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        
+        const splitRow = $(this).closest('.split-row');
+        const container = splitRow.parent();
+        
+        // Only remove if there's more than one row
+        if (container.find('.split-row').length > 1) {
+            splitRow.remove();
+        }
+    });
+    
+            // Form submission handler to validate the total quantity
+            $(document).on('submit', 'form[action^="/rawMaterial/splitQuantity"], form[action^="/packaging-request/purchase/submitSplitQuantities"]', function(e) {
+                const splitQuantities = $(this).find('input[name="splitQuantities[]"]').map(function() {
+                    const value = parseFloat($(this).val());
+                    return isNaN(value) ? 0 : value;
+                }).get();
+    
+                const totalQuantity = splitQuantities.reduce((sum, qty) => sum + qty, 0);
+                const realQuantity = parseFloat($(this).closest('tr').find('input[name="realQuantityHidden"]').val());
+    
+                if (totalQuantity !== realQuantity) {
+                    alert('The total split quantity must equal the real quantity.');
+                    e.preventDefault();
+                }
+            });
+    
+            // Adjust real quantity based on unit and density
+            $(document).on('submit', '.real-quantity-form', function(e) {
+                const form = $(this);
+                const unit = form.find('select[name="unit"]').val();
+                const realQuantityInput = form.find('input[name="realQuantity"]');
+                const density = parseFloat(form.data('density'));
+    
+                if (unit === 'L' && density) {
+                    const quantityInLiters = parseFloat(realQuantityInput.val());
+                    const quantityInKg = quantityInLiters * density;
+                    realQuantityInput.val(quantityInKg.toFixed(2)); // Convert to Kg and update the input
+                }
+            });
+    
+            // Adjust displayed quantity based on unit selection
+            $(document).on('change', '.unit-selection', function() {
+                const density = parseFloat($(this).data('density'));
+                const originalQuantity = parseFloat($(this).data('quantity'));
+                const quantityCell = $(this).closest('td');
+    
+                if ($(this).val() === 'L') {
+                    const newQuantity = originalQuantity / density;
+                    quantityCell.html(`${newQuantity.toFixed(2)} L`);
+                } else {
+                    quantityCell.html(`${originalQuantity} Kg`);
+                }
+    
+                // Re-append the unit selection dropdown
+                quantityCell.append($(this));
+            });
+    
+            $(document).on('change', '.unit-selection-realQuantity', function() {
+                const density = parseFloat($(this).data('density'));
+                const originalQuantity = parseFloat($(this).data('quantity'));
+                const quantityCell = $(this).closest('td');
+                let newQuantity;
+    
+                if ($(this).val() === 'L') {
+                    newQuantity = originalQuantity / density;
+                    quantityCell.html(`${newQuantity.toFixed(2)} L`);
+                } else {
+                    newQuantity = originalQuantity;
+                    quantityCell.html(`${newQuantity} Kg`);
+                }
+    
+                // Update the hidden input value for real quantity
+                const hiddenInput = quantityCell.find('input[name="realQuantityHidden"]');
+                if (hiddenInput.length > 0) {
+                    hiddenInput.val(originalQuantity.toFixed(2)); // Always store in Kg
+                } else {
+                    quantityCell.append(`<input type="hidden" name="realQuantityHidden" value="${originalQuantity.toFixed(2)}">`);
+                }
+    
+                // Re-append the unit selection dropdown
+                quantityCell.append($(this));
+            });
+    
+            // Handle sidebar state changes
+            const sidebar = document.querySelector('.sidebar');
+            if (sidebar) {
+                const observer = new MutationObserver(function(mutations) {
+                    mutations.forEach(function(mutation) {
+                        if (mutation.attributeName === 'class') {
+                            if (sidebar.classList.contains('collapsed')) {
+                                document.body.classList.add('sidebar-collapsed');
+                            } else {
+                                document.body.classList.remove('sidebar-collapsed');
+                            }
+                        }
+                    });
+                });
+                observer.observe(sidebar, { attributes: true });
+            }
+
+            // Initialize collapsible sections
+            const sections = document.querySelectorAll('.dashboard-section');
+            sections.forEach(section => {
+                const content = section.querySelector('.section-content');
+                const icon = section.querySelector('.bi-chevron-down');
+
+                // Set initial state
+                if (content.classList.contains('show')) {
+                    icon.style.transform = 'rotate(180deg)';
+                }
+
+                // Use Bootstrap's collapse events
+                content.addEventListener('show.bs.collapse', () => {
+                    icon.style.transform = 'rotate(180deg)';
+                });
+
+                content.addEventListener('hide.bs.collapse', () => {
+                    icon.style.transform = 'rotate(0)';
+                });
+            });
+
+            // Form submissions
+            document.querySelectorAll('form').forEach(form => {
+                form.addEventListener('submit', function(e) {
+                    const submitBtn = this.querySelector('button[type="submit"]');
+                    if (submitBtn) {
+                        submitBtn.classList.add('loading');
+                        submitBtn.disabled = true;
+                    }
+                });
+            });
+
+        });
+
+        // PO Number edit functions
+        window.editPoNumber = function(id) {
+            document.getElementById(`ponumber-${id}`).style.display = 'none';
+            document.getElementById(`edit-ponumber-form-${id}`).style.display = 'block';
+        }
+
+        window.cancelEdit = function(id) {
+            document.getElementById(`ponumber-${id}`).style.display = 'inline';
+            document.getElementById(`edit-ponumber-form-${id}`).style.display = 'none';
+        }
+    </script>
+<script>
+
+    // Submit real quantity AJAX handler for raw materials
+    $(document).ready(function() {
+        // Remove any existing event handlers to prevent duplicates
+        $(document).off('submit', '.ajax-real-quantity');
+        $(document).off('submit', '.ajax-vendor-split');
+        $(document).off('submit', '.ajax-real-quantity-packaging');
+        $(document).off('submit', '.ajax-vendor-split-packaging');
+
+        // Prevent duplicate submissions for vendor split forms
+        let isSubmittingVendorSplit = false;
+
+        // Submit real quantity AJAX handler for raw materials
+        $(document).on('submit', '.ajax-real-quantity', function(e) {
+            e.preventDefault();
+            const form = $(this);
+            const url = form.attr('action');
+            const requestId = form.data('request-id');
+            const density = form.data('density');
+
+            $.ajax({
+                url: url,
+                type: 'POST',
+                data: form.serialize(),
+                success: function(response) {
+                    // Update the real quantity cell
+                    const realQuantityCell = form.closest('td');
+                    const realQuantity = form.find('input[name="realQuantity"]').val();
+                    const unit = form.find('select[name="unit"]').val();
+                    
+                    realQuantityCell.html(`
+                        ${realQuantity} ${unit}
+                        <select class="unit-selection-realQuantity" data-density="${density}" data-quantity="${realQuantity}">
+                            <option value="Kg">Kg</option>
+                            <option value="L">L</option>
+                        </select>
+                        <input type="hidden" name="realQuantityHidden" value="${realQuantity}">
+                    `);
+
+                    // Show vendor split container and hide the message
+                    $(`#vendor-split-container-${requestId}`).show();
+                    $(`#vendor-split-msg-${requestId}`).hide();
+                },
+                error: function(xhr, status, error) {
+                    alert('Error setting real quantity: ' + error);
+                }
+            });
+        });
+
+        // Submit vendor split AJAX handler for raw materials
+        $(document).on('submit', '.ajax-vendor-split', function(e) {
+            e.preventDefault();
+            
+            if (isSubmittingVendorSplit) {
+                return false;
+            }
+            
+            isSubmittingVendorSplit = true;
+            const form = $(this);
+            const url = form.attr('action');
+
+            // Validate total quantity before submitting
+            const splitQuantities = form.find('input[name="splitQuantities[]"]').map(function() {
+                return parseFloat($(this).val()) || 0;
+            }).get();
+            
+            const totalSplit = splitQuantities.reduce((a, b) => a + b, 0);
+            const realQuantity = parseFloat(form.closest('tr').find('input[name="realQuantityHidden"]').val());
+
+            if (Math.abs(totalSplit - realQuantity) > 0.01) {
+                alert('Total split quantity must equal the real quantity');
+                isSubmittingVendorSplit = false;
+                return false;
+            }
+
+            $.ajax({
+                url: url,
+                type: 'POST',
+                data: form.serialize(),
+                success: function(response) {
+                    // Hide the vendor split form and show success message
+                    form.hide();
+                    form.after('<span class="text-success">Vendor Split Submitted</span>');
+                },
+                error: function(xhr, status, error) {
+                    alert('Error submitting vendor split: ' + error);
+                },
+                complete: function() {
+                    isSubmittingVendorSplit = false;
+                }
+            });
+        });
+
+        // Submit real quantity AJAX handler for packaging
+        $(document).on('submit', '.ajax-real-quantity-packaging', function(e) {
+            e.preventDefault();
+            const form = $(this);
+            const url = form.attr('action');
+            const requestId = form.data('request-id');
+
+            $.ajax({
+                url: url,
+                type: 'POST',
+                data: form.serialize(),
+                success: function(response) {
+                    // Update the real quantity cell
+                    const realQuantityCell = form.closest('td');
+                    const realQuantity = form.find('input[name="realQuantity"]').val();
+                    
+                    realQuantityCell.html(`${realQuantity} pcs`);
+
+                    // Show vendor split container and hide the message
+                    $(`#vendor-split-container-${requestId}`).show();
+                    $(`#vendor-split-msg-${requestId}`).hide();
+                },
+                error: function(xhr, status, error) {
+                    alert('Error setting real quantity: ' + error);
+                }
+            });
+        });
+
+        // Submit vendor split AJAX handler for packaging
+        $(document).on('submit', '.ajax-vendor-split-packaging', function(e) {
+            e.preventDefault();
+            
+            if (isSubmittingVendorSplit) {
+                return false;
+            }
+            
+            isSubmittingVendorSplit = true;
+            const form = $(this);
+            const url = form.attr('action');
+
+            $.ajax({
+                url: url,
+                type: 'POST',
+                data: form.serialize(),
+                success: function(response) {
+                    // Hide the vendor split form and show success message
+                    form.hide();
+                    form.after('<span class="text-success">Vendor Split Submitted</span>');
+                },
+                error: function(xhr, status, error) {
+                    alert('Error submitting vendor split: ' + error);
+                },
+                complete: function() {
+                    isSubmittingVendorSplit = false;
+                }
+            });
+        });
+
+        // Add split row button handler
+        $(document).on('click', '.btn-add-split', function() {
+            const container = $(this).closest('form').find('.split-rows');
+            const newRow = container.find('.split-row').first().clone();
+            newRow.find('input').val('');
+            container.append(newRow);
+        });
+
+        // Remove split row button handler
+        $(document).on('click', '.btn-remove-split', function() {
+            const container = $(this).closest('form').find('.split-rows');
+            if (container.find('.split-row').length > 1) {
+                $(this).closest('.split-row').remove();
+            }
+        });
+    });
+
+    // Add handlers for Return and No Return buttons in failed requests
+    $(document).off('submit', '.failed-request-return-form, .failed-request-no-return-form');
+
+    // Handle Return button click for failed requests
+    $(document).on('submit', '.failed-request-return-form', function(e) {
+        e.preventDefault();
+        const form = $(this);
+        const url = form.attr('action');
+        
+        $.ajax({
+            url: url,
+            type: 'POST',
+            data: form.serialize(),
+            success: function(response) {
+                if (response.success) {
+                    // Remove the entire row from the failed requests table
+                    form.closest('tr').fadeOut(400, function() {
+                        $(this).remove();
+                    });
+                } else {
+                    alert('Failed to process return. Please try again.');
+                }
+            },
+            error: function(xhr, status, error) {
+                alert('An error occurred. Please try again.');
+            }
+        });
+    });
+
+    // Handle No Return button click for failed requests
+    $(document).on('submit', '.failed-request-no-return-form', function(e) {
+        e.preventDefault();
+        const form = $(this);
+        const url = form.attr('action');
+        
+        $.ajax({
+            url: url,
+            type: 'POST',
+            data: form.serialize(),
+            success: function(response) {
+                if (response.success) {
+                    // Remove the entire row from the failed requests table
+                    form.closest('tr').fadeOut(400, function() {
+                        $(this).remove();
+                    });
+                } else {
+                    alert('Failed to process no-return. Please try again.');
+                }
+            },
+            error: function(xhr, status, error) {
+                alert('An error occurred. Please try again.');
+            }
+        });
+    });
+</script>
+</body>
+    <%- include('../partials/chat', { users: users, userRole: userRole, userId: userId }) %>
+</html>

@@ -1,0 +1,450 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Assign Vendor</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.7.2/font/bootstrap-icons.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary-color: #1b5e20;
+            --primary-light: #388E3C;
+            --background-light: #f4f6f8;
+            --text-color: #333;
+            --shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            --transition: all 0.3s ease;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--background-light);
+            margin: 0;
+            padding: 0;
+            min-height: 100vh;
+        }
+
+        .main-content {
+            margin-left: 0;
+            padding: 1rem;
+            width: 100%;
+            transition: var(--transition);
+        }
+
+        .page-header {
+            background: white;
+            padding: 1rem;
+            border-radius: 15px;
+            box-shadow: var(--shadow);
+            margin-bottom: 1rem;
+        }
+
+        .page-title {
+            margin: 0;
+            color: var(--primary-color);
+            font-weight: 600;
+            font-size: 1.25rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .page-subtitle {
+            color: #6c757d;
+            font-size: 0.875rem;
+            margin-top: 0.5rem;
+        }
+
+        .card {
+            background: white;
+            border-radius: 15px;
+            box-shadow: var(--shadow);
+            margin-bottom: 1rem;
+            border: none;
+            overflow: hidden;
+        }
+
+        .card-header {
+            background-color: var(--background-light);
+            padding: 1rem;
+            border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+        }
+
+        .card-title {
+            color: var(--primary-color);
+            font-weight: 600;
+            font-size: 1rem;
+            margin: 0;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .card-body {
+            padding: 1rem;
+        }
+
+        .form-group {
+            margin-bottom: 1rem;
+        }
+
+        .form-label {
+            font-weight: 600;
+            color: var(--primary-color);
+            margin-bottom: 0.5rem;
+            font-size: 0.875rem;
+        }
+
+        .form-select {
+            border-radius: 8px;
+            padding: 0.75rem 1rem;
+            border: 1px solid rgba(0, 0, 0, 0.1);
+            font-size: 0.875rem;
+            transition: var(--transition);
+        }
+
+        .form-select:focus {
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 0.2rem rgba(27, 94, 32, 0.25);
+        }
+
+        .vendor-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        .vendor-item {
+            background-color: var(--background-light);
+            border-radius: 8px;
+            padding: 1rem;
+            margin-bottom: 0.5rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: var(--transition);
+        }
+
+        .vendor-item:hover {
+            transform: translateY(-1px);
+            box-shadow: var(--shadow);
+        }
+
+        .vendor-name {
+            font-weight: 500;
+            color: var(--text-color);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .btn {
+            padding: 0.75rem 1rem;
+            border-radius: 8px;
+            font-weight: 500;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            transition: var(--transition);
+            font-size: 0.875rem;
+        }
+
+        .btn-primary {
+            background-color: var(--primary-color);
+            border: none;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background-color: var(--primary-light);
+            transform: translateY(-1px);
+        }
+
+        .btn-secondary {
+            background-color: #6c757d;
+            border: none;
+            color: white;
+        }
+
+        .btn-secondary:hover {
+            background-color: #5a6268;
+            transform: translateY(-1px);
+        }
+
+        .btn-danger {
+            background-color: #dc3545;
+            border: none;
+            color: white;
+            padding: 0.5rem;
+            width: auto;
+        }
+
+        .btn-danger:hover {
+            background-color: #c82333;
+            transform: translateY(-1px);
+        }
+
+        .fade-in {
+            animation: fadeIn 0.3s ease-in;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @media (min-width: 769px) {
+            .main-content {
+                margin-left: 280px;
+                padding: 2rem;
+                width: calc(100% - 280px);
+            }
+
+            body:has(.sidebar.collapsed) .main-content {
+                margin-left: 70px;
+                width: calc(100% - 70px);
+            }
+
+            .page-header {
+                padding: 1.5rem;
+                margin-bottom: 2rem;
+            }
+
+            .page-title {
+                font-size: 1.5rem;
+            }
+
+            .btn-group {
+                display: flex;
+                gap: 1rem;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .btn-group {
+                display: grid;
+                gap: 0.5rem;
+            }
+
+            .vendor-item {
+                flex-direction: column;
+                gap: 1rem;
+                text-align: center;
+            }
+        }
+    </style>
+</head>
+<body>
+    <%- include('../partials/sidebar', { userRole: userRole }) %>
+
+    <div class="main-content">
+        <div class="page-header fade-in">
+            <h1 class="page-title">
+                <i class="bi bi-building"></i>
+                Assign Vendor
+            </h1>
+            <p class="page-subtitle">Manage vendors for <%= packaging.name %></p>
+        </div>
+
+        <div class="card fade-in">
+            <div class="card-header">
+                <h2 class="card-title">
+                    <i class="bi bi-plus-circle"></i>
+                    Add New Vendor
+                </h2>
+            </div>
+            <div class="card-body">
+                <% if (typeof error !== 'undefined' && error) { %>
+                    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                        <%= error %>
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                    </div>
+                <% } %>
+                <form action="/packaging/assignVendor/<%= packaging.id %>" method="POST">
+                    <div class="form-group">
+                        <label class="form-label" for="vendor">Select Vendor</label>
+                        <select class="form-select" name="vendorId" id="vendor" required>
+                            <option value="" selected disabled>Choose a vendor</option>
+                            <% vendors.forEach(vendor => { %>
+                                <option value="<%= vendor.id %>"><%= vendor.name %></option>
+                            <% }) %>
+                        </select>
+                    </div>
+                    <div class="form-group mt-3">
+                        <label class="form-label" for="price">Price</label>
+                        <div class="input-group">
+                            <span class="input-group-text">Rp</span>
+                            <input type="number" class="form-control" id="price" name="price" value="0" min="0" step="0.01" required>
+                        </div>
+                    </div>
+                    <div class="btn-group">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="bi bi-plus-lg"></i>
+                            Assign Vendor
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <div class="card fade-in">
+            <div class="card-header">
+                <h2 class="card-title">
+                    <i class="bi bi-list-check"></i>
+                    Assigned Vendors
+                </h2>
+            </div>
+            <div class="card-body">
+                <% if (packaging.Vendors && packaging.Vendors.length > 0) { %>
+                    <ul class="vendor-list">
+                        <% packaging.Vendors.forEach(vendor => { %>
+                            <li class="vendor-item fade-in">
+                                <div class="vendor-name">
+                                    <i class="bi bi-building"></i>
+                                    <%= vendor.name %>
+                                    <span class="badge bg-success ms-2 price-display-<%= vendor.id %>">
+                                        Rp <%= vendor.packagingvendor && vendor.packagingvendor.price ? vendor.packagingvendor.price.toLocaleString('id-ID') : '0' %>
+                                    </span>
+                                </div>
+                                <div class="vendor-actions">
+                                    <button type="button" class="btn btn-sm btn-primary me-2 edit-price-btn" 
+                                            data-vendor-id="<%= vendor.id %>"
+                                            data-packaging-id="<%= packaging.id %>"
+                                            data-price="<%= vendor.packagingvendor && vendor.packagingvendor.price ? vendor.packagingvendor.price : 0 %>"
+                                            data-vendor-name="<%= vendor.name %>">
+                                        <i class="bi bi-pencil"></i>
+                                    </button>
+                                    <form action="/packaging/removeVendor/<%= packaging.id %>/<%= vendor.id %>" method="POST" class="d-inline">
+                                        <button type="submit" class="btn btn-sm btn-danger" title="Remove vendor">
+                                            <i class="bi bi-trash"></i>
+                                        </button>
+                                    </form>
+                                </div>
+                            </li>
+                        <% }) %>
+                    </ul>
+                <% } else { %>
+                    <div class="text-center text-muted">
+                        <i class="bi bi-inbox fs-4 d-block mb-2"></i>
+                        No vendors assigned yet
+                    </div>
+                <% } %>
+            </div>
+        </div>
+
+        <div class="btn-group mt-4">
+            <a href="/dashboard/purchase" class="btn btn-secondary">
+                <i class="bi bi-arrow-left"></i>
+                Back to Dashboard
+            </a>
+        </div>
+    </div>
+
+    <!-- Global Edit Price Modal -->
+    <div class="modal fade" id="globalEditPriceModal" tabindex="-1" aria-labelledby="globalEditPriceModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="globalEditPriceModalLabel">Edit Price</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <form id="priceEditForm" method="POST">
+                    <% if (typeof _csrf !== 'undefined') { %>
+                    <input type="hidden" name="_csrf" value="<%= _csrf %>">
+                    <% } %>
+                    <div class="modal-body">
+                        <div class="form-group">
+                            <label for="editPriceInput" class="form-label">Price</label>
+                            <div class="input-group">
+                                <span class="input-group-text">Rp</span>
+                                <input type="number" class="form-control" id="editPriceInput" 
+                                    name="price" value="0" 
+                                    min="0" step="0.01" required>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                        <button type="submit" class="btn btn-primary">Save Changes</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Handle sidebar state changes
+            const sidebar = document.querySelector('.sidebar');
+            const mainContent = document.querySelector('.main-content');
+
+            function updateContentWidth() {
+                if (window.innerWidth > 768) {
+                    if (sidebar.classList.contains('collapsed')) {
+                        mainContent.style.marginLeft = '70px';
+                        mainContent.style.width = 'calc(100% - 70px)';
+                    } else {
+                        mainContent.style.marginLeft = '280px';
+                        mainContent.style.width = 'calc(100% - 280px)';
+                    }
+                } else {
+                    mainContent.style.marginLeft = '0';
+                    mainContent.style.width = '100%';
+                }
+            }
+
+            // Initial width update
+            updateContentWidth();
+
+            // Watch for sidebar class changes
+            const observer = new MutationObserver(function(mutations) {
+                mutations.forEach(function(mutation) {
+                    if (mutation.attributeName === 'class') {
+                        updateContentWidth();
+                    }
+                });
+            });
+
+            observer.observe(sidebar, { attributes: true });
+
+            // Handle window resize
+            window.addEventListener('resize', updateContentWidth);
+            
+            // Price editing functionality
+            const modal = document.getElementById('globalEditPriceModal');
+            const modalTitle = modal.querySelector('.modal-title');
+            const priceInput = document.getElementById('editPriceInput');
+            const form = document.getElementById('priceEditForm');
+            
+            // Get all edit price buttons
+            const editButtons = document.querySelectorAll('.edit-price-btn');
+            
+            // Add click event to each edit button
+            editButtons.forEach(button => {
+                button.addEventListener('click', function() {
+                    // Get data from button attributes
+                    const vendorId = this.getAttribute('data-vendor-id');
+                    const packagingId = this.getAttribute('data-packaging-id');
+                    const price = this.getAttribute('data-price');
+                    const vendorName = this.getAttribute('data-vendor-name');
+                    
+                    // Update modal title
+                    modalTitle.textContent = `Edit Price for ${vendorName}`;
+                    
+                    // Set form action
+                    form.action = `/packaging/updateVendorPrice/${packagingId}/${vendorId}`;
+                    
+                    // Set input value
+                    priceInput.value = price;
+                    
+                    // Show modal using Bootstrap API
+                    const bsModal = new bootstrap.Modal(modal);
+                    bsModal.show();
+                });
+            });
+        });
+    </script>
+</body>
+</html>

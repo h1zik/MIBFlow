@@ -1,0 +1,854 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>COGS Calculator</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.7.2/font/bootstrap-icons.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary-color: #1b5e20;
+            --primary-light: #388E3C;
+            --background-light: #f4f6f8;
+            --text-color: #333;
+            --shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            --transition: all 0.3s ease;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--background-light);
+            margin: 0;
+            padding: 0;
+            min-height: 100vh;
+        }
+
+        .main-content {
+            margin-left: 0;
+            padding: 1rem;
+            width: 100%;
+            transition: var(--transition);
+        }
+
+        .page-header {
+            background: white;
+            padding: 1rem;
+            border-radius: 15px;
+            box-shadow: var(--shadow);
+            margin-bottom: 1rem;
+        }
+
+        .page-title {
+            margin: 0;
+            color: var(--primary-color);
+            font-weight: 600;
+            font-size: 1.25rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .page-subtitle {
+            color: #6c757d;
+            font-size: 0.875rem;
+            margin-top: 0.5rem;
+        }
+
+        .card {
+            background: white;
+            border-radius: 15px;
+            box-shadow: var(--shadow);
+            margin-bottom: 1rem;
+            border: none;
+            overflow: hidden;
+        }
+
+        .card-header {
+            background-color: var(--background-light);
+            padding: 1rem;
+            border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+        }
+
+        .card-title {
+            color: var(--primary-color);
+            font-weight: 600;
+            font-size: 1rem;
+            margin: 0;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .card-body {
+            padding: 1rem;
+        }
+
+        .form-group {
+            margin-bottom: 1rem;
+        }
+
+        .form-label {
+            font-weight: 600;
+            color: var(--primary-color);
+            margin-bottom: 0.5rem;
+            font-size: 0.875rem;
+        }
+
+        .form-control {
+            border-radius: 8px;
+            padding: 0.75rem 1rem;
+            border: 1px solid rgba(0, 0, 0, 0.1);
+            font-size: 0.875rem;
+            transition: var(--transition);
+        }
+
+        .form-control:focus {
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 0.2rem rgba(27, 94, 32, 0.25);
+        }
+
+        .form-select {
+            border-radius: 8px;
+            padding: 0.75rem 1rem;
+            border: 1px solid rgba(0, 0, 0, 0.1);
+            font-size: 0.875rem;
+            transition: var(--transition);
+            background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3e%3cpath fill='none' stroke='%23343a40' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='m2 5 6 6 6-6'/%3e%3c/svg%3e");
+            background-repeat: no-repeat;
+            background-position: right 1rem center;
+            background-size: 16px 12px;
+        }
+
+        .form-select:focus {
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 0.2rem rgba(27, 94, 32, 0.25);
+        }
+
+        .raw-material-group {
+            background-color: var(--background-light);
+            padding: 1rem;
+            border-radius: 8px;
+            margin-bottom: 1rem;
+            position: relative;
+            opacity: 1;
+            transition: opacity 0.3s ease;
+        }
+
+        .raw-material-group.loading {
+            opacity: 0.5;
+            pointer-events: none;
+        }
+
+        .raw-material-group:last-child {
+            margin-bottom: 0;
+        }
+
+        .raw-material-group > div {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .raw-material-total {
+            background-color: var(--background-light);
+            padding: 1rem;
+            border-radius: 8px;
+            margin-top: 1rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .raw-material-total.invalid {
+            background-color: #f8d7da;
+            color: #842029;
+        }
+
+        .raw-material-total.valid {
+            background-color: #d1e7dd;
+            color: #0f5132;
+        }
+
+        .loading-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(255, 255, 255, 0.8);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 8px;
+            z-index: 10;
+        }
+
+        .loading-spinner {
+            width: 2rem;
+            height: 2rem;
+            border: 3px solid var(--background-light);
+            border-top-color: var(--primary-color);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        .error-message {
+            padding: 1rem;
+            background-color: #f8d7da;
+            color: #842029;
+            border-radius: 8px;
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .input-group-text {
+            background-color: var(--background-light);
+            border-color: rgba(0, 0, 0, 0.1);
+            color: #6c757d;
+            font-weight: 500;
+        }
+
+        .btn {
+            padding: 0.75rem 1rem;
+            border-radius: 8px;
+            font-weight: 500;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            transition: var(--transition);
+            font-size: 0.875rem;
+            width: 100%;
+            justify-content: center;
+        }
+
+        .btn-primary {
+            background-color: var(--primary-color);
+            border: none;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background-color: var(--primary-light);
+            transform: translateY(-1px);
+        }
+
+        .btn-outline {
+            background: none;
+            border: 2px solid var(--primary-color);
+            color: var(--primary-color);
+        }
+
+        .btn-outline:hover {
+            background-color: var(--primary-color);
+            color: white;
+            transform: translateY(-1px);
+        }
+
+        .calculation-result {
+            margin-top: 2rem;
+            padding-top: 2rem;
+            border-top: 1px solid rgba(0, 0, 0, 0.1);
+        }
+
+        .result-card {
+            background: white;
+            border-radius: 15px;
+            padding: 1.5rem;
+            text-align: center;
+            margin-bottom: 1rem;
+        }
+
+        .result-label {
+            font-size: 0.875rem;
+            color: #6c757d;
+            margin-bottom: 0.5rem;
+        }
+
+        .result-value {
+            font-size: 2rem;
+            font-weight: 600;
+            color: var(--primary-color);
+        }
+
+        .result-value.cogs {
+            color: var(--primary-color);
+        }
+
+        .result-value.margin {
+            color: var(--primary-light);
+        }
+
+        .result-value.final {
+            color: #00d9ff;
+        }
+
+        .details-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        .details-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 0.75rem;
+            border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+        }
+
+        .details-item:last-child {
+            border-bottom: none;
+        }
+
+        .details-label {
+            color: #6c757d;
+        }
+
+        .details-value {
+            font-weight: 600;
+            color: var(--text-color);
+        }
+
+        .fade-in {
+            animation: fadeIn 0.3s ease-in;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* Desktop styles */
+        @media (min-width: 769px) {
+            .main-content {
+                margin-left: 280px;
+                padding: 2rem;
+                width: calc(100% - 280px);
+            }
+
+            body:has(.sidebar.collapsed) .main-content {
+                margin-left: 70px;
+                width: calc(100% - 70px);
+            }
+
+            .page-header {
+                padding: 1.5rem;
+                margin-bottom: 2rem;
+            }
+
+            .page-title {
+                font-size: 1.5rem;
+            }
+
+            .card-header {
+                padding: 1.5rem;
+            }
+
+            .card-title {
+                font-size: 1.2rem;
+            }
+
+            .card-body {
+                padding: 1.5rem;
+            }
+
+            .form-label {
+                font-size: 1rem;
+            }
+
+            .form-control, .form-select {
+                font-size: 1rem;
+            }
+
+            .btn {
+                font-size: 1rem;
+                width: auto;
+            }
+
+            .btn-group {
+                display: flex;
+                gap: 1rem;
+            }
+
+            .raw-material-group {
+                display: flex;
+                gap: 1rem;
+            }
+
+            .raw-material-group > div {
+                flex: 1;
+            }
+        }
+
+        /* Mobile styles */
+        @media (max-width: 768px) {
+            .btn-group {
+                display: grid;
+                gap: 0.5rem;
+            }
+
+            .raw-material-group {
+                display: grid;
+                gap: 1rem;
+            }
+
+            .result-value {
+                font-size: 1.5rem;
+            }
+
+            .raw-material-group > div {
+                width: 100%;
+                min-width: 0;
+            }
+        }
+
+        @media print {
+            .main-content {
+                margin: 0;
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <%- include('../partials/sidebar', { userRole: userRole }) %>
+
+    <div class="main-content">
+        <!-- Previous HTML content remains unchanged -->
+        <div class="page-header fade-in">
+            <h1 class="page-title">
+                <i class="bi bi-calculator"></i>
+                COGS Calculator
+            </h1>
+            <p class="page-subtitle">Calculate the Cost of Goods Sold for your products</p>
+        </div>
+
+        <form action="/overhead/calculate-cogs" method="POST" id="cogsForm">
+            <!-- Previous form content remains unchanged -->
+            <div class="card fade-in">
+                <div class="card-header">
+                    <h2 class="card-title">
+                        <i class="bi bi-box-seam"></i>
+                        Product Information
+                    </h2>
+                </div>
+                <div class="card-body">
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label class="form-label" for="productType">Product Type</label>
+                                <select class="form-select" id="productType" name="productType" required>
+                                    <option value="" selected disabled>Select product type</option>
+                                    <option value="existing" <%= selectedProductType === 'existing' ? 'selected' : '' %>>Existing Product</option>
+                                    <option value="new" <%= selectedProductType === 'new' ? 'selected' : '' %>>New Product</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="col-md-6" id="productNameSection" style="<%= selectedProductType === 'existing' ? '' : 'display: none;' %>">
+                            <div class="form-group">
+                                <label class="form-label" for="productName">Product Name</label>
+                                <select class="form-select" id="productName" name="productName" <%= selectedProductType === 'existing' ? 'required' : '' %>>
+                                    <option value="" selected disabled>Select product</option>
+                                    <% products.forEach(product => { %>
+                                        <option value="<%= product.name %>" <%= (product.name === selectedProductName) ? 'selected' : '' %>><%= product.name %></option>
+                                    <% }); %>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="col-md-6" id="newProductSection" style="<%= selectedProductType === 'new' ? '' : 'display: none;' %>">
+                            <div class="form-group">
+                                <label class="form-label" for="newProductName">New Product Name</label>
+                                <input type="text" class="form-control" id="newProductName" name="newProductName" <%= selectedProductType === 'new' ? 'required' : '' %>>
+                            </div>
+                        </div>
+
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label class="form-label" for="packagingId">Packaging</label>
+                                <select class="form-select" id="packagingId" name="packagingId" required>
+                                    <option value="" selected disabled>Select packaging</option>
+                                    <% packagingOptions.forEach(packaging => { %>
+                                        <option value="<%= packaging.id %>"><%= packaging.name %> - <%= packaging.volume %>L</option>
+                                    <% }); %>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card fade-in">
+                <div class="card-header">
+                    <h2 class="card-title">
+                        <i class="bi bi-tag"></i>
+                        Label Information
+                    </h2>
+                </div>
+                <div class="card-body">
+                    <div class="row g-3">
+                        <div class="col-md-4">
+                            <div class="form-group">
+                                <label class="form-label" for="labelWidth">Label Width (mm)</label>
+                                <input type="number" class="form-control" id="labelWidth" name="labelWidth" min="0" required>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="form-group">
+                                <label class="form-label" for="labelHeight">Label Height (mm)</label>
+                                <input type="number" class="form-control" id="labelHeight" name="labelHeight" min="0" required>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="form-group">
+                                <label class="form-label" for="paperPrice">A3 Paper Price</label>
+                                <div class="input-group">
+                                    <span class="input-group-text">Rp</span>
+                                    <input type="number" class="form-control" id="paperPrice" name="paperPrice" min="0" required>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card fade-in">
+                <div class="card-header">
+                    <h2 class="card-title">
+                        <i class="bi bi-gear"></i>
+                        Production Information
+                    </h2>
+                </div>
+                <div class="card-body">
+                    <div class="row g-3">
+                        <div class="col-md-4">
+                            <div class="form-group">
+                                <label class="form-label" for="batchMonth">Batch/Month</label>
+                                <input type="number" class="form-control" id="batchMonth" name="batchMonth" step="0.01" min="0" required>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="form-group">
+                                <label class="form-label" for="batchSize">Batch Size (L)</label>
+                                <input type="number" class="form-control" id="batchSize" name="batchSize" step="0.01" min="0" required>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="form-group">
+                                <label class="form-label" for="productionTime">Production Time (hours)</label>
+                                <input type="number" class="form-control" id="productionTime" name="productionTime" step="0.01" min="0" required>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card fade-in" id="rawMaterialsSection">
+                <div class="card-header">
+                    <h2 class="card-title">
+                        <i class="bi bi-box2"></i>
+                        Raw Materials
+                    </h2>
+                </div>
+                <div class="card-body">
+                    <div id="rawMaterialFields">
+                        <% if (selectedProductType === 'existing' && productFormulas.length > 0) { %>
+                            <% productFormulas.forEach((formula, index) => { %>
+                                <div class="raw-material-group">
+                                    <div class="form-group">
+                                        <label class="form-label">Raw Material</label>
+                                        <input type="text" class="form-control" value="<%= formula.RawMaterial.name %>" readonly>
+                                        <input type="hidden" name="rawMaterials[<%= index %>][id]" value="<%= formula.rawMaterialId %>">
+                                    </div>
+                                    <div class="form-group">
+                                        <label class="form-label">Percentage (%)</label>
+                                        <input type="number" class="form-control percentage-input" name="rawMaterials[<%= index %>][percentage]" value="<%= formula.percentage %>" readonly>
+                                    </div>
+                                </div>
+                            <% }); %>
+                        <% } %>
+                    </div>
+
+                    <div id="rawMaterialTotal" class="raw-material-total" style="display: none;">
+                        <span>Total Percentage:</span>
+                        <span id="totalPercentage">0%</span>
+                    </div>
+
+                    <div id="apiError" class="error-message" style="display: none;">
+                        <i class="bi bi-exclamation-triangle"></i>
+                        <span>Error loading product formulas. Please try again.</span>
+                    </div>
+
+                    <button type="button" class="btn btn-outline mt-3" id="addRawMaterialBtn" style="display: <%= selectedProductType === 'new' ? 'block' : 'none' %>;">
+                        <i class="bi bi-plus-lg"></i>
+                        Add Raw Material
+                    </button>
+                </div>
+            </div>
+
+            <div class="btn-group mt-4">
+                <button type="submit" class="btn btn-primary" id="calculateBtn">
+                    <i class="bi bi-calculator"></i>
+                    Calculate COGS
+                </button>
+            </div>
+        </form>
+
+        <% if (calculationResult) { %>
+            <div class="calculation-result fade-in">
+                <div class="row g-3">
+                    <div class="col-md-4">
+                        <div class="result-card">
+                            <div class="result-label">Cost of Goods Sold</div>
+                            <div class="result-value cogs">Rp <%= calculationResult.finalProductCost.toFixed(2) %></div>
+                        </div>
+                    </div>
+
+                    <div class="col-md-4">
+                        <div class="result-card">
+                            <div class="result-label">Margin (%)</div>
+                            <input type="number" id="margin" class="form-control text-center" value="30" min="0" step="0.01">
+                        </div>
+                    </div>
+
+                    <div class="col-md-4">
+                        <div class="result-card">
+                            <div class="result-label">Final Price with Margin</div>
+                            <div class="result-value final" id="finalPrice">Rp 0.00</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card mt-4 fade-in">
+                    <div class="card-header">
+                        <h2 class="card-title">
+                            <i class="bi bi-list-ul"></i>
+                            Cost Breakdown
+                        </h2>
+                    </div>
+                    <div class="card-body">
+                        <ul class="details-list">
+                            <li class="details-item">
+                                <span class="details-label">Raw Material Cost per Product</span>
+                                <span class="details-value">Rp <%= (rawMatCostPerProduct ? rawMatCostPerProduct.toFixed(2) : "0.00") %></span>
+                            </li>
+                            <li class="details-item">
+                                <span class="details-label">Packaging Price per Liter</span>
+                                <span class="details-value">Rp <%= (packagingPricePerLiter ? packagingPricePerLiter.toFixed(2) : "0.00") %></span>
+                            </li>
+                            <li class="details-item">
+                                <span class="details-label">Sticker Price per Pcs</span>
+                                <span class="details-value">Rp <%= (stickerPrice ? stickerPrice.toFixed(2) : "0.00") %></span>
+                            </li>
+                            <li class="details-item">
+                                <span class="details-label">Overhead Cost per Kg</span>
+                                <span class="details-value">Rp <%= (cogsPerUnit ? cogsPerUnit.toFixed(2) : "0.00") %></span>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        <% } %>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Handle sidebar state changes
+            const sidebar = document.querySelector('.sidebar');
+            const mainContent = document.querySelector('.main-content');
+
+            function updateContentWidth() {
+                if (window.innerWidth > 768) {
+                    if (sidebar.classList.contains('collapsed')) {
+                        mainContent.style.marginLeft = '70px';
+                        mainContent.style.width = 'calc(100% - 70px)';
+                    } else {
+                        mainContent.style.marginLeft = '280px';
+                        mainContent.style.width = 'calc(100% - 280px)';
+                    }
+                } else {
+                    mainContent.style.marginLeft = '0';
+                    mainContent.style.width = '100%';
+                }
+            }
+
+            // Initial width update
+            updateContentWidth();
+
+            // Watch for sidebar class changes
+            const observer = new MutationObserver(function(mutations) {
+                mutations.forEach(function(mutation) {
+                    if (mutation.attributeName === 'class') {
+                        updateContentWidth();
+                    }
+                });
+            });
+
+            observer.observe(sidebar, { attributes: true });
+
+            // Handle window resize
+            window.addEventListener('resize', updateContentWidth);
+
+            // Form validation
+            const form = document.getElementById('cogsForm');
+            const calculateBtn = document.getElementById('calculateBtn');
+            const rawMaterialFields = document.getElementById('rawMaterialFields');
+            const rawMaterialTotal = document.getElementById('rawMaterialTotal');
+            const totalPercentageSpan = document.getElementById('totalPercentage');
+            const apiError = document.getElementById('apiError');
+
+            function updateTotalPercentage() {
+                if (selectedProductType === 'new') {
+                    const inputs = rawMaterialFields.querySelectorAll('.percentage-input');
+                    let total = 0;
+                    inputs.forEach(input => {
+                        total += parseFloat(input.value) || 0;
+                    });
+
+                    totalPercentageSpan.textContent = total.toFixed(2) + '%';
+                    rawMaterialTotal.style.display = 'flex';
+                    rawMaterialTotal.className = 'raw-material-total ' + (Math.abs(total - 100) < 0.01 ? 'valid' : 'invalid');
+
+                    return Math.abs(total - 100) < 0.01;
+                }
+                return true;
+            }
+
+            form.addEventListener('submit', function(event) {
+                const inputs = form.querySelectorAll('input[type="number"]');
+                let isValid = true;
+                let message = '';
+
+                inputs.forEach(input => {
+                    if (input.value < 0) {
+                        isValid = false;
+                        message = `${input.previousElementSibling.textContent.trim()} cannot be negative`;
+                    }
+                });
+
+                if (!updateTotalPercentage()) {
+                    isValid = false;
+                    message = 'Total percentage must equal 100%';
+                }
+
+                if (!isValid) {
+                    event.preventDefault();
+                    alert(message);
+                }
+            });
+
+            // Product type handling
+            const productTypeElement = document.getElementById('productType');
+            const productNameSection = document.getElementById('productNameSection');
+            const newProductSection = document.getElementById('newProductSection');
+            const addRawMaterialBtn = document.getElementById('addRawMaterialBtn');
+            let selectedProductType = productTypeElement.value;
+
+            if (productTypeElement) {
+                productTypeElement.addEventListener('change', function() {
+                    selectedProductType = this.value;
+                    productNameSection.style.display = (selectedProductType === 'existing') ? 'block' : 'none';
+                    newProductSection.style.display = (selectedProductType === 'new') ? 'block' : 'none';
+                    addRawMaterialBtn.style.display = (selectedProductType === 'new') ? 'block' : 'none';
+                    rawMaterialFields.innerHTML = '';
+                    rawMaterialTotal.style.display = 'none';
+                });
+            }
+
+            // Product name handling
+            const productNameElement = document.getElementById('productName');
+            if (productNameElement) {
+                productNameElement.addEventListener('change', async function() {
+                    const productName = this.value;
+                    if (rawMaterialFields) {
+                        try {
+                            rawMaterialFields.innerHTML = '<div class="loading-overlay"><div class="loading-spinner"></div></div>';
+                            apiError.style.display = 'none';
+
+                            const response = await fetch(`/overhead/api/product-formulas?productName=${encodeURIComponent(productName)}`);
+                            if (!response.ok) throw new Error('Failed to fetch product formulas');
+                            
+                            const productFormulas = await response.json();
+                            rawMaterialFields.innerHTML = '';
+                            
+                            productFormulas.forEach((formula, index) => {
+                                const newField = document.createElement('div');
+                                newField.classList.add('raw-material-group', 'fade-in');
+                                newField.innerHTML = `
+                                    <div class="form-group">
+                                        <label class="form-label">Raw Material</label>
+                                        <input type="text" class="form-control" value="${formula.name}" readonly>
+                                        <input type="hidden" name="rawMaterials[${index}][id]" value="${formula.id}">
+                                    </div>
+                                    <div class="form-group">
+                                        <label class="form-label">Percentage (%)</label>
+                                        <input type="number" class="form-control percentage-input" value="${formula.percentage}" readonly>
+                                    </div>
+                                `;
+                                rawMaterialFields.appendChild(newField);
+                            });
+                        } catch (error) {
+                            console.error('Error fetching product formulas:', error);
+                            apiError.style.display = 'flex';
+                            rawMaterialFields.innerHTML = '';
+                        }
+                    }
+                });
+            }
+
+            // Add raw material button handling
+            if (addRawMaterialBtn) {
+                addRawMaterialBtn.addEventListener('click', function() {
+                    const index = rawMaterialFields.children.length;
+                    const newField = document.createElement('div');
+                    newField.classList.add('raw-material-group', 'fade-in');
+                    newField.innerHTML = `
+                        <div class="form-group">
+                            <label class="form-label">Raw Material</label>
+                            <select class="form-select" name="rawMaterials[${index}][id]" required>
+                                <option value="" selected disabled>Select raw material</option>
+                                <% rawMaterial.forEach(material => { %>
+                                    <option value="<%= material.id %>"><%= material.name %></option>
+                                <% }); %>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Percentage (%)</label>
+                            <input type="number" class="form-control percentage-input" name="rawMaterials[${index}][percentage]" step="0.01" min="0" required>
+                        </div>
+                    `;
+                    rawMaterialFields.appendChild(newField);
+
+                    // Add event listener to new percentage input
+                    const newInput = newField.querySelector('.percentage-input');
+                    newInput.addEventListener('input', updateTotalPercentage);
+                });
+            }
+
+            // Margin calculation
+            const marginElement = document.getElementById('margin');
+            const finalPriceElement = document.getElementById('finalPrice');
+            const cogs = parseFloat('<%= calculationResult ? calculationResult.finalProductCost : 0 %>');
+
+            if (marginElement && finalPriceElement) {
+                marginElement.addEventListener('input', function() {
+                    const marginPercent = parseFloat(this.value) / 100;
+                    const finalPrice = cogs + (marginPercent * cogs);
+                    finalPriceElement.textContent = `Rp ${finalPrice.toFixed(2)}`;
+                });
+
+                // Initial calculation
+                marginElement.dispatchEvent(new Event('input'));
+            }
+        });
+    </script>
+</body>
+</html>

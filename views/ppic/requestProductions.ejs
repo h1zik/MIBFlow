@@ -1,0 +1,1055 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Request Production</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.7.2/font/bootstrap-icons.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary-color: #1b5e20;
+            --primary-light: #388E3C;
+            --background-light: #f4f6f8;
+            --text-color: #333;
+            --shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            --transition: all 0.3s ease;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--background-light);
+            margin: 0;
+            padding: 0;
+            min-height: 100vh;
+        }
+
+        .main-content {
+            margin-left: 0;
+            padding: 1rem;
+            width: 100%;
+            transition: var(--transition);
+        }
+
+        .page-header {
+            background: white;
+            padding: 1rem;
+            border-radius: 15px;
+            box-shadow: var(--shadow);
+            margin-bottom: 1rem;
+            text-align: center;
+        }
+
+        .page-title {
+            margin: 0;
+            color: var(--primary-color);
+            font-weight: 600;
+            font-size: 1.25rem;
+        }
+
+        .product-card {
+            background: white;
+            border-radius: 15px;
+            box-shadow: var(--shadow);
+            margin-bottom: 1rem;
+            border: none;
+            overflow: hidden;
+        }
+
+        .product-header {
+            background-color: var(--background-light);
+            padding: 1rem;
+            border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+        }
+
+        .product-title {
+            color: var(--primary-color);
+            font-weight: 600;
+            font-size: 1rem;
+            margin: 0;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .product-body {
+            padding: 1rem;
+        }
+
+        .form-group {
+            margin-bottom: 1rem;
+        }
+
+        .form-label {
+            font-weight: 600;
+            color: var(--primary-color);
+            margin-bottom: 0.5rem;
+            font-size: 0.875rem;
+        }
+
+        .form-control {
+            border-radius: 8px;
+            padding: 0.75rem 1rem;
+            border: 1px solid rgba(0, 0, 0, 0.1);
+            font-size: 0.875rem;
+            transition: var(--transition);
+        }
+
+        .form-control:focus {
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 0.2rem rgba(27, 94, 32, 0.25);
+        }
+
+        .form-control-file {
+            padding: 0.75rem;
+            background-color: #f8f9fa;
+            border-radius: 8px;
+            border: 1px solid rgba(0, 0, 0, 0.1);
+            width: 100%;
+        }
+
+        .raw-materials-list {
+            margin-top: 1rem;
+        }
+
+        .raw-material-row {
+            padding: 0.75rem;
+            border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 1rem;
+            font-size: 0.875rem;
+        }
+
+        .raw-material-row:last-child {
+            border-bottom: none;
+        }
+
+        .raw-material-name {
+            flex: 1;
+            min-width: 150px;
+            font-weight: 500;
+        }
+
+        .raw-material-quantity {
+            width: 120px;
+        }
+
+        .raw-material-stock {
+            color: #6c757d;
+            font-size: 0.875rem;
+        }
+
+        .btn {
+            padding: 0.75rem 1rem;
+            border-radius: 8px;
+            font-weight: 500;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            transition: var(--transition);
+            font-size: 0.875rem;
+            width: 100%;
+            justify-content: center;
+        }
+
+        .btn-primary {
+            background-color: var(--primary-color);
+            border: none;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background-color: var(--primary-light);
+            transform: translateY(-1px);
+        }
+
+        .btn-warning {
+            background-color: #ffc107;
+            border: none;
+            color: #000;
+        }
+
+        .btn-warning:hover {
+            background-color: #ffca2c;
+            transform: translateY(-1px);
+        }
+
+        .btn-secondary {
+            background-color: #6c757d;
+            border: none;
+            color: white;
+        }
+
+        .btn-secondary:hover {
+            background-color: #5a6268;
+            transform: translateY(-1px);
+        }
+
+        .error {
+            color: #dc3545;
+            background-color: #f8d7da;
+            border: 1px solid #f5c6cb;
+            border-radius: 8px;
+            padding: 1rem;
+            margin-bottom: 1rem;
+            font-size: 0.875rem;
+            display: none;
+        }
+
+        .distribution-panel {
+            background-color: #e8f5e9;
+            border: 2px solid #4caf50;
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-top: 1.5rem;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .distribution-panel strong {
+            color: #2e7d32;
+            font-size: 1.1rem;
+            display: block;
+            margin-bottom: 0.5rem;
+        }
+
+        .distribution-panel p {
+            color: #1b5e20;
+            font-size: 0.9rem;
+            margin-bottom: 1rem;
+        }
+
+        .distribution-option {
+            background-color: white;
+            border: 1px solid #c8e6c9;
+            border-radius: 8px;
+            padding: 1rem;
+            margin-bottom: 1rem;
+            transition: all 0.3s ease;
+        }
+
+        .distribution-option:hover {
+            border-color: #4caf50;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .distribution-input {
+            max-width: 120px;
+            margin-right: 0.5rem;
+        }
+
+        .apply-distribution {
+            min-width: 80px;
+        }
+
+        .form-check-input:checked {
+            background-color: #4caf50;
+            border-color: #4caf50;
+        }
+
+        .form-check-label {
+            color: #1b5e20;
+            font-weight: 500;
+        }
+
+        .fade-in {
+            animation: fadeIn 0.3s ease-in;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Desktop styles */
+        @media (min-width: 769px) {
+            .main-content {
+                margin-left: 280px;
+                padding: 2rem;
+                width: calc(100% - 280px);
+            }
+
+            body:has(.sidebar.collapsed) .main-content {
+                margin-left: 70px;
+                width: calc(100% - 70px);
+            }
+
+            .page-header {
+                padding: 1.5rem;
+                margin-bottom: 2rem;
+            }
+
+            .page-title {
+                font-size: 1.5rem;
+            }
+
+            .product-header {
+                padding: 1.5rem;
+            }
+
+            .product-title {
+                font-size: 1.2rem;
+            }
+
+            .product-body {
+                padding: 1.5rem;
+            }
+
+            .form-label {
+                font-size: 1rem;
+            }
+
+            .form-control {
+                font-size: 1rem;
+            }
+
+            .btn {
+                font-size: 1rem;
+                width: auto;
+            }
+
+            .raw-material-row {
+                font-size: 1rem;
+            }
+
+            .btn-group {
+                display: flex;
+                gap: 1rem;
+            }
+        }
+
+        /* Mobile styles */
+        @media (max-width: 768px) {
+            .btn-group {
+                display: grid;
+                gap: 0.5rem;
+            }
+
+            .raw-material-row {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+
+            .raw-material-quantity {
+                width: 100%;
+            }
+
+            .raw-material-stock {
+                width: 100%;
+                text-align: left;
+            }
+        }
+    </style>
+</head>
+<body>
+    <%- include('../partials/sidebar', { userRole: userRole }) %>
+
+    <div class="main-content">
+        <div class="page-header fade-in">
+            <h1 class="page-title">
+                <i class="bi bi-gear"></i>
+                Request Production for Order #<%= order.id %>
+            </h1>
+        </div>
+
+        <% productsToProduce.forEach(product => { %>
+        <form class="productionRequestForm" action="/production/request" method="POST" enctype="multipart/form-data" class="fade-in">
+            <input type="hidden" name="orderId" value="<%= order.id %>">
+            <input type="hidden" name="productId" value="<%= product.productId %>">
+            <input type="hidden" name="productName" value="<%= product.productName %>">
+            <input type="hidden" name="prodreqnumber" value="PR-<%= new Date().getTime() %>-<%= product.productId %>">
+            <div class="product-card mb-4" data-density="<%= product.density %>">
+                <div class="product-header">
+                    <h2 class="product-title">
+                        <i class="bi bi-box-seam"></i>
+                        <%= product.productName %> (Needed: <%= Math.ceil(product.neededQuantity) %>Kg)
+                    </h2>
+                </div>
+                <div class="product-body">
+                    <input type="hidden" name="neededQuantity" value="<%= Math.ceil(product.neededQuantity) %>">
+
+                    <div class="form-group">
+                        <label class="form-label" for="quantity-<%= product.productId %>">Quantity to Produce</label>
+                        <input type="number" class="form-control production-quantity" id="quantity-<%= product.productId %>" name="quantity" value="<%= Math.ceil(product.neededQuantity) %>" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label" for="formula-<%= product.productId %>">Formula (Excel)</label>
+                        <div class="mb-2">
+                            <div class="form-check">
+                                <input class="form-check-input formula-source" type="radio" name="formulaSource-<%= product.productId %>" id="useExisting-<%= product.productId %>" value="existing" checked>
+                                <label class="form-check-label" for="useExisting-<%= product.productId %>">
+                                    Use existing formula from product
+                                </label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input formula-source" type="radio" name="formulaSource-<%= product.productId %>" id="uploadNew-<%= product.productId %>" value="upload">
+                                <label class="form-check-label" for="uploadNew-<%= product.productId %>">
+                                    Upload new formula
+                                </label>
+                            </div>
+                        </div>
+                        <!-- Using a single hidden input to store the existing formula path -->
+                        <input type="hidden" name="existingFormula-<%= product.productId %>" id="existingFormula-<%= product.productId %>" value="<%= product.formula || '' %>">
+                        <div id="formulaUploadContainer-<%= product.productId %>" style="display: none;">
+                            <input type="file" class="form-control" id="formula-<%= product.productId %>" name="formula-<%= product.productId %>" accept=".xlsx">
+                        </div>
+                        <% if (product.formula) { %>
+                            <div id="existingFormulaInfo-<%= product.productId %>" class="mt-2">
+                                <div class="alert alert-info">
+                                    <i class="bi bi-file-earmark-excel me-2"></i>
+                                    Using existing formula: <strong><%= product.formula.split('/').pop() %></strong>
+                                </div>
+                            </div>
+                        <% } else { %>
+                            <div id="existingFormulaInfo-<%= product.productId %>" class="mt-2">
+                                <div class="alert alert-warning">
+                                    <i class="bi bi-exclamation-triangle me-2"></i>
+                                    No existing formula found. Please upload a formula file.
+                                </div>
+                            </div>
+                            <script>
+                                // Auto-select upload option if no existing formula
+                                document.getElementById('uploadNew-<%= product.productId %>').checked = true;
+                                document.getElementById('useExisting-<%= product.productId %>').disabled = true;
+                                document.getElementById('formulaUploadContainer-<%= product.productId %>').style.display = 'block';
+                            </script>
+                        <% } %>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Raw Materials</label>
+                        <div id="rawMaterialContainer-<%= product.productId %>" class="raw-materials-list">
+                            <% product.rawMaterials.forEach(rawMaterial => { %>
+                            <div class="raw-material-row" data-raw-material-id="<%= rawMaterial.id %>" data-raw-material-percentage="<%= rawMaterial.percentage %>" data-raw-material-stock="<%= rawMaterial.stock %>">
+                                <span class="raw-material-name"><%= rawMaterial.name %></span>
+                                <input type="number" class="form-control raw-material-quantity" name="products[<%= product.productId %>][rawMaterials][<%= rawMaterial.id %>][quantity]" value="<%= Math.ceil(rawMaterial.quantity) %>" readonly>
+                                <span class="raw-material-stock">Current Stock: <%= rawMaterial.stock %> Kg</span>
+                                <% if (Math.ceil(rawMaterial.quantity) > rawMaterial.stock) { %>
+                                <button type="button" class="btn btn-warning request-raw-material-btn" data-material-id="<%= rawMaterial.id %>" data-material-name="<%= rawMaterial.name %>" data-quantity="<%= Math.ceil(rawMaterial.quantity) %>">
+                                    <i class="bi bi-plus-circle"></i>
+                                    Request Raw Material
+                                </button>
+                                <% } %>
+                            </div>
+                            <% }) %>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Packaging Requirements</label>
+                        <div id="packagingContainer-<%= product.productId %>" class="raw-materials-list">
+                            <% product.packagings && product.packagings.forEach(packaging => { %>
+                            <div class="raw-material-row" data-packaging-id="<%= packaging.id %>" data-packaging-stock="<%= packaging.stock %>" data-packaging-volume="<%= packaging.volume %>" data-original-unit="<%= packaging.unit %>">
+                                <span class="raw-material-name"><%= packaging.name %></span>
+                                <% const neededPackaging = packaging.unit; %>
+                                <input type="number" class="form-control raw-material-quantity" name="products[<%= product.productId %>][packagings][<%= packaging.id %>][quantity]" value="<%= packaging.unit %>" readonly>
+                                <span class="raw-material-stock">Current Stock: <%= packaging.stock %> pcs | Need: <%= packaging.unit %> pcs (Volume: <%= packaging.volume %>L)</span>
+                                <% if (packaging.unit > packaging.stock) { %>
+                                <button type="button" class="btn btn-warning request-packaging-btn" data-packaging-id="<%= packaging.id %>" data-packaging-name="<%= packaging.name %>" data-quantity="<%= packaging.unit %>">
+                                    <i class="bi bi-plus-circle"></i>
+                                    Request Packaging
+                                </button>
+                                <% } %>
+                            </div>
+                            <% }) %>
+                        </div>
+                    </div>
+
+                    <div class="btn-group mt-3">
+                        <button type="submit" class="btn btn-primary" data-product-id="<%= product.productId %>">
+                            <i class="bi bi-check-lg"></i>
+                            Submit Production Request
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </form>
+        <% }); %>
+
+        <div class="btn-group mt-4">
+            <button type="button" id="submitRawMaterialRequests" class="btn btn-warning">
+                <i class="bi bi-plus-circle"></i>
+                Submit Raw Material Requests
+            </button>
+            <button type="button" id="submitPackagingRequests" class="btn btn-warning">
+                <i class="bi bi-plus-circle"></i>
+                Submit Packaging Requests
+            </button>
+            <a href="/dashboard/ppic" class="btn btn-secondary">
+                <i class="bi bi-arrow-left"></i>
+                Back to Dashboard
+            </a>
+        </div>
+
+        <div class="error" id="error-message"></div>
+    </div>
+
+    <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Initialize request tracking objects
+        const rawMaterialRequests = {};
+        const packagingRequests = {};
+        const stockUsed = {};
+
+        document.addEventListener('DOMContentLoaded', function() {
+            // Raw material request button handling
+            document.querySelectorAll('.request-raw-material-btn').forEach(button => {
+                button.addEventListener('click', function() {
+                    const materialId = this.getAttribute('data-material-id');
+                    const materialName = this.getAttribute('data-material-name');
+                    const neededQuantity = parseFloat(this.getAttribute('data-quantity'));
+                    const currentStock = parseFloat(this.closest('.raw-material-row').getAttribute('data-raw-material-stock'));
+
+                    let requestQuantity = neededQuantity;
+                    
+                    if (!stockUsed[materialId] && currentStock > 0) {
+                        requestQuantity = Math.max(0, neededQuantity - currentStock);
+                        stockUsed[materialId] = true;
+                        console.log(`Using ${currentStock}KG stock for ${materialName}. Need ${Math.ceil(neededQuantity)}KG, requesting ${Math.ceil(requestQuantity)}KG`);
+                    } else {
+                        console.log(`No stock available for ${materialName}. Requesting full ${Math.ceil(requestQuantity)}KG`);
+                    }
+
+                    if (!rawMaterialRequests[materialId]) {
+                        rawMaterialRequests[materialId] = {
+                            name: materialName,
+                            quantity: requestQuantity,
+                        };
+                    } else {
+                        rawMaterialRequests[materialId].quantity += requestQuantity;
+                    }
+
+                    console.log(`Total request for ${materialName}: ${Math.ceil(rawMaterialRequests[materialId].quantity)}KG`);
+                    
+                    this.disabled = true;
+                    this.innerHTML = '<i class="bi bi-check-lg"></i> Request Added';
+                });
+            });
+
+            // Handle packaging request buttons
+            document.querySelectorAll('.request-packaging-btn').forEach(button => {
+                button.addEventListener('click', function() {
+                    const packagingId = this.getAttribute('data-packaging-id');
+                    const packagingName = this.getAttribute('data-packaging-name');
+                    const neededQuantity = parseInt(this.getAttribute('data-quantity'));
+                    const currentStock = parseInt(this.closest('.raw-material-row').getAttribute('data-packaging-stock'));
+                    const orderId = document.querySelector('input[name="orderId"]').value;
+
+                    if (!packagingRequests[packagingName]) {
+                        packagingRequests[packagingName] = {
+                            id: packagingId,
+                            name: packagingName,
+                            totalNeeded: neededQuantity,
+                            stock: currentStock
+                        };
+                    } else {
+                        packagingRequests[packagingName].totalNeeded += neededQuantity;
+                    }
+
+                    this.disabled = true;
+                    this.innerHTML = '<i class="bi bi-check-lg"></i> Request Added';
+                });
+            });
+
+            // Handle sidebar state changes
+            const sidebar = document.querySelector('.sidebar');
+            const mainContent = document.querySelector('.main-content');
+
+            function updateContentWidth() {
+                if (window.innerWidth > 768) {
+                    if (sidebar.classList.contains('collapsed')) {
+                        mainContent.style.marginLeft = '70px';
+                        mainContent.style.width = 'calc(100% - 70px)';
+                    } else {
+                        mainContent.style.marginLeft = '280px';
+                        mainContent.style.width = 'calc(100% - 280px)';
+                    }
+                } else {
+                    mainContent.style.marginLeft = '0';
+                    mainContent.style.width = '100%';
+                }
+            }
+
+            // Initial width update
+            updateContentWidth();
+
+            // Watch for sidebar class changes
+            const observer = new MutationObserver(function(mutations) {
+                mutations.forEach(function(mutation) {
+                    if (mutation.attributeName === 'class') {
+                        updateContentWidth();
+                    }
+                });
+            });
+
+            observer.observe(sidebar, { attributes: true });
+
+            // Handle window resize
+            window.addEventListener('resize', updateContentWidth);
+        });
+
+        // Form validation
+        document.querySelectorAll('.productionRequestForm').forEach(form => {
+            form.addEventListener('submit', async function(event) {
+            // Get the current product ID being submitted
+            const currentProductId = form.querySelector('input[name="productId"]').value;
+            const products = JSON.parse('<%- JSON.stringify(productsToProduce) %>');
+            let hasError = false;
+            let errorMessage = '';
+            const tolerance = 0.01;
+
+            // Find the current product in the products array
+            const currentProduct = products.find(p => p.productId.toString() === currentProductId.toString());
+            if (!currentProduct) {
+                console.error('Current product not found in products array');
+                return true; // Allow form submission if we can't find the product
+            }
+
+            // Only validate raw materials for the current product
+            const productQuantity = parseFloat(document.getElementById(`quantity-${currentProductId}`).value);
+            let totalRawMaterialQuantity = 0;
+
+            document.querySelectorAll(`[name^="products[${currentProductId}][rawMaterials]"][name$="[quantity]"]`).forEach(input => {
+                const rawMaterialQuantity = parseFloat(input.value);
+                if (!isNaN(rawMaterialQuantity)) {
+                    totalRawMaterialQuantity += rawMaterialQuantity;
+                }
+            });
+
+            // Disable the validation for raw material quantity matching production quantity
+            // This is because we're using Math.ceil() for display which can cause mismatches
+            /*
+            if (Math.abs(totalRawMaterialQuantity - productQuantity) > tolerance) {
+                hasError = true;
+                errorMessage += `Total raw material quantity does not match the production quantity for product: ${currentProduct.productName}<br>`;
+            }
+            */
+
+            // Calculate product density and volume (needed for reference but not for validation)
+            const productDensity = parseFloat(document.querySelector(`#quantity-${currentProductId}`).closest('.product-card').getAttribute('data-density') || 1);
+            const volumeInLiters = productQuantity / productDensity;
+            
+            // All packaging validation has been removed as requested
+            
+            // Prevent default form submission
+            event.preventDefault();
+
+            if (hasError) {
+                const errorDiv = document.getElementById('error-message');
+                errorDiv.innerHTML = errorMessage;
+                errorDiv.style.display = 'block';
+                errorDiv.scrollIntoView({ behavior: 'smooth' });
+                return false;
+            }
+            
+            // If all validations pass, submit the form
+            event.target.submit();
+        });
+        });
+
+
+        // Submit raw material requests
+        document.getElementById('submitRawMaterialRequests').addEventListener('click', function() {
+            const orderId = document.querySelector('input[name="orderId"]').value;
+            const requests = Object.keys(rawMaterialRequests).map(materialId => {
+                const requestData = {
+                    orderId: orderId,
+                    materialName: rawMaterialRequests[materialId].name,
+                    quantity: Math.ceil(rawMaterialRequests[materialId].quantity)
+                };
+                console.log('Sending request:', requestData);
+                return fetch('/rawMaterial/requestRawMaterial', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(requestData)
+                });
+            });
+
+            console.log('Raw material requests to be sent:', Object.values(rawMaterialRequests));
+            Promise.all(requests)
+                .then(responses => {
+                    // Check if any response is not ok (status not in 200-299 range)
+                    if (responses.some(response => !response.ok)) {
+                        throw new Error('Failed to create one or more raw material requests');
+                    }
+                    // If we get here, all requests were successful
+                    alert('Raw material requests created successfully!');
+                    this.disabled = true;
+                    this.innerHTML = '<i class="bi bi-check-lg"></i> Requests Submitted';
+                })
+                .catch(error => {
+                    console.error('Error details:', error);
+                    alert('Error creating raw material request. Please try again.');
+                });
+        });
+
+        // Submit packaging requests
+        document.getElementById('submitPackagingRequests').addEventListener('click', function() {
+            const orderId = document.querySelector('input[name="orderId"]').value;
+            
+            // Calculate final request quantities by subtracting stock once from total
+            const requests = Object.entries(packagingRequests).map(([name, pkg]) => {
+                const requestQuantity = Math.max(0, pkg.totalNeeded - pkg.stock);
+                console.log(`${name}: Total needed ${pkg.totalNeeded} - Stock ${pkg.stock} = Request ${requestQuantity}`);
+                
+                // Only create request if quantity > 0
+                if (requestQuantity > 0) {
+                    return fetch('/packaging-request', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({
+                            orderId: orderId,
+                            packagingName: name,
+                            quantity: requestQuantity
+                        })
+                    });
+                }
+                return Promise.resolve(); // Skip if no request needed
+            });
+
+            console.log('Packaging requests to be sent:', Object.entries(packagingRequests).map(([name, pkg]) => ({
+                name: name,
+                totalNeeded: pkg.totalNeeded,
+                stock: pkg.stock,
+                requestQuantity: pkg.totalNeeded - pkg.stock
+            })));
+            Promise.all(requests)
+                .then(responses => {
+                    if (responses.some(response => !response.ok)) {
+                        throw new Error('Failed to create one or more packaging requests');
+                    }
+                    alert('Packaging requests created successfully!');
+                    this.disabled = true;
+                    this.innerHTML = '<i class="bi bi-check-lg"></i> Requests Submitted';
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('Error creating packaging request. Please try again.');
+                });
+        });
+
+        // Production quantity handling
+        document.querySelectorAll('.production-quantity').forEach(input => {
+            input.addEventListener('input', function() {
+                const productId = this.id.split('-')[1];
+                const newQuantity = parseFloat(this.value);
+
+                if (!isNaN(newQuantity)) {
+                    // Handle raw materials
+                    const rawMaterialRows = document.querySelectorAll(`#rawMaterialContainer-${productId} .raw-material-row`);
+                    rawMaterialRows.forEach(row => {
+                        const percentage = parseFloat(row.getAttribute('data-raw-material-percentage'));
+                        const currentStock = parseFloat(row.getAttribute('data-raw-material-stock'));
+
+                        if (!isNaN(percentage)) {
+                            const newRawMaterialQuantity = (percentage / 100) * newQuantity;
+                            row.querySelector('.raw-material-quantity').value = Math.ceil(newRawMaterialQuantity);
+
+                            if (newRawMaterialQuantity > currentStock) {
+                                let requestButton = row.querySelector('.request-raw-material-btn');
+                                if (!requestButton) {
+                                    requestButton = document.createElement('button');
+                                    requestButton.type = 'button';
+                                    requestButton.className = 'btn btn-warning request-raw-material-btn';
+                                    requestButton.innerHTML = '<i class="bi bi-plus-circle"></i> Request Raw Material';
+                                    requestButton.setAttribute('data-material-id', row.getAttribute('data-raw-material-id'));
+                                    requestButton.setAttribute('data-material-name', row.querySelector('.raw-material-name').textContent);
+                                    requestButton.setAttribute('data-quantity', Math.ceil(newRawMaterialQuantity));
+                                    row.appendChild(requestButton);
+
+                                    requestButton.addEventListener('click', function() {
+                                        const materialId = this.getAttribute('data-material-id');
+                                        const materialName = this.getAttribute('data-material-name');
+                                        const neededQuantity = parseFloat(this.getAttribute('data-quantity'));
+                                        const currentStock = parseFloat(this.closest('.raw-material-row').getAttribute('data-raw-material-stock'));
+
+                                        let requestQuantity = neededQuantity;
+                                        
+                                        if (!stockUsed[materialId] && currentStock > 0) {
+                                            requestQuantity = Math.max(0, neededQuantity - currentStock);
+                                            stockUsed[materialId] = true;
+                                            console.log(`Using ${currentStock}KG stock for ${materialName}. Need ${Math.ceil(neededQuantity)}KG, requesting ${Math.ceil(requestQuantity)}KG`);
+                                        } else {
+                                            console.log(`No stock available for ${materialName}. Requesting full ${Math.ceil(requestQuantity)}KG`);
+                                        }
+
+                                        if (!rawMaterialRequests[materialId]) {
+                                            rawMaterialRequests[materialId] = {
+                                                name: materialName,
+                                                quantity: requestQuantity,
+                                            };
+                                        } else {
+                                            rawMaterialRequests[materialId].quantity += requestQuantity;
+                                        }
+
+                                        console.log(`Total request for ${materialName}: ${Math.ceil(rawMaterialRequests[materialId].quantity)}KG`);
+                                        
+                                        this.disabled = true;
+                                        this.innerHTML = '<i class="bi bi-check-lg"></i> Request Added';
+                                    });
+                                }
+                                requestButton.setAttribute('data-quantity', Math.ceil(newRawMaterialQuantity));
+                            } else {
+                                const requestButton = row.querySelector('.request-raw-material-btn');
+                                if (requestButton) {
+                                    requestButton.remove();
+                                }
+                            }
+                        }
+                    });
+
+                    // Handle packaging - show distribution options for excess volume
+                    const packagingRows = document.querySelectorAll(`#packagingContainer-${productId} .raw-material-row`);
+                    const originalQuantity = parseFloat(document.querySelector(`input[name="products[${productId}][neededQuantity]"]`).value);
+                    const productDensity = parseFloat(document.querySelector(`#quantity-${productId}`).closest('.product-card').getAttribute('data-density') || 1);
+                    
+                    // Calculate volume difference
+                    const originalVolumeInLiters = originalQuantity / productDensity;
+                    const newVolumeInLiters = newQuantity / productDensity;
+                    const excessVolumeInLiters = Math.max(0, newVolumeInLiters - originalVolumeInLiters);
+                    
+                    // Show distribution options if there's excess volume
+                    if (excessVolumeInLiters > 0) {
+                        // Create or update distribution panel
+                        let distributionPanel = document.querySelector(`#distributionPanel-${productId}`);
+                        if (!distributionPanel) {
+                            distributionPanel = document.createElement('div');
+                            distributionPanel.id = `distributionPanel-${productId}`;
+                            distributionPanel.className = 'distribution-panel mt-3 p-3 bg-light rounded';
+                            const packagingContainer = document.querySelector(`#packagingContainer-${productId}`);
+                            packagingContainer.appendChild(distributionPanel);
+                        }
+                        
+                        // Update panel content with radio buttons for each packaging
+                        distributionPanel.innerHTML = `
+                            <div class="mb-3">
+                                <strong>Additional Volume: ${excessVolumeInLiters.toFixed(2)}L</strong>
+                                <p>Select which packaging to use for the additional volume:</p>
+                            </div>
+                            ${Array.from(packagingRows).map((row, index) => {
+                                const packagingId = row.getAttribute('data-packaging-id');
+                                const packagingName = row.querySelector('.raw-material-name').textContent;
+                                const packagingVolume = parseFloat(row.getAttribute('data-packaging-volume'));
+                                const maxAdditionalUnits = Math.ceil(excessVolumeInLiters / packagingVolume);
+                                
+                                return `
+                                    <div class="mb-3">
+                                        <div class="form-check mb-2">
+                                            <input class="form-check-input packaging-selection" 
+                                                type="radio" 
+                                                name="packaging-selection-${productId}" 
+                                                id="packaging-${productId}-${packagingId}"
+                                                value="${packagingId}"
+                                                ${index === 0 ? 'checked' : ''}>
+                                            <label class="form-check-label" for="packaging-${productId}-${packagingId}">
+                                                ${packagingName} (${packagingVolume}L each)
+                                            </label>
+                                        </div>
+                                        <div class="d-flex gap-2 align-items-center">
+                                            <input type="number" 
+                                                class="form-control distribution-input" 
+                                                data-packaging-id="${packagingId}"
+                                                data-packaging-volume="${packagingVolume}"
+                                                min="0" 
+                                                max="${maxAdditionalUnits}"
+                                                value="0"
+                                                ${index === 0 ? '' : 'disabled'}>
+                                            <button type="button" 
+                                                class="btn btn-sm btn-primary apply-distribution"
+                                                data-packaging-id="${packagingId}"
+                                                ${index === 0 ? '' : 'disabled'}>
+                                                Apply
+                                            </button>
+                                        </div>
+                                    </div>
+                                `;
+                            }).join('')}
+                        `;
+
+                        // Add event listeners for radio buttons
+                        distributionPanel.querySelectorAll('.packaging-selection').forEach(radio => {
+                            radio.addEventListener('change', function() {
+                                const selectedPackagingId = this.value;
+                                
+                                // Disable all inputs and buttons first
+                                distributionPanel.querySelectorAll('.distribution-input').forEach(input => {
+                                    input.disabled = true;
+                                });
+                                distributionPanel.querySelectorAll('.apply-distribution').forEach(button => {
+                                    button.disabled = true;
+                                });
+                                
+                                // Enable only the selected packaging's input and button
+                                const selectedInput = distributionPanel.querySelector(`.distribution-input[data-packaging-id="${selectedPackagingId}"]`);
+                                const selectedButton = distributionPanel.querySelector(`.apply-distribution[data-packaging-id="${selectedPackagingId}"]`);
+                                if (selectedInput) selectedInput.disabled = false;
+                                if (selectedButton) selectedButton.disabled = false;
+                            });
+                        });
+                        
+                        // Add event listeners to apply buttons
+                        distributionPanel.querySelectorAll('.apply-distribution').forEach(button => {
+                            button.addEventListener('click', function() {
+                                const packagingId = this.getAttribute('data-packaging-id');
+                                const row = document.querySelector(`[data-packaging-id="${packagingId}"]`);
+                                const input = distributionPanel.querySelector(`.distribution-input[data-packaging-id="${packagingId}"]`);
+                                const additionalUnits = parseInt(input.value) || 0;
+                                
+                                // Reset all packaging to original values first
+                                packagingRows.forEach(otherRow => {
+                                    const originalUnit = parseInt(otherRow.getAttribute('data-original-unit'));
+                                    otherRow.querySelector('.raw-material-quantity').value = originalUnit;
+                                    
+                                    const currentStock = parseFloat(otherRow.getAttribute('data-packaging-stock'));
+                                    const packagingVolume = parseFloat(otherRow.getAttribute('data-packaging-volume'));
+                                    const requestQuantity = Math.max(0, originalUnit - currentStock);
+                                    otherRow.querySelector('.raw-material-stock').textContent = 
+                                        `Current Stock: ${currentStock} pcs | Need to Request: ${Math.ceil(requestQuantity)} pcs (Volume: ${Math.ceil(packagingVolume)}L)`;
+                                    
+                                    // Remove any existing request buttons
+                                    const existingButton = otherRow.querySelector('.request-packaging-btn');
+                                    if (existingButton) {
+                                        existingButton.remove();
+                                    }
+                                });
+                                
+                                // Update the selected packaging
+                                const currentStock = parseFloat(row.getAttribute('data-packaging-stock'));
+                                const originalUnit = parseInt(row.getAttribute('data-original-unit'));
+                                const packagingVolume = parseFloat(row.getAttribute('data-packaging-volume'));
+                                
+                                // Update quantity
+                                const newTotal = originalUnit + additionalUnits;
+                                row.querySelector('.raw-material-quantity').value = newTotal;
+                                
+                                // Update stock info and request button
+                                const requestQuantity = Math.max(0, newTotal - currentStock);
+                                row.querySelector('.raw-material-stock').textContent = 
+                                    `Current Stock: ${currentStock} pcs | Need to Request: ${requestQuantity} pcs (Volume: ${packagingVolume}L)`;
+                                
+                                // Handle request button
+                                if (requestQuantity > 0) {
+                                    let requestButton = row.querySelector('.request-packaging-btn');
+                                    if (!requestButton) {
+                                        requestButton = document.createElement('button');
+                                        requestButton.type = 'button';
+                                        requestButton.className = 'btn btn-warning request-packaging-btn';
+                                        requestButton.innerHTML = '<i class="bi bi-plus-circle"></i> Request Packaging';
+                                        requestButton.setAttribute('data-packaging-id', packagingId);
+                                        requestButton.setAttribute('data-packaging-name', row.querySelector('.raw-material-name').textContent);
+                                        requestButton.setAttribute('data-quantity', requestQuantity);
+                                        row.appendChild(requestButton);
+                                        
+                                        // Add click event listener
+                                        requestButton.addEventListener('click', function() {
+                                            const packagingId = this.getAttribute('data-packaging-id');
+                                            const packagingName = this.getAttribute('data-packaging-name');
+                                            const neededQuantity = parseInt(this.getAttribute('data-quantity'));
+                                            const currentStock = parseInt(this.closest('.raw-material-row').getAttribute('data-packaging-stock'));
+                                            const orderId = document.querySelector('input[name="orderId"]').value;
+
+                                            // Track total needed quantity per packaging type
+                                            if (!packagingRequests[packagingName]) {
+                                                packagingRequests[packagingName] = {
+                                                    id: packagingId,
+                                                    name: packagingName,
+                                                    totalNeeded: neededQuantity,
+                                                    stock: currentStock
+                                                };
+                                            } else {
+                                                packagingRequests[packagingName].totalNeeded += neededQuantity;
+                                            }
+
+                                            this.disabled = true;
+                                            this.innerHTML = '<i class="bi bi-check-lg"></i> Request Added';
+                                        });
+                                    } else {
+                                        requestButton.setAttribute('data-quantity', requestQuantity);
+                                    }
+                                } else {
+                                    const requestButton = row.querySelector('.request-packaging-btn');
+                                    if (requestButton) {
+                                        requestButton.remove();
+                                    }
+                                }
+                            });
+                        });
+                    } else {
+                        // Remove distribution panel if no excess volume
+                        const distributionPanel = document.querySelector(`#distributionPanel-${productId}`);
+                        if (distributionPanel) {
+                            distributionPanel.remove();
+                        }
+                        
+                        // Reset packaging to original values
+                        packagingRows.forEach(row => {
+                            const currentStock = parseFloat(row.getAttribute('data-packaging-stock'));
+                            const packagingVolume = parseFloat(row.getAttribute('data-packaging-volume'));
+                            const originalUnit = parseInt(row.getAttribute('data-original-unit'));
+                            
+                            row.querySelector('.raw-material-quantity').value = originalUnit;
+                            
+                            const requestQuantity = Math.max(0, originalUnit - currentStock);
+                            row.querySelector('.raw-material-stock').textContent = 
+                                `Current Stock: ${currentStock} pcs | Need to Request: ${requestQuantity} pcs (Volume: ${packagingVolume}L)`;
+                                
+                            // Remove any existing request buttons
+                            const existingButton = row.querySelector('.request-packaging-btn');
+                            if (existingButton) {
+                                existingButton.remove();
+                            }
+                        });
+                    }
+                } else {
+                    // Clear values when input is invalid
+                    const rawMaterialRows = document.querySelectorAll(`#rawMaterialContainer-${productId} .raw-material-row`);
+                    rawMaterialRows.forEach(row => {
+                        row.querySelector('.raw-material-quantity').value = '';
+                        const requestButton = row.querySelector('.request-raw-material-btn');
+                        if (requestButton) {
+                            requestButton.remove();
+                        }
+                    });
+
+                    const packagingRows = document.querySelectorAll(`#packagingContainer-${productId} .raw-material-row`);
+                    packagingRows.forEach(row => {
+                        row.querySelector('.raw-material-quantity').value = '';
+                        const requestButton = row.querySelector('.request-packaging-btn');
+                        if (requestButton) {
+                            requestButton.remove();
+                        }
+                    });
+                }
+            });
+            
+            // Handle formula source selection
+            document.querySelectorAll('.formula-source').forEach(radio => {
+                radio.addEventListener('change', function() {
+                    const productId = this.id.split('-')[1];
+                    const uploadContainer = document.getElementById(`formulaUploadContainer-${productId}`);
+                    const fileInput = document.getElementById(`formula-${productId}`);
+                    const existingFormulaInfo = document.getElementById(`existingFormulaInfo-${productId}`);
+                    
+                    if (this.value === 'upload') {
+                        uploadContainer.style.display = 'block';
+                        fileInput.required = true;
+                        existingFormulaInfo.style.display = 'none';
+                    } else {
+                        uploadContainer.style.display = 'none';
+                        fileInput.required = false;
+                        existingFormulaInfo.style.display = 'block';
+                    }
+                });
+            });
+        });
+    </script>
+</body>
+</html>

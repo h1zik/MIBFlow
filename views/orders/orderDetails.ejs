@@ -1,0 +1,586 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Order Details</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.7.2/font/bootstrap-icons.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary-color: #2e7d32;
+            --primary-dark: #1b5e20;
+            --background-light: #e8f5e9;
+            --shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            --transition: all 0.3s ease;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--background-light);
+            margin: 0;
+            padding: 0;
+            min-height: 100vh;
+        }
+
+        .content {
+            margin-left: 280px;
+            padding: 2rem;
+            width: calc(100% - 280px);
+            transition: all 0.3s ease;
+        }
+
+        @media (max-width: 768px) {
+            .content {
+                margin-left: 0;
+                padding: 1rem;
+                width: 100%;
+            }
+        }
+
+        .order-status {
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+            font-weight: 600;
+            text-align: center;
+            width: fit-content;
+        }
+        .status-pending { background-color: #ffeeba; color: #856404; }
+        .status-approved { background-color: #d4edda; color: #155724; }
+        .status-processing { background-color: #cce5ff; color: #004085; }
+        .status-delivered { background-color: #c3e6cb; color: #155724; }
+        .status-declined { background-color: #f8d7da; color: #721c24; }
+        
+        .info-card {
+            background-color: #f8f9fa;
+            border-radius: 10px;
+            padding: 1.5rem;
+            height: 100%;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        
+        .product-card {
+            border-left: 4px solid #007bff;
+            margin-bottom: 1rem;
+            transition: transform 0.2s;
+        }
+        
+        .product-card:hover {
+            transform: translateX(5px);
+        }
+        
+        .packaging-details {
+            font-size: 0.9rem;
+            color: #6c757d;
+            padding-left: 1rem;
+            border-left: 2px solid #dee2e6;
+            margin: 0.5rem 0 0.5rem 1rem;
+        }
+        
+        .total-section {
+            background-color: #f8f9fa;
+            border-radius: 10px;
+            padding: 1.5rem;
+            margin-top: 2rem;
+        }
+
+        .total-line {
+            display: flex;
+            justify-content: space-between;
+            padding: 0.5rem 0;
+            border-bottom: 1px solid #dee2e6;
+        }
+
+        .total-line:last-child {
+            border-bottom: none;
+            font-weight: bold;
+            font-size: 1.2rem;
+        }
+
+        .deadline-alert {
+            color: #dc3545;
+            font-weight: 600;
+        }
+
+        /* Timeline styles */
+        .timeline {
+            position: relative;
+            margin: 3rem auto;
+            padding: 20px;
+            max-width: 1200px;
+        }
+        
+        .timeline::before {
+            content: '';
+            position: absolute;
+            width: 6px;
+            background: linear-gradient(to bottom, 
+                #e9ecef 0%, #e9ecef 100%);
+            top: 0;
+            bottom: 0;
+            left: 50%;
+            margin-left: -3px;
+            border-radius: 3px;
+        }
+        
+        .timeline-item {
+            position: relative;
+            margin: 3rem 0;
+        }
+        
+        .timeline-item::before {
+            content: '';
+            position: absolute;
+            width: 24px;
+            height: 24px;
+            left: calc(50% - 12px);
+            background-color: white;
+            border: 4px solid #007bff;
+            border-radius: 50%;
+            z-index: 1;
+            transition: all 0.3s ease;
+            box-shadow: 0 0 0 4px rgba(0,123,255,0.2);
+        }
+        
+        .timeline-item.active::before {
+            background-color: #007bff;
+            box-shadow: 0 0 0 6px rgba(0,123,255,0.2);
+            animation: pulse 2s infinite;
+        }
+        
+        @keyframes pulse {
+            0% { box-shadow: 0 0 0 0 rgba(0,123,255,0.4); }
+            70% { box-shadow: 0 0 0 10px rgba(0,123,255,0); }
+            100% { box-shadow: 0 0 0 0 rgba(0,123,255,0); }
+        }
+        
+        .timeline-item.completed::before {
+            background-color: #28a745;
+            border-color: #28a745;
+            box-shadow: 0 0 0 4px rgba(40,167,69,0.2);
+        }
+        
+        .timeline-content {
+            position: relative;
+            width: 45%;
+            padding: 1.5rem;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+            transition: transform 0.3s ease;
+        }
+        
+        .timeline-content:hover {
+            transform: translateY(-5px);
+        }
+        
+        .timeline-item:nth-child(odd) .timeline-content {
+            margin-left: auto;
+        }
+        
+        .timeline-content::before {
+            content: '';
+            position: absolute;
+            top: 12px;
+            width: 20px;
+            height: 20px;
+            background: white;
+            transform: rotate(45deg);
+            box-shadow: -2px 2px 4px rgba(0,0,0,0.05);
+        }
+        
+        .timeline-item:nth-child(odd) .timeline-content::before {
+            left: -10px;
+        }
+        
+        .timeline-item:nth-child(even) .timeline-content::before {
+            right: -10px;
+        }
+        
+        .timeline-icon {
+            margin-bottom: 0.5rem;
+            color: #007bff;
+            font-size: 1.2rem;
+        }
+        
+        .timeline-date {
+            color: #6c757d;
+            font-size: 0.9rem;
+            margin-top: 0.5rem;
+        }
+        
+        .timeline-title {
+            color: #343a40;
+            font-weight: 600;
+            margin-bottom: 0.25rem;
+        }
+        
+        .timeline-description {
+            color: #6c757d;
+            font-size: 0.9rem;
+            margin-bottom: 0;
+        }
+        
+        @media (max-width: 768px) {
+            .timeline::before {
+                left: 31px;
+            }
+            
+            .timeline-item::before {
+                left: 19px;
+            }
+            
+            .timeline-content {
+                width: calc(100% - 70px);
+                margin-left: 70px !important;
+            }
+            
+            .timeline-content::before {
+                left: -10px !important;
+            }
+            
+            .timeline-date {
+                margin-top: 0.25rem;
+            }
+
+            .info-card {
+                margin-bottom: 1rem;
+            }
+            .order-header {
+                flex-direction: column;
+                align-items: start !important;
+            }
+            .order-status {
+                margin-top: 1rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <%- include('../partials/sidebar', { userRole: userRole, path: '/orders/details' }) %>
+
+    <div class="content">
+        <div class="container-fluid">
+            <!-- Order Header -->
+            <div class="mb-4">
+                <div class="d-flex justify-content-between align-items-center order-header">
+                    <h2 class="mb-0">Order #<%= order.id %></h2>
+                    <div class="order-status status-<%= order.status.toLowerCase() %>">
+                        <%= order.status %>
+                    </div>
+                </div>
+
+                <!-- Enhanced Order Timeline -->
+                <div class="timeline mt-5">
+                    <div class="timeline-item <%= ['Pending', 'On Production', 'Production Completed', 'Approved', 'Paid', 'Ready to Deliver', 'On Delivery', 'Delivered'].includes(order.status) ? 'completed' : '' %>">
+                        <div class="timeline-content">
+                            <div class="timeline-icon">
+                                <i class="fas fa-file-invoice"></i>
+                            </div>
+                            <h6 class="timeline-title">Order Created</h6>
+                            <p class="timeline-description">Order has been submitted</p>
+                            <div class="timeline-date"><%= new Date(order.createdAt).toLocaleDateString() %></div>
+                        </div>
+                    </div>
+                    
+                    <div class="timeline-item <%= ['On Production', 'Production Completed', 'Approved', 'Paid', 'Ready to Deliver', 'On Delivery', 'Delivered'].includes(order.status) ? 'completed' : order.status === 'Pending' ? 'active' : '' %>">
+                        <div class="timeline-content">
+                            <div class="timeline-icon">
+                                <i class="fas fa-clock"></i>
+                            </div>
+                            <h6 class="timeline-title">Pending Review</h6>
+                            <p class="timeline-description">Order is being reviewed</p>
+                            <div class="timeline-date">Awaiting production approval</div>
+                        </div>
+                    </div>
+                    
+                    <div class="timeline-item <%= ['On Production', 'Production Completed', 'Approved', 'Paid', 'Ready to Deliver', 'On Delivery', 'Delivered'].includes(order.status) ? 'completed' : order.RawMaterialRequests && order.RawMaterialRequests.length > 0 ? 'active' : '' %>">
+                        <div class="timeline-content">
+                            <div class="timeline-icon">
+                                <i class="fas fa-boxes"></i>
+                            </div>
+                            <h6 class="timeline-title">Raw Material Requested</h6>
+                            <p class="timeline-description">Raw materials have been requested</p>
+                            <div class="timeline-date">
+                                <% if(order.RawMaterialRequests && order.RawMaterialRequests.length > 0) { %>
+                                    <% const allVendorsCompleted = order.RawMaterialRequests.every(req => 
+                                        req.RawMaterialRequestVendors && 
+                                        req.RawMaterialRequestVendors.every(vendor => 
+                                            vendor.status === 'Completed' || vendor.status === 'Quarantined'
+                                        )
+                                    ); %>
+                                    <%= allVendorsCompleted ? 'All materials received' : 'Materials in process' %>
+                                <% } else { %>
+                                    Awaiting material requests
+                                <% } %>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="timeline-item <%= ['Production Completed', 'Approved', 'Paid', 'Ready to Deliver', 'On Delivery', 'Delivered'].includes(order.status) ? 'completed' : order.status === 'On Production' ? 'active' : '' %>">
+                        <div class="timeline-content">
+                            <div class="timeline-icon">
+                                <i class="fas fa-industry"></i>
+                            </div>
+                            <h6 class="timeline-title">On Production</h6>
+                            <p class="timeline-description">Products are being manufactured</p>
+                            <div class="timeline-date">Manufacturing in progress</div>
+                        </div>
+                    </div>
+                    
+                    <div class="timeline-item <%= ['Approved', 'Paid', 'Ready to Deliver', 'On Delivery', 'Delivered'].includes(order.status) ? 'completed' : order.status === 'Production Completed' ? 'active' : '' %>">
+                        <div class="timeline-content">
+                            <div class="timeline-icon">
+                                <i class="fas fa-check-circle"></i>
+                            </div>
+                            <h6 class="timeline-title">Production Completed</h6>
+                            <p class="timeline-description">Manufacturing process finished</p>
+                            <div class="timeline-date">Ready for approval</div>
+                        </div>
+                    </div>
+                    
+                    <div class="timeline-item <%= ['Paid', 'Ready to Deliver', 'On Delivery', 'Delivered'].includes(order.status) ? 'completed' : order.status === 'Approved' ? 'active' : '' %>">
+                        <div class="timeline-content">
+                            <div class="timeline-icon">
+                                <i class="fas fa-thumbs-up"></i>
+                            </div>
+                            <h6 class="timeline-title">Approved</h6>
+                            <p class="timeline-description">Order has been approved</p>
+                            <div class="timeline-date">Awaiting payment</div>
+                        </div>
+                    </div>
+                    
+                    <div class="timeline-item <%= ['Ready to Deliver', 'On Delivery', 'Delivered'].includes(order.status) ? 'completed' : order.status === 'Paid' ? 'active' : '' %>">
+                        <div class="timeline-content">
+                            <div class="timeline-icon">
+                                <i class="fas fa-money-bill-wave"></i>
+                            </div>
+                            <h6 class="timeline-title">Paid</h6>
+                            <p class="timeline-description">Payment received</p>
+                            <div class="timeline-date">Processing for delivery</div>
+                        </div>
+                    </div>
+                    
+                    <div class="timeline-item <%= ['On Delivery', 'Delivered'].includes(order.status) ? 'completed' : order.status === 'Ready to Deliver' ? 'active' : '' %>">
+                        <div class="timeline-content">
+                            <div class="timeline-icon">
+                                <i class="fas fa-box"></i>
+                            </div>
+                            <h6 class="timeline-title">Ready to Deliver</h6>
+                            <p class="timeline-description">Order packed and ready</p>
+                            <div class="timeline-date">Preparing for shipment</div>
+                        </div>
+                    </div>
+                    
+                    <div class="timeline-item <%= ['Delivered'].includes(order.status) ? 'completed' : order.status === 'On Delivery' ? 'active' : '' %>">
+                        <div class="timeline-content">
+                            <div class="timeline-icon">
+                                <i class="fas fa-truck"></i>
+                            </div>
+                            <h6 class="timeline-title">On Delivery</h6>
+                            <p class="timeline-description">Order is in transit</p>
+                            <div class="timeline-date">Out for delivery</div>
+                        </div>
+                    </div>
+                    
+                    <div class="timeline-item <%= order.status === 'Delivered' ? 'completed' : '' %>">
+                        <div class="timeline-content">
+                            <div class="timeline-icon">
+                                <i class="fas fa-flag-checkered"></i>
+                            </div>
+                            <h6 class="timeline-title">Delivered</h6>
+                            <p class="timeline-description">Order successfully delivered</p>
+                            <div class="timeline-date">Order completed</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="row">
+                <!-- Customer Information -->
+                <div class="col-md-6 mb-4">
+                    <div class="info-card">
+                        <h4 class="mb-3"><i class="fas fa-user me-2"></i>Customer Information</h4>
+                        <div class="mb-2"><strong>Name:</strong> <%= order.Customer.name %></div>
+                        <div class="mb-2"><strong>Company:</strong> <%= order.Customer.perusahaan %></div>
+                        <div class="mb-2"><strong>Contact Person:</strong> <%= order.Customer.cp %></div>
+                        <div class="mb-2"><strong>Phone:</strong> <%= order.Customer.phone %></div>
+                        <div class="mb-2"><strong>Email:</strong> <%= order.Customer.email %></div>
+                        <div class="mb-2"><strong>Address:</strong> <%= order.Customer.alamat %></div>
+                    </div>
+                </div>
+
+                <!-- Order Information -->
+                <div class="col-md-6 mb-4">
+                    <div class="info-card">
+                        <h4 class="mb-3"><i class="fas fa-file-invoice me-2"></i>Order Information</h4>
+                        <div class="mb-2"><strong>PO Number:</strong> <%= order.po %></div>
+                        <div class="mb-2"><strong>Payment Type:</strong> <%= order.paymentType %></div>
+                        <div class="mb-2"><strong>Tax:</strong> <%= order.tax ? 'Yes' : 'No' %></div>
+                        <% if(order.deadline) { %>
+                            <div class="mb-2">
+                                <strong>Deadline:</strong> 
+                                <span class="<%= new Date(order.deadline) < new Date() ? 'deadline-alert' : '' %>">
+                                    <%= new Date(order.deadline).toLocaleDateString() %>
+                                </span>
+                            </div>
+                        <% } %>
+                        <% if(order.notes) { %>
+                            <div class="mb-2"><strong>Notes:</strong> <%= order.notes %></div>
+                        <% } %>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Products Section -->
+            <h4 class="mb-3"><i class="fas fa-box me-2"></i>Products</h4>
+            <div class="bg-white p-4 rounded shadow-sm">
+                <% groupedItems.forEach(item => { %>
+                    <div class="product-card p-3 bg-white rounded">
+                <div class="d-flex justify-content-between align-items-start">
+                    <div>
+                        <h5 class="mb-2"><%= item.product %></h5>
+                        <div class="text-muted">Unit Price: Rp <%= item.unitPrice.toLocaleString() %> / <%= item.satuan %></div>
+                        <div>Total Quantity: <%= item.totalQuantity.toLocaleString() %> <%= item.satuan %></div>
+                        <div class="text-muted">Product Total: Rp <%= (item.totalPrice - item.packagingTotal).toLocaleString() %></div>
+                        <div class="text-muted">Packaging Total: Rp <%= item.packagingTotal.toLocaleString() %></div>
+                    </div>
+                    <div class="text-end">
+                        <div class="h5 mb-0">Total: Rp <%= item.totalPrice.toLocaleString() %></div>
+                    </div>
+                </div>
+                        
+                        <!-- Packaging Details -->
+                        <div class="packaging-details">
+                            <% item.packagingDetails.forEach(pkg => { %>
+                                <div>
+                                    <%= pkg.packagingName %> (<%= pkg.volume %>L) x <%= pkg.unit %> units
+                                </div>
+                            <% }) %>
+                        </div>
+                    </div>
+                <% }) %>
+
+            <!-- Consumables Section -->
+            <div class="mt-4">
+                <h4 class="mb-3"><i class="fas fa-box-open me-2"></i>Consumables Used</h4>
+                <div class="row">
+                    <% const consumables = [
+                        { name: 'Pallet', flag: order.pallet },
+                        { name: 'Sticker', flag: order.sticker },
+                        { name: 'Wrap', flag: order.wrap },
+                        { name: 'Handling', flag: order.handling },
+                        { name: 'Logistic', flag: order.logistic },
+                        { name: 'Triplek', flag: order.triplek },
+                        { name: 'Peti', flag: order.peti },
+                        { name: 'Kabel Ties', flag: order.kabelties }
+                    ] %>
+                    <% consumables.forEach(consumable => { %>
+                        <div class="col-md-3 mb-2">
+                            <div class="d-flex align-items-center">
+                                <i class="fas fa-<%= consumable.flag ? 'check text-success' : 'times text-danger' %> me-2"></i>
+                                <span><%= consumable.name %></span>
+                            </div>
+                        </div>
+                    <% }) %>
+                </div>
+            </div>
+
+            <!-- Total Section -->
+            <div class="total-section mt-4">
+                <div class="total-line">
+                    <span>Products Subtotal</span>
+                    <span>Rp <%= Object.values(groupedItems).reduce((sum, item) => sum + item.totalPrice - item.packagingTotal, 0).toLocaleString() %></span>
+                </div>
+                <div class="total-line">
+                    <span>Packaging Subtotal</span>
+                    <span>Rp <%= Object.values(groupedItems).reduce((sum, item) => sum + item.packagingTotal, 0).toLocaleString() %></span>
+                </div>
+                <% if (order.pallet || order.sticker || order.wrap || order.handling || order.logistic || order.triplek || order.peti || order.kabelties) { %>
+                    <div class="total-line">
+                        <span>Consumables</span>
+                        <div>
+                            <% if (order.pallet) { %><div>Pallet - Rp <%= consumableFees.pallet.toLocaleString() %></div><% } %>
+                            <% if (order.sticker) { %><div>Sticker - Rp <%= consumableFees.sticker.toLocaleString() %></div><% } %>
+                            <% if (order.wrap) { %><div>Wrap - Rp <%= consumableFees.wrap.toLocaleString() %></div><% } %>
+                            <% if (order.handling) { %><div>Handling - Rp <%= consumableFees.handling.toLocaleString() %></div><% } %>
+                            <% if (order.logistic) { %><div>Logistic - Rp <%= consumableFees.logistic.toLocaleString() %></div><% } %>
+                            <% if (order.triplek) { %><div>Triplek - Rp <%= consumableFees.triplek.toLocaleString() %></div><% } %>
+                            <% if (order.peti) { %><div>Peti - Rp <%= consumableFees.peti.toLocaleString() %></div><% } %>
+                            <% if (order.kabelties) { %><div>Kabel Ties - Rp <%= consumableFees.kabelties.toLocaleString() %></div><% } %>
+                            <div class="mt-2"><strong>Consumables Total: Rp <%= consumablesTotal.toLocaleString() %></strong></div>
+                        </div>
+                    </div>
+                <% } %>
+                <div class="total-line">
+                    <span>Subtotal</span>
+                    <span>Rp <%= order.total.toLocaleString() %></span>
+                </div>
+                <% if(order.tax) { %>
+                    <div class="total-line">
+                        <span>Tax (11%)</span>
+                        <span>Rp <%= (order.total * 0.11).toLocaleString() %></span>
+                    </div>
+                <% } %>
+                <div class="total-line">
+                    <span>Total</span>
+                    <span>Rp <%= (order.tax ? order.total * 1.11 : order.total).toLocaleString() %></span>
+                </div>
+            </div>
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="d-flex justify-content-end gap-2 mt-4">
+                <a href="/orders/print/<%= order.id %>" class="btn btn-primary">
+                    <i class="fas fa-print me-2"></i>Print Invoice
+                </a>
+                <a href="javascript:history.back()" class="btn btn-secondary">
+                    <i class="fas fa-arrow-left me-2"></i>Back
+                </a>
+            </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Handle sidebar state changes
+            const sidebar = document.querySelector('.sidebar');
+            const mainContent = document.querySelector('.content');
+
+            function updateContentWidth() {
+                if (window.innerWidth > 768) {
+                    if (sidebar.classList.contains('collapsed')) {
+                        mainContent.style.marginLeft = '70px';
+                        mainContent.style.width = 'calc(100% - 70px)';
+                    } else {
+                        mainContent.style.marginLeft = '280px';
+                        mainContent.style.width = 'calc(100% - 280px)';
+                    }
+                } else {
+                    mainContent.style.marginLeft = '0';
+                    mainContent.style.width = '100%';
+                }
+            }
+
+            // Initial width update
+            updateContentWidth();
+
+            // Watch for sidebar class changes
+            const observer = new MutationObserver(function(mutations) {
+                mutations.forEach(function(mutation) {
+                    if (mutation.attributeName === 'class') {
+                        updateContentWidth();
+                    }
+                });
+            });
+
+            observer.observe(sidebar, { attributes: true });
+
+            // Handle window resize
+            window.addEventListener('resize', updateContentWidth);
+        });
+    </script>
+</body>
+</html>

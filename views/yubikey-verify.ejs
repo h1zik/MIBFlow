@@ -1,0 +1,848 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#2e7d32">
+    <meta name="mobile-web-app-capable" content="yes">
+    <!-- Security Headers -->
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdn.jsdelivr.net https://cdnjs.cloudflare.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob:; connect-src 'self' http://localhost:* https://localhost:*">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="theme-color" content="#2e7d32">
+    <title>YubiKey Verification - MIB Flow</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/@simplewebauthn/browser@8.3.4/dist/bundle/index.umd.min.js"></script>
+    <style>
+        :root {
+            --primary-color: #2e7d32;
+            --primary-light: #4caf50;
+            --primary-dark: #1b5e20;
+            --text-color: #2c3e50;
+            --background-light: #e8f5e9;
+            --shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        body {
+            margin: 0;
+            padding: 1rem;
+            font-family: 'Inter', sans-serif;
+            min-height: 100vh;
+            background: linear-gradient(135deg, var(--primary-dark), var(--primary-light));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow-x: hidden;
+            overflow-y: auto;
+        }
+
+        .container {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            box-shadow: var(--shadow);
+            width: 100%;
+            max-width: 420px;
+            padding: clamp(1.5rem, 5vw, 2.5rem);
+            text-align: center;
+            position: relative;
+            z-index: 1;
+            backdrop-filter: blur(10px);
+            margin: auto;
+        }
+
+        @media (max-width: 480px) {
+            body {
+                padding: 0.5rem;
+            }
+            
+            .container {
+                border-radius: 15px;
+                margin: 0.5rem;
+            }
+
+            .header h2 {
+                font-size: 1.25rem !important;
+            }
+
+            .header p {
+                font-size: 0.85rem !important;
+            }
+
+            .auth-content {
+                width: 100px !important;
+                height: 100px !important;
+                margin: 0 auto 1.5rem !important;
+            }
+
+            .percentage {
+                font-size: 1.5rem !important;
+            }
+
+            .status-text {
+                font-size: 1rem !important;
+            }
+
+            .scanning-text {
+                font-size: 0.8rem !important;
+            }
+
+            .text-muted {
+                font-size: 0.75rem !important;
+            }
+        }
+
+        @media (max-height: 600px) {
+            body {
+                padding: 0.5rem;
+            }
+
+            .container {
+                padding: 1rem;
+            }
+
+            .header {
+                margin-bottom: 1.5rem !important;
+                padding-bottom: 1rem !important;
+            }
+
+            .auth-content {
+                margin: 0 auto 1rem !important;
+            }
+        }
+
+        .header {
+            margin-bottom: clamp(1.5rem, 4vw, 2.5rem);
+            padding-bottom: clamp(1rem, 3vw, 1.5rem);
+            border-bottom: 1px solid rgba(46, 125, 50, 0.1);
+            position: relative;
+        }
+
+        .header::after {
+            content: '';
+            position: absolute;
+            bottom: -1px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 100px;
+            height: 2px;
+            background: linear-gradient(90deg, transparent, var(--primary-color), transparent);
+        }
+
+        .header img {
+            width: clamp(40px, 15vw, 60px);
+            height: auto;
+            margin-bottom: clamp(0.5rem, 2vw, 1rem);
+        }
+
+        .header h2 {
+            color: var(--primary-dark);
+            font-weight: 600;
+            margin: 0;
+            font-size: clamp(1.25rem, 4vw, 1.5rem);
+            margin-bottom: 0.5rem;
+            line-height: 1.2;
+        }
+
+        .header p {
+            color: #666;
+            margin: 0;
+            font-size: clamp(0.85rem, 2.5vw, 0.9rem);
+            line-height: 1.4;
+        }
+
+        .auth-content {
+            position: relative;
+            width: 120px;
+            height: 120px;
+            margin: 0 auto 2rem;
+        }
+
+        .progress-ring {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            animation: pulse-rotate 3s ease-in-out infinite;
+        }
+
+        @keyframes pulse-rotate {
+            0% { transform: rotate(0deg) scale(0.95); }
+            50% { transform: rotate(180deg) scale(1.05); }
+            100% { transform: rotate(360deg) scale(0.95); }
+        }
+
+        .progress-ring circle {
+            fill: none;
+            stroke: var(--background-light);
+            stroke-width: 4;
+            filter: drop-shadow(0 0 4px var(--primary-light));
+            animation: glow 3s ease-in-out infinite;
+        }
+
+        .progress-ring circle.progress {
+            stroke: var(--primary-color);
+            stroke-dasharray: 377;
+            stroke-dashoffset: 377;
+            transform: rotate(-90deg);
+            transform-origin: 50% 50%;
+            transition: stroke-dashoffset 0.3s ease;
+            animation: none;
+            filter: none;
+        }
+
+        @keyframes glow {
+            0% { filter: drop-shadow(0 0 4px var(--primary-light)); }
+            50% { filter: drop-shadow(0 0 12px var(--primary-light)); }
+            100% { filter: drop-shadow(0 0 4px var(--primary-light)); }
+        }
+
+        .percentage {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 1.75rem;
+            font-weight: 500;
+            color: var(--primary-color);
+            z-index: 3;
+        }
+
+        .status-text {
+            font-size: 1.1rem;
+            color: var(--text-color);
+            font-weight: 500;
+            margin-bottom: 0.5rem;
+        }
+
+        .scanning-text {
+            font-size: 0.875rem;
+            color: #666;
+            animation: pulse-text 2s ease-in-out infinite;
+        }
+
+        @keyframes pulse-text {
+            0% { opacity: 0.6; }
+            50% { opacity: 1; }
+            100% { opacity: 0.6; }
+        }
+
+        form {
+            margin: 0;
+            padding: 0;
+        }
+
+        /* Hidden input for USB method */
+        #otpInput {
+            position: absolute;
+            opacity: 0;
+            width: 0;
+            height: 0;
+            padding: 0;
+            margin: 0;
+            border: none;
+        }
+
+        /* Input group styles */
+        .input-group {
+            position: relative;
+            display: flex;
+            flex-wrap: nowrap;
+            align-items: stretch;
+            width: 100%;
+        }
+
+        /* Visible input for authenticator app method */
+        .input-group input.form-control {
+            font-family: monospace;
+            font-size: 1rem;
+            padding: 0.75rem;
+            border: 1px solid #ddd;
+            border-radius: 8px 0 0 8px;
+            background: #f8f9fa;
+            color: #333;
+            transition: border-color 0.2s;
+            flex: 1 1 auto;
+            width: 1%;
+            min-width: 0;
+        }
+
+        .input-group input.form-control:focus {
+            outline: none;
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 2px rgba(46, 125, 50, 0.1);
+        }
+
+        .input-group .btn-primary {
+            background-color: var(--primary-color);
+            border-color: var(--primary-color);
+        }
+
+        .input-group .btn-primary:hover {
+            background-color: var(--primary-dark);
+            border-color: var(--primary-dark);
+        }
+
+        @media (max-width: 480px) {
+            #appOtpInput {
+                font-size: 0.9rem;
+                padding: 0.5rem;
+            }
+            
+            .input-group .btn {
+                padding: 0.5rem 1rem;
+            }
+        }
+
+        @keyframes shake {
+            10%, 90% { transform: translateX(-1px); }
+            20%, 80% { transform: translateX(2px); }
+            30%, 50%, 70% { transform: translateX(-4px); }
+            40%, 60% { transform: translateX(4px); }
+        }
+
+        .error .auth-content {
+            animation: shake 0.5s cubic-bezier(.36,.07,.19,.97) both;
+        }
+
+        .alert {
+            font-size: clamp(0.8rem, 2.5vw, 0.9rem);
+            padding: 0.75rem;
+            border-radius: 10px;
+            margin-top: 1rem;
+        }
+
+        @media (max-width: 480px) {
+            .alert {
+                padding: 0.5rem;
+                margin-top: 0.75rem;
+            }
+
+            .progress-ring {
+                transform-origin: center;
+                transform: scale(0.9);
+            }
+
+            .progress-ring circle {
+                stroke-width: 3;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <img src="/images/logomib.png" alt="MIB Flow Logo">
+            <h2>Two-Factor Authentication</h2>
+            <p>Please verify your identity to continue</p>
+            <% if (typeof error !== 'undefined' && error) { %>
+                <div class="alert alert-danger mt-3" role="alert">
+                    <%= error %>
+                </div>
+            <% } %>
+        </div>
+
+        <div class="auth-content">
+            <svg class="progress-ring">
+                <circle cx="60" cy="60" r="55" />
+                <circle class="progress" cx="60" cy="60" r="55" />
+            </svg>
+            <div class="percentage">0%</div>
+        </div>
+
+        <div class="status-text">YubiKey Authentication</div>
+        <div class="scanning-text">Touch your YubiKey's sensor</div>
+        
+        <div class="auth-methods mt-4">
+            <!-- Method 1: USB Direct Input -->
+            <div class="method-usb mb-4">
+                <div class="text-muted small mb-2">
+                    <i class="fas fa-usb"></i> USB Method: Insert YubiKey and touch the sensor
+                </div>
+                <form action="/yubikey-verify" method="POST" id="verifyForm">
+                    <input type="text" id="otpInput" name="otp" autocomplete="off">
+                    <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                </form>
+            </div>
+
+            <!-- Method 2: Authenticator App -->
+            <div class="method-app">
+                <div class="text-muted small mb-2">
+                    <i class="fas fa-mobile-alt"></i> Authenticator App Method
+                </div>
+                <div class="alert alert-info">
+                    <p class="text-start small mb-2">
+                        <strong>Authenticator App Setup:</strong>
+                    </p>
+                    <ol class="text-start small mb-2 ps-3">
+                        <li>Install any authenticator app (Google/Microsoft Authenticator)</li>
+                        <li>Click "Generate QR Code" below</li>
+                        <li>Scan the QR code with your authenticator app</li>
+                        <li>Enter the 6-digit code shown in your app</li>
+                    </ol>
+                    <div id="qrcode-container" class="text-center mt-3" style="display: none;">
+                        <img id="qrcode" alt="QR Code" class="mb-2" style="max-width: 200px;">
+                        <p class="small text-muted mb-2">Scan this QR code with your authenticator app</p>
+                        <p class="small text-muted">Backup code: <span id="secret-key"></span></p>
+                    </div>
+                    <button type="button" class="btn btn-sm btn-primary mt-2" onclick="generateQRCode()">
+                        Generate QR Code
+                    </button>
+                    <div class="mb-2">
+                        <a href="https://play.google.com/store/apps/details?id=com.yubico.yubioath" target="_blank" class="btn btn-sm btn-outline-primary me-2">
+                            <i class="fab fa-android"></i> Android
+                        </a>
+                        <a href="https://apps.apple.com/app/yubico-authenticator/id1476679808" target="_blank" class="btn btn-sm btn-outline-primary">
+                            <i class="fab fa-apple"></i> iOS
+                        </a>
+                    </div>
+                </div>
+                <div class="mt-3">
+                    <div class="text-center">
+                        <div class="input-group mx-auto" style="max-width: 300px;">
+                            <input type="text" 
+                                   id="appOtpInput" 
+                                   class="form-control" 
+                                   placeholder="Enter 6-digit code" 
+                                   autocomplete="off" 
+                                   maxlength="6"
+                                   pattern="[0-9]{6}"
+                                   inputmode="numeric">
+                            <button type="button" class="btn btn-primary" onclick="handleAppSubmit()">
+                                <i class="fas fa-check"></i> Verify
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const otpInput = document.getElementById('otpInput');
+        const form = document.getElementById('verifyForm');
+        const progressRing = document.querySelector('.progress-ring circle.progress');
+        const percentage = document.querySelector('.percentage');
+        const statusText = document.querySelector('.status-text');
+        const scanningText = document.querySelector('.scanning-text');
+        const circumference = 2 * Math.PI * 55;
+
+        // Add logging function with visual feedback
+        function addLog(message, detail = '') {
+            console.log(message, detail);
+            statusText.textContent = message;
+            scanningText.textContent = detail || new Date().toLocaleTimeString();
+            
+            // Flash the status text to make changes more noticeable
+            statusText.style.color = '#2e7d32';
+            setTimeout(() => {
+                statusText.style.color = '';
+            }, 500);
+        }
+
+        // Show a temporary message
+        function showTemporaryMessage(message, detail = '', duration = 2000) {
+            addLog(message, detail);
+            return new Promise(resolve => setTimeout(resolve, duration));
+        }
+
+        progressRing.style.strokeDasharray = circumference;
+        progressRing.style.strokeDashoffset = circumference;
+
+        function setProgress(percent) {
+            const offset = circumference - (percent / 100 * circumference);
+            progressRing.style.strokeDashoffset = offset;
+            percentage.textContent = percent + '%';
+        }
+
+        // Handle Yubikey input
+        function stopRotation() {
+            document.querySelector('.progress-ring').style.animation = 'none';
+        }
+
+        // Initialize with default message
+        addLog('YubiKey Authentication', 'Choose your authentication method');
+
+        // Wait for SimpleWebAuthn to load
+        function waitForSimpleWebAuthn() {
+            return new Promise((resolve) => {
+                if (window.SimpleWebAuthn) {
+                    resolve(window.SimpleWebAuthn);
+                } else {
+                    const checkInterval = setInterval(() => {
+                        if (window.SimpleWebAuthn) {
+                            clearInterval(checkInterval);
+                            resolve(window.SimpleWebAuthn);
+                        }
+                    }, 100);
+                }
+            });
+        }
+
+        // WebAuthn functionality for YubiKey
+        async function handleAuthentication() {
+            if (!window.PublicKeyCredential) {
+                addLog('Error', 'WebAuthn is not supported in this browser');
+                return;
+            }
+
+            try {
+                addLog('Starting Authentication...', 'Please wait');
+                stopRotation();
+
+                // Wait for SimpleWebAuthn to load
+                const SimpleWebAuthn = await waitForSimpleWebAuthn();
+                const { startAuthentication } = SimpleWebAuthn;
+
+                // Get authentication options from server
+                const optionsResponse = await fetch('/auth/challenge');
+                const options = await optionsResponse.json();
+
+                if (!options || options.error) {
+                    throw new Error(options.error || 'Failed to get authentication options');
+                }
+
+                // Start the authentication process
+                addLog('Authenticating...', 'Touch your YubiKey when it starts flashing');
+                const authResponse = await startAuthentication(options);
+
+                async function makeAuthRequest(retryAttempt = false) {
+                    console.log(`Making WebAuthn request${retryAttempt ? ' (retry)' : ''}`);
+                    return fetch('/auth/verify', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'CSRF-Token': document.querySelector('input[name="_csrf"]').value
+                    },
+                    body: JSON.stringify({
+                        authData: authResponse,
+                        _csrf: document.querySelector('input[name="_csrf"]').value
+                    }),
+                    credentials: 'same-origin'
+                });
+
+                }
+
+                let verificationResponse = await makeAuthRequest();
+                
+                // Check if response is JSON before parsing
+                let contentType = verificationResponse.headers.get('content-type');
+                if (!contentType || !contentType.includes('application/json')) {
+                    console.log('Received non-JSON response, attempting retry...');
+                    // Short delay before retry
+                    await new Promise(resolve => setTimeout(resolve, 1000));
+                    // Retry the request once
+                    verificationResponse = await makeAuthRequest(true);
+                    contentType = verificationResponse.headers.get('content-type');
+                    
+                    // If still not JSON after retry, then throw error
+                    if (!contentType || !contentType.includes('application/json')) {
+                        throw new Error('Authentication server is temporarily unavailable. Please try again in a few moments.');
+                    }
+                }
+
+                const verificationResult = await verificationResponse.json();
+
+                if (verificationResponse.ok && verificationResult) {
+                    addLog('YubiKey Verified!', 'Processing...');
+                    let progress = 0;
+                    const interval = setInterval(() => {
+                        progress += 2;
+                        setProgress(progress);
+                        if (progress >= 100) {
+                            clearInterval(interval);
+                            if (verificationResult.redirect) {
+                                window.location.href = verificationResult.redirect;
+                            }
+                        }
+                    }, 20);
+                } else {
+                    throw new Error(verificationResult.error || 'Verification failed');
+                }
+            } catch (error) {
+                console.error('Authentication error:', error);
+                
+                // Handle different types of errors
+                let errorMessage = error.message;
+                if (error instanceof SyntaxError) {
+                    errorMessage = 'Invalid response from server. Please try again.';
+                } else if (!navigator.onLine) {
+                    errorMessage = 'Network connection lost. Please check your internet connection.';
+                }
+                
+                addLog('Authentication Failed', errorMessage);
+                document.querySelector('.container').classList.add('error');
+                setProgress(0);
+                
+                // Clear state and reload after delay
+                setTimeout(() => {
+                    location.reload();
+                }, 2000);
+            }
+        }
+
+        // Initialize forms and inputs
+        const appForm = document.getElementById('appForm');
+        const appOtpInput = document.getElementById('appOtpInput');
+        let isSubmitting = false;
+
+        // Handle form submissions
+        form.addEventListener('submit', (e) => e.preventDefault());
+
+        // Handle app submit button click
+        function handleAppSubmit() {
+            const otp = appOtpInput.value;
+            if (otp.length === 6 && /^\d{6}$/.test(otp)) {
+                handleOTPSubmission(otp, 'app');
+            }
+        }
+
+        // Handle USB input focus
+        window.addEventListener('load', () => {
+            if (!document.activeElement || document.activeElement === document.body) {
+                otpInput.focus();
+            }
+        });
+
+        // Handle OTP submission
+        async function handleOTPSubmission(otp, method = 'usb') {
+            if (isSubmitting) return;
+            
+            isSubmitting = true;
+            stopRotation();
+            addLog('OTP Received', 'Processing...');
+            console.log('Submitting OTP:', { otp, method });
+
+            // Clear inputs immediately to prevent resubmission
+            otpInput.value = '';
+            appOtpInput.value = '';
+            
+            async function makeRequest(retryAttempt = false) {
+                const csrfToken = document.querySelector('input[name="_csrf"]').value;
+                console.log(`Making request${retryAttempt ? ' (retry)' : ''}`);
+                
+                return fetch('/yubikey-verify', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'CSRF-Token': csrfToken,
+                        'Accept': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        otp: otp,
+                        method: method,
+                        _csrf: csrfToken
+                    }),
+                    credentials: 'same-origin'
+                });
+
+            }
+
+            try {
+                let response = await makeRequest();
+                console.log('Response status:', response.status);
+                
+                // Check if response is JSON before parsing
+                let contentType = response.headers.get('content-type');
+                if (!contentType || !contentType.includes('application/json')) {
+                    console.log('Received non-JSON response, attempting retry...');
+                    // Short delay before retry
+                    await new Promise(resolve => setTimeout(resolve, 1000));
+                    // Retry the request once
+                    response = await makeRequest(true);
+                    contentType = response.headers.get('content-type');
+                    
+                    // If still not JSON after retry, then throw error
+                    if (!contentType || !contentType.includes('application/json')) {
+                        throw new Error('Authentication server is temporarily unavailable. Please try again in a few moments.');
+                    }
+                }
+                
+                const data = await response.json();
+                console.log('Response data:', data);
+                
+                if (data.success) {
+                    console.log('Verification successful');
+                    let progress = 0;
+                    const interval = setInterval(() => {
+                        progress += 2;
+                        setProgress(progress);
+                        if (progress >= 100) {
+                            clearInterval(interval);
+                            window.location.href = data.redirect;
+                        }
+                    }, 20);
+                } else {
+                    throw new Error(data.error || 'Verification failed');
+                }
+            } catch (error) {
+                console.error('Verification error:', error);
+                
+                // Handle different types of errors
+                let errorMessage = error.message;
+                if (error instanceof SyntaxError) {
+                    errorMessage = 'Invalid response from server. Please try again.';
+                } else if (!navigator.onLine) {
+                    errorMessage = 'Network connection lost. Please check your internet connection.';
+                }
+                
+                addLog('Verification Failed', errorMessage);
+                document.querySelector('.container').classList.add('error');
+                setProgress(0);
+                
+                // Clear submission state and reload after delay
+                setTimeout(() => {
+                    isSubmitting = false;
+                    location.reload();
+                }, 2000);
+            }
+        }
+
+        // Handle OTP inputs for auto-submission
+        otpInput.addEventListener('input', (e) => {
+            const otp = e.target.value;
+            if (otp.length === 44) {
+                handleOTPSubmission(otp);
+            }
+        });
+
+        // Handle authenticator app input
+        appOtpInput.addEventListener('input', (e) => {
+            // Only allow numbers
+            e.target.value = e.target.value.replace(/[^0-9]/g, '');
+            
+            const otp = e.target.value;
+            if (otp.length === 6) {
+                handleOTPSubmission(otp, 'app');
+            }
+        });
+
+        // Generate QR Code
+        async function generateQRCode() {
+            try {
+                const response = await fetch('/qr/generate-qr');
+                
+                // Check if response is JSON before parsing
+                const contentType = response.headers.get('content-type');
+                if (!contentType || !contentType.includes('application/json')) {
+                    throw new Error('Server returned non-JSON response. Please try again or contact support.');
+                }
+                
+                const data = await response.json();
+                
+                if (response.ok && data && data.qrCode && data.secret) {
+                    document.getElementById('qrcode').src = data.qrCode;
+                    document.getElementById('secret-key').textContent = data.secret;
+                    document.getElementById('qrcode-container').style.display = 'block';
+                } else {
+                    throw new Error('Failed to generate QR code');
+                }
+            } catch (error) {
+                console.error('QR Code generation error:', error);
+                
+                // Handle different types of errors
+                let errorMessage = error.message;
+                if (error instanceof SyntaxError) {
+                    errorMessage = 'Invalid response from server. Please try again.';
+                } else if (!navigator.onLine) {
+                    errorMessage = 'Network connection lost. Please check your internet connection.';
+                }
+                
+                addLog('QR Code Generation Failed', errorMessage);
+                document.querySelector('.container').classList.add('error');
+                
+                // Hide QR code container if it was previously shown
+                document.getElementById('qrcode-container').style.display = 'none';
+            }
+        }
+
+        // Handle authenticator app verification
+        async function handleAppSubmit() {
+            const otp = appOtpInput.value;
+            if (otp.length !== 6 || !/^\d{6}$/.test(otp)) {
+                addLog('Invalid Code', 'Please enter a valid 6-digit code');
+                return;
+            }
+
+            try {
+                addLog('Verifying code...', 'Please wait');
+                async function makeTotpRequest(retryAttempt = false) {
+                    console.log(`Making TOTP request${retryAttempt ? ' (retry)' : ''}`);
+                    return fetch('/qr/verify-totp', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'CSRF-Token': document.querySelector('input[name="_csrf"]').value,
+                            'Accept': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            token: otp,
+                            _csrf: document.querySelector('input[name="_csrf"]').value
+                        }),
+                        credentials: 'same-origin'
+                    });
+                }
+
+                let response = await makeTotpRequest();
+                console.log('TOTP verification response:', response.status);
+                
+                // Check if response is JSON before parsing
+                let contentType = response.headers.get('content-type');
+                if (!contentType || !contentType.includes('application/json')) {
+                    console.log('Received non-JSON response, attempting retry...');
+                    // Short delay before retry
+                    await new Promise(resolve => setTimeout(resolve, 1000));
+                    // Retry the request once
+                    response = await makeTotpRequest(true);
+                    contentType = response.headers.get('content-type');
+                    
+                    // If still not JSON after retry, then throw error
+                    if (!contentType || !contentType.includes('application/json')) {
+                        throw new Error('Authentication server is temporarily unavailable. Please try again in a few moments.');
+                    }
+                }
+
+                const data = await response.json();
+                console.log('TOTP verification data:', data);
+                
+                if (data && data.success) {
+                    console.log('TOTP verification successful');
+                    addLog('Verification Successful', 'Redirecting...');
+                    let progress = 0;
+                    const interval = setInterval(() => {
+                        progress += 2;
+                        setProgress(progress);
+                        if (progress >= 100) {
+                            clearInterval(interval);
+                            window.location.href = data.redirect;
+                        }
+                    }, 20);
+                } else {
+                    throw new Error(data.error || 'Verification failed');
+                }
+            } catch (error) {
+                console.error('Verification error:', error);
+                
+                // Handle different types of errors
+                let errorMessage = error.message;
+                if (error instanceof SyntaxError) {
+                    errorMessage = 'Invalid response from server. Please try again.';
+                } else if (!navigator.onLine) {
+                    errorMessage = 'Network connection lost. Please check your internet connection.';
+                }
+                
+                addLog('Verification Failed', errorMessage);
+                document.querySelector('.container').classList.add('error');
+                setProgress(0);
+                
+                // Reload after delay
+                setTimeout(() => {
+                    location.reload();
+                }, 2000);
+            }
+        }
+    </script>
+</body>
+</html>

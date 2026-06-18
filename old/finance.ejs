@@ -1,0 +1,417 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Finance Dashboard</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #f4f6f8;
+            padding-left: 250px; /* Offset for sidebar */
+        }
+
+        .content {
+            margin-left: 260px;
+            padding: 40px;
+            background-color: #ffffff;
+            border-radius: 10px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            max-width: 90%;
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .header h2 {
+            color: #333;
+        }
+
+        .table {
+            margin-bottom: 20px;
+            border-collapse: collapse;
+        }
+
+        .table th {
+            background-color: #1b5e20;
+            color: white;
+            position: sticky;
+            top: 0;
+            z-index: 1;
+            text-align: center;
+        }
+
+        .table td {
+            text-align: center;
+            vertical-align: middle;
+        }
+
+        .table tbody tr:nth-child(even) {
+            background-color: #f8f9fa;
+        }
+
+        .table tbody tr:hover {
+            background-color: #e2e2e2;
+        }
+
+        .badge {
+            padding: 0.5em;
+            border-radius: 0.25rem;
+            font-size: 0.9rem;
+        }
+
+        .badge-pending {
+            background-color: #6c757d;
+        }
+
+        .badge-approved {
+            background-color: #28a745;
+        }
+
+        .badge-declined {
+            background-color: #dc3545;
+        }
+
+        .btn-primary,
+        .btn-danger,
+        .btn-success {
+            margin-top: 0.2rem;
+            border-radius: 5px;
+            padding: 5px 10px;
+            font-size: 0.85rem;
+            border: none;
+        }
+
+        .btn-primary {
+            background-color: #1b5e20;
+        }
+
+        .btn-primary:hover {
+            background-color: #388E3C;
+        }
+
+        .btn-danger {
+            background-color: #d9534f;
+        }
+
+        .btn-danger:hover {
+            background-color: #c9302c;
+        }
+
+        .btn-success {
+            background-color: #4CAF50;
+        }
+
+        .btn-success:hover {
+            background-color: #388E3C;
+        }
+
+        .collapsible-section {
+            border: 1px solid #ccc;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            padding: 10px;
+            background: #fff;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            transition: all 0.3s ease;
+        }
+
+        .collapsible-section h3 {
+            cursor: pointer;
+            color: #1b5e20;
+            margin-bottom: 10px;
+        }
+
+        .collapsible-section.collapsed .collapse-content {
+            display: none;
+        }
+
+        @media (max-width: 768px) {
+            .content {
+                margin-left: 0;
+                padding: 20px;
+                margin-top: 20px;
+            }
+
+            .header h2 {
+                font-size: 1.8rem;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <%- include('../partials/sidebar', { userRole: userRole }) %>
+    <div class="content">
+        <div class="header">
+            <h2>Finance Dashboard</h2>
+        </div>
+
+        <!-- Approved Orders Section -->
+        <div class="collapsible-section">
+            <h3>Approved Orders</h3>
+            <div class="collapse-content">
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Product</th>
+                            <th>Quantity</th>
+                            <th>Total Price</th>
+                            <th>Payment Type</th>
+                            <th>Tax</th>
+                            <th>Status</th>
+                            <th>Printed</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <% if (orders && orders.length > 0) { %>
+                            <% orders.forEach(order => { %>
+                                <tr id="order-<%= order.id %>">
+                                    <td><%= order.id %></td>
+                                    <td><%= order.product %></td>
+                                    <td><%= order.quantity %></td>
+                                    <td>Rp. <%= order.total %></td>
+                                    <td><%= order.paymentType %></td>
+                                    <td><%= order.tax %></td>
+                                    <td id="status-<%= order.id %>"><%= order.status %></td>
+                                    <td><%= order.printed ? 'Yes' : 'No' %></td>
+                                    <td id="actions-<%= order.id %>">
+                                        <% if (!order.printed) { %>
+                                            <form action="/finance/print/<%= order.id %>" method="GET" style="display: inline;">
+                                                <button type="submit" class="btn btn-primary">Print</button>
+                                            </form>
+                                        <% } else { %>
+                                            <% if (order.paymentType === 'CBD' || order.paymentType === 'DP') { %>
+                                                <% if (order.status === 'Approved') { %>
+                                                    <button class="btn btn-success" onclick="markAsPaid(<%= order.id %>)">Paid</button>
+                                                <% } else if (order.status === 'Paid') { %>
+                                                    <button class="btn btn-primary" onclick="proceedDelivery(<%= order.id %>)">Proceed Delivery</button>
+                                                <% } %>
+                                            <% } else if (order.paymentType.startsWith('TOP')) { %>
+                                                <button class="btn btn-primary" onclick="proceedDelivery(<%= order.id %>)">Proceed Delivery</button>
+                                            <% } %>
+                                        <% } %>
+                                    </td>
+                                </tr>
+                            <% }) %>
+                        <% } else { %>
+                            <tr>
+                                <td colspan="9">No approved orders found.</td>
+                            </tr>
+                        <% } %>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Raw Material Requests Section -->
+<div class="collapsible-section">
+    <h3>Raw Material Requests</h3>
+    <div class="collapse-content">
+        <table class="table table-hover">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Material Name</th>
+                    <th>Quantity</th>
+                    <th>Total</th>
+                    <th>Payment Type</th>
+                    <th>Vendor</th>
+                    <th>Status</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                <% if (rawMaterialRequestsVendors && rawMaterialRequestsVendors.length > 0) { %>
+                    <% rawMaterialRequestsVendors.forEach(request => { %>
+                        <tr>
+                            <td><%= request.id %></td>
+                            <td><%= request.RawMaterialRequest.materialName %></td>
+                            <td>
+                                <%= request.splitQuantity %> 
+                                <select class="unit-selection" data-density="<%= request.RawMaterialRequest.RawMaterial.density %>" data-quantity="<%= request.splitQuantity %>">
+                                    <option value="Kg">Kg</option>
+                                    <option value="L">L</option>
+                                </select>
+                            </td>
+                            <td>Rp. <%= (request.splitQuantity * request.RawMaterialRequest.RawMaterial.price).toFixed(2) %></td>
+                            <td><%= request.paymentType %></td>
+                            <td><%= request.Vendor.name %></td>
+                            <td id="status-<%= request.id %>"><%= request.status %></td>
+                            <td id="actions-<%= request.id %>">
+                                <% if (request.status === 'Pending') { %>
+                                    <form action="/finance/approveRawMaterial/<%= request.id %>" method="POST" style="display: inline;">
+                                        <button type="submit" class="btn btn-primary">Approve</button>
+                                    </form>
+                                    <form action="/finance/declineRawMaterial/<%= request.id %>" method="POST" style="display: inline;">
+                                        <button type="submit" class="btn btn-danger">Decline</button>
+                                    </form>
+                                <% } else if (request.status === 'Approved') { %>
+                                    <% if (request.paymentType === 'CBD' || request.paymentType === 'DP') { %>
+                                        <button class="btn btn-success" onclick="paidRequest(<%= request.id %>)">Paid</button>
+                                    <% } else { %>
+                                        <button class="btn btn-primary" onclick="deliverRequest(<%= request.id %>, '<%= request.paymentType %>')">Deliver</button>
+                                    <% } %>
+                                <% } else if (request.status === 'Paid') { %>
+                                    <button class="btn btn-primary" onclick="deliverRequest(<%= request.id %>, '<%= request.paymentType %>')">Deliver</button>
+                                <% } %>
+                            </td>
+                        </tr>
+                    <% }) %>
+                <% } else { %>
+                    <tr>
+                        <td colspan="9">No raw material requests found.</td>
+                    </tr>
+                <% } %>
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Handle collapsible sections
+        document.querySelectorAll('.collapsible-section h3').forEach(sectionHeader => {
+            sectionHeader.addEventListener('click', function() {
+                const section = this.parentElement;
+                section.classList.toggle('collapsed');
+
+                const content = section.querySelector('.collapse-content');
+                if (section.classList.contains('collapsed')) {
+                    content.style.display = 'none';
+                } else {
+                    content.style.display = 'block';
+                }
+            });
+        });
+
+        // Adjust displayed quantity based on unit selection
+        document.querySelectorAll('.unit-selection').forEach(select => {
+            select.addEventListener('change', function() {
+                const density = parseFloat(this.getAttribute('data-density'));
+                const originalQuantity = parseFloat(this.getAttribute('data-quantity'));
+                const quantityCell = this.closest('td');
+
+                let newQuantity;
+                if (this.value === 'L') {
+                    newQuantity = originalQuantity / density;
+                    quantityCell.innerHTML = `${newQuantity.toFixed(2)} L`;
+                } else {
+                    newQuantity = originalQuantity;
+                    quantityCell.innerHTML = `${newQuantity} Kg`;
+                }
+
+                // Re-append the unit selection dropdown
+                quantityCell.appendChild(this);
+            });
+        });
+    });
+
+    function markAsPaid(orderId) {
+        fetch(`/finance/markAsPaid/${orderId}`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    location.reload(); // Reload the page to show the Proceed Delivery button
+                } else {
+                    alert('Failed to mark as paid.');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Error marking as paid.');
+            });
+    }
+
+    function proceedDelivery(orderId) {
+        fetch(`/finance/proceedDelivery/${orderId}`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    location.reload(); // Reload the page to update the order status
+                } else {
+                    alert('Failed to proceed delivery.');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Error proceeding delivery.');
+            });
+    }
+
+    function paidRequest(requestId) {
+        fetch(`/finance/payRawMaterial/${requestId}`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    // Update the status to Paid
+                    document.getElementById(`status-${requestId}`).innerText = 'Paid';
+                    // Replace the Paid button with the Deliver button
+                    document.getElementById(`actions-${requestId}`).innerHTML = `<button class="btn btn-primary" onclick="deliverRequest(${requestId}, 'CBD')">Deliver</button>`;
+                } else {
+                    alert('Failed to mark as paid.');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Error marking as paid.');
+            });
+    }
+
+    function deliverRequest(requestId, paymentType) {
+        fetch(`/finance/deliverRawMaterial/${requestId}`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    // Update the status to Delivered
+                    document.getElementById(`status-${requestId}`).innerText = 'Delivered';
+                    // Optionally, you can add more logic here if needed
+                } else {
+                    alert('Failed to deliver.');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Error delivering.');
+            });
+    }
+</script>
+
+<script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.9.2/dist/umd/popper.min.js"></script>
+<script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.9.2/dist/umd/popper.min.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+</body>
+
+</html>

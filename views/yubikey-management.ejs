@@ -1,0 +1,304 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Yubikey Management</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .container {
+            background-color: white;
+            padding: 2rem;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+        .form-group {
+            margin-bottom: 1rem;
+        }
+        input, button {
+            padding: 0.5rem;
+            margin-bottom: 1rem;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        button {
+            background-color: #007bff;
+            color: white;
+            border: none;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        .yubikey-list {
+            margin-top: 2rem;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 1rem;
+        }
+        th, td {
+            padding: 0.75rem;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+        }
+        th {
+            background-color: #f8f9fa;
+        }
+        .status-active {
+            color: green;
+        }
+        .status-inactive {
+            color: red;
+        }
+        .action-btn {
+            padding: 0.25rem 0.5rem;
+            margin: 0 0.25rem;
+        }
+        .btn-danger {
+            background-color: #dc3545;
+        }
+        .btn-warning {
+            background-color: #ffc107;
+            color: black;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Yubikey Management</h1>
+        
+        <!-- Add New Yubikey Form -->
+        <div class="add-yubikey">
+            <h2>Add New Yubikey</h2>
+            
+            <div class="form-group">
+                <label>Registration Type:</label>
+                <select id="authType" onchange="toggleRegistrationForm()">
+                    <option value="otp">Traditional OTP</option>
+                    <option value="webauthn">WebAuthn/FIDO2</option>
+                </select>
+            </div>
+
+            <!-- Traditional OTP Form -->
+            <form id="otpForm" action="/yubikey-management/add" method="POST">
+                <input type="hidden" name="authType" value="otp">
+                <div class="form-group">
+                    <label for="keyId">Yubikey ID (first 12 characters of OTP):</label>
+                    <input type="text" 
+                           id="keyId" 
+                           name="keyId" 
+                           required 
+                           pattern=".{12,}"
+                           title="Please enter at least 12 characters"
+                           placeholder="Touch Yubikey or enter ID manually">
+                </div>
+                <div class="form-group">
+                    <label for="assignedTo">Assigned To:</label>
+                    <input type="text" 
+                           id="assignedTo" 
+                           name="assignedTo" 
+                           required 
+                           placeholder="Enter name of person">
+                </div>
+                <button type="submit">Add Yubikey (OTP)</button>
+            </form>
+
+            <!-- WebAuthn Registration Form -->
+            <form id="webauthnForm" style="display: none;">
+                <input type="hidden" name="authType" value="webauthn">
+                <div class="form-group">
+                    <label for="webauthnAssignedTo">Assigned To:</label>
+                    <input type="text" 
+                           id="webauthnAssignedTo" 
+                           name="assignedTo" 
+                           required 
+                           placeholder="Enter name of person">
+                </div>
+                <button type="button" onclick="startWebAuthnRegistration()">Register Yubikey (WebAuthn)</button>
+                <div id="webauthnStatus" class="status-text"></div>
+            </form>
+        </div>
+
+        <!-- Yubikey List -->
+        <div class="yubikey-list">
+            <h2>Registered Yubikeys</h2>
+            <table>
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Assigned To</th>
+                        <th>Type</th>
+                        <th>Status</th>
+                        <th>Last Used</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <% yubikeys.forEach(yubikey => { %>
+                        <tr>
+                            <td><%= yubikey.keyId %></td>
+                            <td><%= yubikey.assignedTo %></td>
+                            <td><%= yubikey.authType === 'webauthn' ? 'WebAuthn' : 'OTP' %></td>
+                            <td class="<%= yubikey.isActive ? 'status-active' : 'status-inactive' %>">
+                                <%= yubikey.isActive ? 'Active' : 'Inactive' %>
+                            </td>
+                            <td>
+                                <%= yubikey.lastUsed ? new Date(yubikey.lastUsed).toLocaleString() : 'Never' %>
+                            </td>
+                            <td>
+                                <form style="display: inline;" action="/yubikey-management/toggle/<%= yubikey.id %>" method="POST">
+                                    <button type="submit" class="action-btn btn-warning">
+                                        <%= yubikey.isActive ? 'Deactivate' : 'Activate' %>
+                                    </button>
+                                </form>
+                                <form style="display: inline;" action="/yubikey-management/delete/<%= yubikey.id %>" method="POST">
+                                    <button type="submit" class="action-btn btn-danger" 
+                                            onclick="return confirm('Are you sure you want to delete this Yubikey?')">
+                                        Delete
+                                    </button>
+                                </form>
+                            </td>
+                        </tr>
+                    <% }); %>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/@simplewebauthn/browser@8.3.4/dist/bundle/index.umd.min.js"></script>
+    <script>
+        // Wait for SimpleWebAuthn to load
+        function waitForSimpleWebAuthn() {
+            return new Promise((resolve) => {
+                if (window.SimpleWebAuthn) {
+                    resolve(window.SimpleWebAuthn);
+                } else {
+                    const checkInterval = setInterval(() => {
+                        if (window.SimpleWebAuthn) {
+                            clearInterval(checkInterval);
+                            resolve(window.SimpleWebAuthn);
+                        }
+                    }, 100);
+                }
+            });
+        }
+        // Auto-format Yubikey input when pasting full OTP
+        document.getElementById('keyId').addEventListener('input', function(e) {
+            if (e.target.value.length > 12) {
+                e.target.value = e.target.value.substring(0, 12);
+            }
+        });
+
+        // Toggle between registration forms
+        function toggleRegistrationForm() {
+            const authType = document.getElementById('authType').value;
+            document.getElementById('otpForm').style.display = authType === 'otp' ? 'block' : 'none';
+            document.getElementById('webauthnForm').style.display = authType === 'webauthn' ? 'block' : 'none';
+        }
+
+        // WebAuthn registration
+        async function startWebAuthnRegistration() {
+            const assignedTo = document.getElementById('webauthnAssignedTo').value;
+            if (!assignedTo) {
+                alert('Please enter the name of the person this YubiKey will be assigned to.');
+                return;
+            }
+
+            const statusDiv = document.getElementById('webauthnStatus');
+            statusDiv.textContent = 'Starting registration...';
+
+            try {
+                // Get registration options from server
+                const optionsRes = await fetch('/yubikey-management/add', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        assignedTo,
+                        authType: 'webauthn'
+                    })
+                });
+
+                const options = await optionsRes.json();
+                if (options.error) {
+                    throw new Error(options.error);
+                }
+
+                statusDiv.textContent = 'Touch your YubiKey...';
+
+                console.log('Registration options from server:', options);
+                
+                // Wait for SimpleWebAuthn to load
+                const SimpleWebAuthn = await waitForSimpleWebAuthn();
+                
+                // Start the registration
+                statusDiv.textContent = 'Waiting for YubiKey...';
+                console.log('Starting WebAuthn registration with options:', {
+                    ...options,
+                    challenge: options.challenge.slice(0, 10) + '...'
+                });
+
+                // Check if WebAuthn is supported
+                if (!window.PublicKeyCredential) {
+                    throw new Error('WebAuthn is not supported in this browser');
+                }
+
+                let regResult;
+                try {
+                    // Start registration with the YubiKey
+                    regResult = await window.SimpleWebAuthn.startRegistration(options);
+                    
+                    if (!regResult.response || !regResult.response.attestationObject || !regResult.response.clientDataJSON) {
+                        throw new Error('Invalid response from YubiKey');
+                    }
+                    
+                    statusDiv.textContent = 'YubiKey detected, verifying...';
+                } catch (error) {
+                    console.error('WebAuthn API error:', error);
+                    if (error.name === 'NotAllowedError') {
+                        throw new Error('YubiKey operation was cancelled or timed out');
+                    } else if (error.name === 'SecurityError') {
+                        throw new Error('YubiKey communication error - please try again');
+                    } else {
+                        throw new Error(`WebAuthn error: ${error.message}`);
+                    }
+                }
+                
+                statusDiv.textContent = 'Verifying registration...';
+                // Send response to server for verification
+                const verificationRes = await fetch('/yubikey-management/verify-registration', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(regResult)
+                });
+
+                if (!verificationRes.ok) {
+                    const errorData = await verificationRes.json();
+                    throw new Error(errorData.error || 'Server verification failed');
+                }
+
+                const verificationResult = await verificationRes.json();
+                if (verificationResult.success) {
+                    statusDiv.textContent = 'Registration successful!';
+                    setTimeout(() => window.location.reload(), 1000);
+                } else {
+                    throw new Error('Verification failed');
+                }
+            } catch (error) {
+                console.error('Registration error:', error);
+                statusDiv.textContent = `Registration failed: ${error.message}`;
+            }
+        }
+    </script>
+</body>
+</html>

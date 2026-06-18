@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" fill="none">
+  <rect width="64" height="64" rx="14" fill="#2f6f4e"/>
+  <path d="M32 12c-8 0-14 6-14 14 0 10 14 26 14 26s14-16 14-26c0-8-6-14-14-14z" fill="#fff" opacity="0.95"/>
+  <circle cx="32" cy="26" r="5" fill="#2f6f4e"/>
+  <text x="32" y="58" text-anchor="middle" fill="#fff" font-family="system-ui,sans-serif" font-size="9" font-weight="700">MIB</text>
+</svg>

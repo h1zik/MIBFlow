@@ -1,0 +1,1185 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PPIC Dashboard - MIB Flow</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.7.2/font/bootstrap-icons.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary-color: #2e7d32;
+            --primary-light: #4caf50;
+            --primary-dark: #1b5e20;
+            --text-color: #2c3e50;
+            --background-light: #e8f5e9;
+            --shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            --transition: all 0.3s ease;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--background-light);
+            margin: 0;
+            padding: 0;
+            min-height: 100vh;
+        }
+
+        .main-content {
+            margin-left: 280px;
+            padding: 2rem;
+            transition: var(--transition);
+            width: calc(100% - 280px);
+        }
+
+        /* When sidebar is collapsed */
+        body.sidebar-collapsed .main-content {
+            margin-left: 70px;
+            width: calc(100% - 70px);
+        }
+
+        .page-header {
+            background: white;
+            padding: 1.5rem;
+            border-radius: 15px;
+            box-shadow: var(--shadow);
+            margin-bottom: 2rem;
+            animation: slideDown 0.5s ease-out;
+        }
+
+        @keyframes slideDown {
+            from {
+                opacity: 0;
+                transform: translateY(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .page-title {
+            margin: 0;
+            color: var(--primary-dark);
+            font-weight: 600;
+            font-size: 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .dashboard-section {
+            background: white;
+            border-radius: 15px;
+            box-shadow: var(--shadow);
+            margin-bottom: 2rem;
+            overflow: hidden;
+            animation: fadeIn 0.5s ease-out;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .section-header {
+            padding: 1.5rem;
+            background-color: var(--background-light);
+            border-bottom: 1px solid rgba(0,0,0,0.1);
+            cursor: pointer;
+            transition: var(--transition);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .section-header:hover {
+            background-color: #d7ecd8;
+        }
+
+        .section-title {
+            margin: 0;
+            color: var(--primary-dark);
+            font-weight: 600;
+            font-size: 1.2rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .section-content {
+            padding: 1.5rem;
+            display: none;
+        }
+
+        .section-content.show {
+            display: block;
+            animation: slideDown 0.3s ease-out;
+        }
+
+        .table {
+            margin: 0;
+        }
+
+        .table thead th {
+            background-color: var(--background-light);
+            color: var(--primary-dark);
+            font-weight: 600;
+            text-transform: uppercase;
+            font-size: 0.75rem;
+            letter-spacing: 0.5px;
+            padding: 1rem;
+            border: none;
+            white-space: nowrap;
+        }
+
+        .table tbody td {
+            padding: 1rem;
+            vertical-align: middle;
+            border-color: rgba(0,0,0,0.05);
+        }
+
+        .table tbody tr {
+            transition: var(--transition);
+        }
+
+        .table tbody tr:hover {
+            background-color: var(--background-light);
+        }
+
+        .badge {
+            padding: 0.5rem 1rem;
+            border-radius: 50px;
+            font-weight: 500;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.25rem;
+        }
+
+        .badge i {
+            font-size: 0.75rem;
+        }
+
+        .badge-pending {
+            background-color: #fff3cd;
+            color: #856404;
+        }
+
+        .badge-scheduled {
+            background-color: #d1e7dd;
+            color: #0f5132;
+        }
+
+        .badge-approved {
+            background-color: #d1e7dd;
+            color: #0f5132;
+        }
+
+        .badge-declined {
+            background-color: #f8d7da;
+            color: #842029;
+        }
+
+        .badge-pass {
+            background-color: #d1e7dd;
+            color: #0f5132;
+        }
+
+        .badge-fail {
+            background-color: #f8d7da;
+            color: #842029;
+        }
+
+        .badge-tank {
+            background-color: #e2e3e5;
+            color: #383d41;
+        }
+
+        .btn {
+            padding: 0.5rem 1rem;
+            border-radius: 8px;
+            transition: var(--transition);
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-weight: 500;
+        }
+
+        .btn-primary {
+            background-color: var(--primary-color);
+            border: none;
+        }
+
+        .btn-primary:hover {
+            background-color: var(--primary-dark);
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(46, 125, 50, 0.25);
+        }
+
+        .btn-danger {
+            background-color: #dc3545;
+            border: none;
+        }
+
+        .btn-danger:hover {
+            background-color: #bb2d3b;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(220, 53, 69, 0.25);
+        }
+
+        .btn-success {
+            background-color: var(--primary-color);
+            border: none;
+        }
+
+        .btn-success:hover {
+            background-color: var(--primary-dark);
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(46, 125, 50, 0.25);
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+        }
+
+        .action-buttons .btn {
+            padding: 0.4rem 0.8rem;
+            font-size: 0.875rem;
+        }
+
+        /* Modal Styling */
+        .modal-content {
+            border-radius: 15px;
+            border: none;
+            box-shadow: var(--shadow);
+        }
+
+        .modal-header {
+            background-color: var(--background-light);
+            border-bottom: 1px solid rgba(0,0,0,0.1);
+            padding: 1.5rem;
+        }
+
+        .modal-title {
+            color: var(--primary-dark);
+            font-weight: 600;
+            font-size: 1.2rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .modal-body {
+            padding: 1.5rem;
+        }
+
+        .modal-footer {
+            border-top: 1px solid rgba(0,0,0,0.1);
+            padding: 1rem 1.5rem;
+        }
+
+        .alert {
+            border-radius: 10px;
+            border: none;
+            padding: 1rem;
+        }
+
+        .alert ul {
+            margin-bottom: 0;
+            padding-left: 1.5rem;
+        }
+
+        .alert li {
+            margin-bottom: 0.5rem;
+        }
+
+        .alert li:last-child {
+            margin-bottom: 0;
+        }
+
+        /* Loading Animation */
+        .loading {
+            pointer-events: none;
+            position: relative;
+        }
+
+        .loading::after {
+            content: '';
+            position: absolute;
+            width: 20px;
+            height: 20px;
+            top: 50%;
+            left: 50%;
+            margin: -10px 0 0 -10px;
+            border: 3px solid rgba(255,255,255,0.3);
+            border-radius: 50%;
+            border-top-color: #fff;
+            animation: spin 1s ease-in-out infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .main-content {
+                margin-left: 0;
+                padding: 1rem;
+                width: 100%;
+            }
+
+            .page-header {
+                padding: 1rem;
+            }
+
+            .dashboard-section {
+                margin-bottom: 1rem;
+            }
+
+            .section-header {
+                padding: 1rem;
+            }
+
+            .section-content {
+                padding: 1rem;
+            }
+
+            .table-responsive {
+                margin: 0 -1rem;
+            }
+
+            .action-buttons {
+                flex-direction: column;
+            }
+
+            .action-buttons .btn {
+                width: 100%;
+                justify-content: center;
+            }
+        }
+    </style>
+</head>
+<body>
+    <%- include('../partials/sidebar', { userRole: userRole }) %>
+
+    <div class="main-content">
+        <div class="page-header">
+            <h1 class="page-title">
+                <i class="bi bi-clipboard-data"></i>
+                PPIC Dashboard
+            </h1>
+            <p class="text-muted mb-0">Manage orders, production requests, and material planning</p>
+        </div>
+
+        <!-- Flash Messages -->
+        <% if (messages.error) { %>
+            <div class="alert alert-danger alert-dismissible fade show mb-4" role="alert">
+                <i class="bi bi-exclamation-triangle-fill me-2"></i>
+                <% if (messages.error.includes('\n')) { %>
+                    <pre class="mb-0" style="white-space: pre-wrap;"><%= messages.error %></pre>
+                <% } else { %>
+                    <%= messages.error %>
+                <% } %>
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+        <% } %>
+        
+        <% if (messages.success) { %>
+            <div class="alert alert-success alert-dismissible fade show mb-4" role="alert">
+                <i class="bi bi-check-circle-fill me-2"></i>
+                <%= messages.success %>
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+        <% } %>
+
+        <!-- Orders Section -->
+        <div class="dashboard-section">
+            <div class="section-header" data-bs-toggle="collapse" data-bs-target="#orders">
+                <h2 class="section-title">
+                    <i class="bi bi-cart"></i>
+                    Orders
+                </h2>
+                <i class="bi bi-chevron-down"></i>
+            </div>
+            <div id="orders" class="section-content collapse show">
+                <div class="table-responsive">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>SO Number</th>
+                                <th>Customer</th>
+                                <th>Products</th>
+                                <th>Status</th>
+                                <th>PO File</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <% if (orders && orders.length > 0) { %>
+                                <% orders.forEach(order => { %>
+                                    <tr>
+                                        <td>#<%= order.id %></td>
+                                        <td><%= order.sonumber %></td>
+                                        <td>
+                                            <div class="fw-semibold"><%= order.Customer.name %></div>
+                                        </td>
+                                        <td>
+                                            <div class="d-flex flex-wrap gap-1">
+                                                <% 
+                                                    const groupedProducts = {};
+                                                    for (const item of order.OrderItems) {
+                                                        const name = item.Product.name;
+                                                        if (!groupedProducts[name]) {
+                                                            groupedProducts[name] = {
+                                                                quantity: 0,
+                                                                satuan: item.satuan
+                                                            };
+                                                        }
+                                                        groupedProducts[name].quantity += item.quantity;
+                                                    }
+                                                    for (const [name, details] of Object.entries(groupedProducts)) {
+                                                %>
+                                                    <span class="badge badge-tank">
+                                                        <%= name %> (<%= details.quantity %> <%= details.satuan %>)
+                                                    </span>
+                                                <% } %>
+                                            </div>
+                                        </td>
+                                        <td>
+                                            <span class="badge badge-approved">
+                                                <i class="bi bi-check-circle"></i>
+                                                <%= order.status %>
+                                            </span>
+                                        </td>
+                                        <td>
+                                            <% if (order.po) { %>
+                                                <a href="/uploads/<%= order.po %>" target="_blank" class="btn btn-sm btn-outline-primary">
+                                                    <i class="bi bi-file-pdf"></i>
+                                                    View PO
+                                                </a>
+                                            <% } else { %>
+                                                <span class="text-muted">
+                                                    <i class="bi bi-x-circle"></i>
+                                                    No PO
+                                                </span>
+                                            <% } %>
+                                        </td>
+                                        <td>
+                                            <div class="action-buttons">
+                                                <%  if (order.status == "Pending" || order.status == "Production Completed") { %>
+                                                    <form action="/orders/approve/<%= order.id %>" method="POST">
+                                                        <button type="submit" class="btn btn-success">
+                                                            <i class="bi bi-check-lg"></i>
+                                                            Approve
+                                                        </button>
+                                                    </form>
+                                                <% } %>
+                                                <form action="/orders/decline/<%= order.id %>" method="POST">
+                                                    <button type="submit" class="btn btn-danger">
+                                                        <i class="bi bi-x-lg"></i>
+                                                        Decline
+                                                    </button>
+                                                </form>
+                                                <% if (!order.OrderItems.every(item => item.Product.formula)) { %>
+                                                    <form action="/orders/requestFormula/<%= order.id %>" method="POST">
+                                                        <button type="submit" class="btn btn-primary">
+                                                            <i class="bi bi-file-text"></i>
+                                                            Request Formula
+                                                        </button>
+                                                    </form>
+                                                <% } %>
+                                                <button type="button" class="btn btn-primary check-stock-btn" data-order-id="<%= order.id %>">
+                                                    <i class="bi bi-box"></i>
+                                                    Check Stock
+                                                </button>
+                                                <a href="/orders/<%= order.id %>" class="btn btn-primary">
+                                                    <i class="bi bi-eye"></i>
+                                                    View
+                                                </a>
+                                                <% if (order.status !== 'On Production' && order.status !== 'Production Completed') { %>
+                                                    <a href="/production/request/<%= order.id %>" class="btn btn-primary">
+                                                        <i class="bi bi-gear"></i>
+                                                        Request Production
+                                                    </a>
+                                                <% } %>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                <% }) %>
+                            <% } else { %>
+                                <tr>
+                                    <td colspan="6" class="text-center py-4 text-muted">
+                                        <i class="bi bi-inbox fs-4 d-block mb-2"></i>
+                                        No orders found
+                                    </td>
+                                </tr>
+                            <% } %>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Production List Section -->
+        <div class="dashboard-section">
+            <div class="section-header" data-bs-toggle="collapse" data-bs-target="#productionList">
+                <h2 class="section-title">
+                    <i class="bi bi-list-check"></i>
+                    Production List
+                </h2>
+                <i class="bi bi-chevron-down"></i>
+            </div>
+            <div id="productionList" class="section-content collapse">
+                <div class="table-responsive">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>PREQ ID</th>
+                                <th>Product</th>
+                                <th>Quantity</th>
+                                <th>Dates</th>
+                                <th>Status</th>
+                                <th>QC Status</th>
+                                <th>Tanks</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <% if (completedProductions && completedProductions.length > 0) { %>
+                                <% completedProductions.forEach(production => { %>
+                                    <tr>
+                                        <td>#<%= production.id %></td>
+                                        <td>#<%= production.productionRequestId %></td>
+                                        <td>
+                                            <div class="fw-semibold"><%= production.Product.name %></div>
+                                        </td>
+                                        <td><%= production.quantity %> Kg</td>
+                                        <td>
+                                            <div>Start: <%= new Date(production.startDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) %></div>
+                                            <div>Due: <%= new Date(production.deadlineDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) %></div>
+                                        </td>
+                                        <td>
+                                            <span class="badge badge-approved">
+                                                <i class="bi bi-check-circle"></i>
+                                                <%= production.status %>
+                                            </span>
+                                        </td>
+                                        <td>
+                                            <span class="badge badge-<%= production.qcStatus === 'Pass' ? 'pass' : 'fail' %>">
+                                                <i class="bi bi-<%= production.qcStatus === 'Pass' ? 'check-circle' : 'x-circle' %>"></i>
+                                                <%= production.qcStatus %>
+                                            </span>
+                                        </td>
+                                        <td>
+                                            <div class="d-flex flex-wrap gap-1">
+                                                <% production.Tanks.forEach(tank => { %>
+                                                    <span class="badge badge-tank">
+                                                        <%= tank.name %> (<%= tank.volume %> L)
+                                                    </span>
+                                                <% }) %>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                <% }) %>
+                            <% } else { %>
+                                <tr>
+                                    <td colspan="8" class="text-center py-4 text-muted">
+                                        <i class="bi bi-inbox fs-4 d-block mb-2"></i>
+                                        No completed productions found
+                                    </td>
+                                </tr>
+                            <% } %>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Production Request List Section -->
+        <div class="dashboard-section">
+            <div class="section-header" data-bs-toggle="collapse" data-bs-target="#productionRequests">
+                <h2 class="section-title">
+                    <i class="bi bi-gear"></i>
+                    Production Requests
+                </h2>
+                <i class="bi bi-chevron-down"></i>
+            </div>
+            <div id="productionRequests" class="section-content collapse">
+                <div class="table-responsive">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Number</th>
+                                <th>Product</th>
+                                <th>Quantity</th>
+                                <th>Formula</th>
+                                <th>Status</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <% if (requests && requests.length > 0) { %>
+                                <% requests.forEach(request => { %>
+                                    <tr>
+                                        <td>#<%= request.id %></td>
+                                        <td>
+                                            <% if (request.orderId) { %>
+                                                <%= request.Order ? request.Order.sonumber : 'N/A' %>
+                                            <% } else { %>
+                                                <%= request.prodreqnumber %>
+                                            <% } %>
+                                        </td>
+                                        <td>
+                                            <div class="fw-semibold"><%= request.product %></div>
+                                        </td>
+                                        <td><%= request.quantity %> Kg</td>
+                                        <td>
+                                            <a href="/uploads/<%= request.formula %>" target="_blank" class="btn btn-sm btn-outline-primary">
+                                                <i class="bi bi-file-pdf"></i>
+                                                View Formula
+                                            </a>
+                                        </td>
+                                        <td>
+                                            <% if (request.status === 'Scheduled') { %>
+                                                <span class="badge badge-scheduled">
+                                                    <i class="bi bi-calendar-check"></i>
+                                                    <%= request.status %>
+                                                </span>
+                                            <% } else if (request.status === 'Pending') { %>
+                                                <span class="badge badge-pending">
+                                                    <i class="bi bi-clock"></i>
+                                                    <%= request.status %>
+                                                </span>
+                                            <% } else if (request.status === 'Declined') { %>
+                                                <span class="badge badge-declined">
+                                                    <i class="bi bi-x-circle"></i>
+                                                    <%= request.status %>
+                                                </span>
+                                            <% } else { %>
+                                                <span class="badge badge-light">
+                                                    <%= request.status %>
+                                                </span>
+                                            <% } %>
+                                        </td>
+                                        <td>
+                                            <div class="action-buttons">
+                                                <a href="/production/<%= request.id %>/view" class="btn btn-primary">
+                                                    <i class="bi bi-eye"></i>
+                                                    View
+                                                </a>
+                                                <% if (request.allCompleted) { %>
+                                                    <form action="/production/<%= request.id %>/clear" method="POST">
+                                                        <button type="submit" class="btn btn-success">
+                                                            <i class="bi bi-check-lg"></i>
+                                                            Clear
+                                                        </button>
+                                                    </form>
+                                                <% } %>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                <% }) %>
+                            <% } else { %>
+                                <tr>
+                                    <td colspan="7" class="text-center py-4 text-muted">
+                                        <i class="bi bi-inbox fs-4 d-block mb-2"></i>
+                                        No production requests found
+                                    </td>
+                                </tr>
+                            <% } %>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Raw Material Requests Section -->
+        <div class="dashboard-section">
+            <div class="section-header" data-bs-toggle="collapse" data-bs-target="#rawMaterialRequests">
+                <h2 class="section-title">
+                    <i class="bi bi-box-seam"></i>
+                    Raw Material Requests
+                </h2>
+                <i class="bi bi-chevron-down"></i>
+            </div>
+            <div id="rawMaterialRequests" class="section-content collapse">
+                <div class="table-responsive">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Material</th>
+                                <th>Quantity</th>
+                                <th>Status</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <% if (rawMaterialRequests && rawMaterialRequests.length > 0) { %>
+                                <% rawMaterialRequests.forEach(request => { %>
+                                <tr>
+                                    <td>#<%= request.id %></td>
+                                    <td>
+                                        <div class="fw-semibold"><%= request.materialName %></div>
+                                    </td>
+                                    <td><%= request.quantity %> Kg</td>
+                                    <td>
+                                        <span class="badge badge-approved">
+                                            <i class="bi bi-check-circle"></i>
+                                            <%= request.status %>
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <div class="action-buttons">
+                                            <% if (request.allVendorsCompleted) { %>
+                                                <form action="/rawMaterial/complete/<%= request.id %>" method="POST" class="d-inline">
+                                                    <button type="submit" class="btn btn-success">
+                                                        <i class="bi bi-check-lg"></i>
+                                                        Complete
+                                                    </button>
+                                                </form>
+                                            <% } %>
+                                        </div>
+                                    </td>
+                                </tr>
+                                <% }) %>
+                            <% } else { %>
+                                <tr>
+                                    <td colspan="4" class="text-center py-4 text-muted">
+                                        <i class="bi bi-inbox fs-4 d-block mb-2"></i>
+                                        No raw material requests found
+                                    </td>
+                                </tr>
+                            <% } %>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Packaging Requests Section -->
+        <div class="dashboard-section">
+            <div class="section-header" data-bs-toggle="collapse" data-bs-target="#packagingRequests">
+                <h2 class="section-title">
+                    <i class="bi bi-box2"></i>
+                    Packaging Requests
+                </h2>
+                <i class="bi bi-chevron-down"></i>
+            </div>
+            <div id="packagingRequests" class="section-content collapse">
+                <div class="table-responsive">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Packaging</th>
+                                <th>Quantity</th>
+                                <th>Status</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <% if (packagingRequests && packagingRequests.length > 0) { %>
+                                <% packagingRequests.forEach(request => { %>
+                                    <tr>
+                                        <td>#<%= request.id %></td>
+                                        <td>
+                                            <div class="fw-semibold"><%= request.Packaging.name %></div>
+                                        </td>
+                                        <td><%= request.quantity %> pcs</td>
+                                        <td>
+                                            <span class="badge badge-<%= request.status === 'Pending' ? 'pending' : 'approved' %>">
+                                                <i class="bi bi-<%= request.status === 'Pending' ? 'clock' : 'check-circle' %>"></i>
+                                                <%= request.status %>
+                                            </span>
+                                        </td>
+                                        <td>
+                                            <div class="action-buttons">
+                                                <a href="/packaging-request/<%= request.id %>/view" class="btn btn-primary">
+                                                    <i class="bi bi-eye"></i>
+                                                    View
+                                                </a>
+                                                <% if (request.allVendorsCompleted) { %>
+                                                    <form action="/packaging-request/complete/<%= request.id %>" method="POST" class="d-inline">
+                                                        <button type="submit" class="btn btn-success">
+                                                            <i class="bi bi-check-lg"></i>
+                                                            Complete
+                                                        </button>
+                                                    </form>
+                                                <% } %>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                <% }) %>
+                            <% } else { %>
+                                <tr>
+                                    <td colspan="5" class="text-center py-4 text-muted">
+                                        <i class="bi bi-inbox fs-4 d-block mb-2"></i>
+                                        No packaging requests found
+                                    </td>
+                                </tr>
+                            <% } %>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Formula Requests Section -->
+        <div class="dashboard-section">
+            <div class="section-header" data-bs-toggle="collapse" data-bs-target="#formulaRequests">
+                <h2 class="section-title">
+                    <i class="bi bi-file-text"></i>
+                    Formula Requests
+                </h2>
+                <i class="bi bi-chevron-down"></i>
+            </div>
+            <div id="formulaRequests" class="section-content collapse">
+                <div class="table-responsive">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Product</th>
+                                <th>Status</th>
+                                <th>Formula</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <% if (formulaRequests && formulaRequests.length > 0) { %>
+                                <% formulaRequests.forEach(request => { %>
+                                    <tr>
+                                        <td>#<%= request.id %></td>
+                                        <td>
+                                            <div class="fw-semibold"><%= request.Product.name %></div>
+                                        </td>
+                                        <td>
+                                            <span class="badge badge-approved">
+                                                <i class="bi bi-check-circle"></i>
+                                                <%= request.status %>
+                                            </span>
+                                        </td>
+                                        <td>
+                                            <% if (request.Product.formula) { %>
+                                                <a href="/uploads/<%= request.Product.formula %>" target="_blank" class="btn btn-sm btn-outline-primary">
+                                                    <i class="bi bi-file-pdf"></i>
+                                                    View Formula
+                                                </a>
+                                            <% } else { %>
+                                                <span class="text-muted">
+                                                    <i class="bi bi-x-circle"></i>
+                                                    No formula
+                                                </span>
+                                            <% } %>
+                                        </td>
+                                    </tr>
+                                <% }) %>
+                            <% } else { %>
+                                <tr>
+                                    <td colspan="4" class="text-center py-4 text-muted">
+                                        <i class="bi bi-inbox fs-4 d-block mb-2"></i>
+                                        No formula requests found
+                                    </td>
+                                </tr>
+                            <% } %>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Rework Items Section -->
+        <div class="dashboard-section">
+            <div class="section-header" data-bs-toggle="collapse" data-bs-target="#reworkItems">
+                <h2 class="section-title">
+                    <i class="bi bi-tools"></i>
+                    Rework Items
+                </h2>
+                <i class="bi bi-chevron-down"></i>
+            </div>
+            <div id="reworkItems" class="section-content collapse">
+                <div class="table-responsive">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>PO Number</th>
+                                <th>Customer Name</th>
+                                <th>Product</th>
+                                <th>Quantity Rejected</th>
+                                <th>Notes</th>
+                                <th>Status</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <% if (complainItems && complainItems.length > 0) { %>
+                                <% complainItems.forEach(function(item) { %>
+                                    <% if (item.status !== 'Completed') { %>
+                                        <tr>
+                                            <td><%= item.Complain.Order.sonumber %></td>
+                                            <td><%= item.Complain.Order.customerName %></td>
+                                            <td><%= item.product %></td>
+                                            <td><%= item.quantityRejected %></td>
+                                            <td><%= item.notes || '-' %></td>
+                                            <td><%= item.status %></td>
+                                            <td>
+                                                <div class="action-buttons">
+                                                    <% if (item.status === 'Delivered') { %>
+                                                        <form action="/complain/complete/<%= item.Complain.id %>" method="POST" class="d-inline">
+                                                            <button type="submit" class="btn btn-success">
+                                                                <i class="bi bi-check-lg"></i>
+                                                                Complete
+                                                            </button>
+                                                        </form>
+                                                    <% } else { %>
+                                                        <% if (item.status === 'Raw Materials Added') { %>
+                                                            <form action="/complain/request-rework/<%= item.id %>" method="POST" class="d-inline">
+                                                                <input type="hidden" name="complainItemId" value="<%= item.id %>">
+                                                                <button type="submit" class="btn btn-success">
+                                                                    <i class="bi bi-gear"></i>
+                                                                    Request Rework
+                                                                </button>
+                                                            </form>
+                                                        <% } %>
+                                                        <% if (item.status === 'Sent to PPIC') { %>
+                                                            <form action="/rd/request-formula/<%= item.id %>" method="POST" class="d-inline">
+                                                                <input type="hidden" name="complainItemId" value="<%= item.id %>">
+                                                                <button type="submit" class="btn btn-primary">
+                                                                    <i class="bi bi-file-text"></i>
+                                                                    Request Formula
+                                                                </button>
+                                                            </form>
+                                                        <% } %>
+                                                    <% } %>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    <% } %>
+                                <% }); %>
+                            <% } else { %>
+                                <tr>
+                                    <td colspan="7" class="text-center py-4 text-muted">
+                                        <i class="bi bi-inbox fs-4 d-block mb-2"></i>
+                                        No rework items found
+                                    </td>
+                                </tr>
+                            <% } %>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Stock Check Modal -->
+    <div class="modal fade" id="stockModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">
+                        <i class="bi bi-box"></i>
+                        Stock Check Result
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body" id="modalBody">
+                    <!-- Content will be injected by JavaScript -->
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Handle sidebar state changes
+            const sidebar = document.querySelector('.sidebar');
+            const observer = new MutationObserver(function(mutations) {
+                mutations.forEach(function(mutation) {
+                    if (mutation.attributeName === 'class') {
+                        if (sidebar.classList.contains('collapsed')) {
+                            document.body.classList.add('sidebar-collapsed');
+                        } else {
+                            document.body.classList.remove('sidebar-collapsed');
+                        }
+                    }
+                });
+            });
+            observer.observe(sidebar, { attributes: true });
+
+            // Initialize collapsible sections
+            const sections = document.querySelectorAll('.dashboard-section');
+            sections.forEach(section => {
+                const content = section.querySelector('.section-content');
+                const icon = section.querySelector('.bi-chevron-down');
+
+                // Set initial state
+                if (content.classList.contains('show')) {
+                    icon.style.transform = 'rotate(180deg)';
+                }
+
+                // Use Bootstrap's collapse events
+                content.addEventListener('show.bs.collapse', () => {
+                    icon.style.transform = 'rotate(180deg)';
+                });
+
+                content.addEventListener('hide.bs.collapse', () => {
+                    icon.style.transform = 'rotate(0)';
+                });
+            });
+            // Form submissions
+            document.querySelectorAll('form').forEach(form => {
+                form.addEventListener('submit', function(e) {
+                    const submitBtn = this.querySelector('button[type="submit"]');
+                    if (submitBtn) {
+                        submitBtn.classList.add('loading');
+                        submitBtn.disabled = true;
+                    }
+                });
+            });
+
+            // Stock check functionality
+            // Add event listeners for stock check buttons
+            document.querySelectorAll('.check-stock-btn').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const orderId = this.dataset.orderId;
+                    this.classList.add('loading');
+                    this.disabled = true;
+
+                    $.ajax({
+                        url: '/orders/checkStock/' + orderId,
+                        type: 'POST',
+                        success: (response) => {
+                            this.classList.remove('loading');
+                            this.disabled = false;
+
+                            let modalBody = '';
+                            if (response.error) {
+                            modalBody = `
+                                <div class="alert alert-danger">
+                                    <h6 class="alert-heading mb-2">
+                                        <i class="bi bi-exclamation-triangle me-2"></i>
+                                        Stock Check Failed
+                                    </h6>
+                                    <p class="mb-2">${response.error}</p>
+                                    ${response.outOfStockProducts ? `
+                                        <strong class="d-block mb-2">Out of Stock Products:</strong>
+                                        <ul class="mb-3">
+                                            ${response.outOfStockProducts.map(product => 
+                                                '<li>' +
+                                                    '<strong>' + product.name + '</strong><br>' +
+                                                    'Needed: ' + product.needed + ' ' + product.satuan + '<br>' +
+                                                    'Available: ' + product.available + ' ' + product.satuan +
+                                                '</li>'
+                                            ).join('')}
+                                        </ul>
+                                    ` : ''}
+                                    ${response.inStockProducts ? `
+                                        <strong class="d-block mb-2">In Stock Products:</strong>
+                                        <ul class="mb-3">
+                                            ${response.inStockProducts.map(product => `
+                                            <li>
+                                                <strong>${product.name}</strong><br>
+                                                Available: ${product.available} ${product.satuan}
+                                            </li>
+                                        `).join('')}
+                                        </ul>
+                                    ` : ''}
+                                    ${response.outOfStockPackaging ? `
+                                        <strong class="d-block mb-2">Out of Stock Packaging:</strong>
+                                        <ul class="mb-3">
+                                            ${response.outOfStockPackaging.map(pkg => 
+                                                '<li>' +
+                                                    '<strong>' + pkg.name + '</strong><br>' +
+                                                    'Needed: ' + pkg.needed + ' ' + pkg.satuan + '<br>' +
+                                                    'Available: ' + pkg.available + ' ' + pkg.satuan +
+                                                '</li>'
+                                            ).join('')}
+                                        </ul>
+                                    ` : ''}
+                                    ${response.inStockPackaging ? `
+                                        <strong class="d-block mb-2">In Stock Packaging:</strong>
+                                        <ul class="mb-0">
+                                            ${response.inStockPackaging.map(pkg => `
+                                            <li>
+                                                <strong>${pkg.name}</strong><br>
+                                                Available: ${pkg.available} ${pkg.satuan}
+                                            </li>
+                                        `).join('')}
+                                        </ul>
+                                    ` : ''}
+                                </div>
+                            `;
+                        } else if (response.inStockProducts) {
+                            modalBody = `
+                                <div class="alert alert-success">
+                                    <h6 class="alert-heading mb-2">
+                                        <i class="bi bi-check-circle me-2"></i>
+                                        All Products In Stock
+                                    </h6>
+                                    <p class="mb-2">${response.message}</p>
+                                    <ul class="mb-0">
+                                            ${response.inStockProducts.map(product => `
+                                            <li>
+                                                <strong>${product.name}</strong><br>
+                                                Available: ${product.available} ${product.satuan}
+                                            </li>
+                                        `).join('')}
+                                    </ul>
+                                </div>
+                            `;
+                        } else {
+                            modalBody = `
+                                <div class="alert alert-warning">
+                                    <h6 class="alert-heading mb-2">
+                                        <i class="bi bi-exclamation-circle me-2"></i>
+                                        No Stock Information
+                                    </h6>
+                                    <p class="mb-0">No stock information is available for this order.</p>
+                                </div>
+                            `;
+                        }
+                        
+                        $('#modalBody').html(modalBody);
+                        $('#stockModal').modal('show');
+                    },
+                        error: (error) => {
+                            this.classList.remove('loading');
+                            this.disabled = false;
+
+                            console.error('Error checking stock:', error);
+                            const modalBody = `
+                                <div class="alert alert-danger">
+                                    <h6 class="alert-heading mb-2">
+                                        <i class="bi bi-exclamation-triangle me-2"></i>
+                                        Error
+                                    </h6>
+                                    <p class="mb-0">An error occurred while checking stock. Please try again later.</p>
+                                </div>
+                            `;
+                            $('#modalBody').html(modalBody);
+                            $('#stockModal').modal('show');
+                        }
+                    });
+                });
+            });
+        });
+    </script>
+</body>
+</html>
