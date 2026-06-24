@@ -18,6 +18,7 @@ const ComplainRework = require('../models/complainRework');
 const ProductionRequestPackaging = require('../models/productionRequestPackaging');
 const User = require('../models/user'); // Add User model
 const { Op } = require('sequelize');
+const { adjustStock } = require('../utils/stock');
 
 
 exports.requestProductionForm = async (req, res) => {
@@ -337,11 +338,9 @@ exports.requestProduction = async (req, res) => {
                 quantity: pack.quantity
             }, { transaction });
             
-            // Subtract the quantity from the packaging stock
+            // Subtract the quantity from the packaging stock (atomic, locked, never negative)
             if (packagingItem) {
-                const newStock = Math.max(0, packagingItem.stock - pack.quantity);
-                await packagingItem.update({ stock: newStock }, { transaction });
-                console.log(`Updated packaging ${packagingItem.name} stock: ${packagingItem.stock} -> ${newStock}`);
+                await adjustStock(Packaging, packagingItem.id, -pack.quantity, { transaction, integer: true });
             }
 
             // Create outbound record for packaging with SO number if available
@@ -371,13 +370,11 @@ exports.requestProduction = async (req, res) => {
                 quantity: rawMaterialData.quantity
             }, { transaction });
             
-            // Subtract the quantity from the raw material stock
+            // Subtract the quantity from the raw material stock (atomic, locked, never negative)
             const rawMaterial = await RawMaterial.findByPk(rawMaterialData.rawMaterialId, { transaction });
             if (rawMaterial) {
-                const newStock = Math.max(0, rawMaterial.stock - rawMaterialData.quantity);
-                await rawMaterial.update({ stock: newStock }, { transaction });
-                console.log(`Updated raw material ${rawMaterial.name} stock: ${rawMaterial.stock} -> ${newStock}`);
-                
+                await adjustStock(RawMaterial, rawMaterial.id, -rawMaterialData.quantity, { transaction });
+
                 // Create outbound record for raw material with SO number if available
                 const soNumber = req.body.soNumber || req.body.prodreqnumber;
                 
@@ -599,15 +596,12 @@ exports.declineProductionRequest = async (req, res) => {
             transaction
         });
 
-        console.log(`Found ${packagingRecords.length} packaging records to restore`);
 
         for (const packagingRecord of packagingRecords) {
             const packaging = packagingRecord.Packaging;
             if (packaging) {
-                // Restore the stock
-                const newStock = packaging.stock + packagingRecord.quantity;
-                await packaging.update({ stock: newStock }, { transaction });
-                console.log(`Restored packaging ${packaging.name} stock: ${packaging.stock} -> ${newStock}`);
+                // Restore the stock (atomic, locked)
+                await adjustStock(Packaging, packaging.id, packagingRecord.quantity, { transaction, integer: true });
 
                 // Delete related outbound records
                 await Outbound.destroy({
@@ -631,15 +625,12 @@ exports.declineProductionRequest = async (req, res) => {
             transaction
         });
 
-        console.log(`Found ${rawMaterialRecords.length} raw material records to restore`);
 
         for (const rawMaterialRecord of rawMaterialRecords) {
             const rawMaterial = rawMaterialRecord.RawMaterial;
             if (rawMaterial) {
-                // Restore the stock
-                const newStock = rawMaterial.stock + rawMaterialRecord.quantity;
-                await rawMaterial.update({ stock: newStock }, { transaction });
-                console.log(`Restored raw material ${rawMaterial.name} stock: ${rawMaterial.stock} -> ${newStock}`);
+                // Restore the stock (atomic, locked)
+                await adjustStock(RawMaterial, rawMaterial.id, rawMaterialRecord.quantity, { transaction });
 
                 // Delete related outbound records for raw materials by name and notes
                 // Since there's no rawMaterialId column in the Outbound table
@@ -750,20 +741,8 @@ exports.updateStock = async (req, res) => {
             return res.status(400).send('Production has not passed QC');
         }
 
-        // Ensure current stock is valid
-        const currentStock = parseFloat(production.Product.stock) || 0;
-        console.log("Current stock:", currentStock);
-        console.log("Adding quantity:", realQuantity);
-
-        // Calculate new stock with validated numbers
-        const newStock = currentStock + realQuantity;
-        console.log("New stock will be:", newStock);
-
-        // Update product stock with explicit number conversion and rounding
-        await production.Product.update(
-            { stock: Number(newStock.toFixed(2)) },
-            { transaction }
-        );
+        // Add produced quantity to product stock (atomic, locked).
+        await adjustStock(Product, production.Product.id, realQuantity, { transaction });
 
         // Update production record
         await production.update(
@@ -1092,13 +1071,11 @@ exports.createProductionRequest = async (req, res) => {
                         quantity: packagingQuantity
                     }, { transaction });
                     
-                    // Subtract the quantity from the packaging stock
+                    // Subtract the quantity from the packaging stock (atomic, locked, never negative)
                     const packagingItem = await Packaging.findByPk(packagingId, { transaction });
                     if (packagingItem) {
-                        const newStock = Math.max(0, packagingItem.stock - packagingQuantity);
-                        await packagingItem.update({ stock: newStock }, { transaction });
-                        console.log(`Updated packaging ${packagingItem.name} stock: ${packagingItem.stock} -> ${newStock}`);
-                        
+                        await adjustStock(Packaging, packagingItem.id, -packagingQuantity, { transaction, integer: true });
+
                         // Create outbound record for packaging
                         await Outbound.create({
                             date: new Date(),
@@ -1136,13 +1113,11 @@ exports.createProductionRequest = async (req, res) => {
                     quantity: packagingQuantity
                 }, { transaction });
                 
-                // Subtract the quantity from the packaging stock
+                // Subtract the quantity from the packaging stock (atomic, locked, never negative)
                 const packagingItem = orderItem.Packaging;
                 if (packagingItem) {
-                    const newStock = Math.max(0, packagingItem.stock - packagingQuantity);
-                    await packagingItem.update({ stock: newStock }, { transaction });
-                    console.log(`Updated packaging ${packagingItem.name} stock: ${packagingItem.stock} -> ${newStock}`);
-                    
+                    await adjustStock(Packaging, packagingItem.id, -packagingQuantity, { transaction, integer: true });
+
                     // Create outbound record for packaging
                     await Outbound.create({
                         date: new Date(),
@@ -1170,13 +1145,11 @@ exports.createProductionRequest = async (req, res) => {
                 quantity: rawMaterialData.quantity
             }, { transaction });
             
-            // Subtract the quantity from the raw material stock
+            // Subtract the quantity from the raw material stock (atomic, locked, never negative)
             const rawMaterial = await RawMaterial.findByPk(rawMaterialData.rawMaterialId, { transaction });
             if (rawMaterial) {
-                const newStock = Math.max(0, rawMaterial.stock - rawMaterialData.quantity);
-                await rawMaterial.update({ stock: newStock }, { transaction });
-                console.log(`Updated raw material ${rawMaterial.name} stock: ${rawMaterial.stock} -> ${newStock}`);
-                
+                await adjustStock(RawMaterial, rawMaterial.id, -rawMaterialData.quantity, { transaction });
+
                 // Create outbound record for raw material
                 await Outbound.create({
                     date: new Date(),
@@ -1323,9 +1296,8 @@ exports.clearProductionRequest = async (req, res) => {
             for (const prp of productionRequest.ProductionRequestPackagings) {
                 const packaging = prp.Packaging;
                 if (packaging) {
-                    // Subtract the used quantity from packaging stock
-                    packaging.stock -= prp.quantity;
-                    await packaging.save({ transaction });
+                    // Subtract the used quantity from packaging stock (atomic, locked, never negative)
+                    await adjustStock(Packaging, packaging.id, -prp.quantity, { transaction, integer: true });
                 }
             }
         }
@@ -1416,8 +1388,11 @@ exports.addRawMaterial = async (req, res) => {
             return res.status(404).send('Production not found');
         }
 
-        // Find the raw material
-        const rawMaterial = await RawMaterial.findByPk(rawMaterialId);
+        // Find the raw material (locked to keep the check-and-deduct atomic)
+        const rawMaterial = await RawMaterial.findByPk(rawMaterialId, {
+            transaction,
+            lock: transaction.LOCK.UPDATE
+        });
         if (!rawMaterial) {
             await transaction.rollback();
             return res.status(404).send('Raw material not found');
@@ -1436,10 +1411,8 @@ exports.addRawMaterial = async (req, res) => {
             quantity: quantity
         }, { transaction });
 
-        // Update raw material stock
-        await rawMaterial.update({
-            stock: rawMaterial.stock - quantity
-        }, { transaction });
+        // Update raw material stock (atomic, locked, never negative)
+        await adjustStock(RawMaterial, rawMaterialId, -quantity, { transaction });
 
         // Set flag that raw material has been added
         await production.update({

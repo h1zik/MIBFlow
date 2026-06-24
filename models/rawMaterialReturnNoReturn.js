@@ -26,7 +26,7 @@ const RawMaterialReturnNoReturn = sequelize.define('RawMaterialReturnNoReturn', 
         allowNull: false
     },
     splitQuantity: {
-        type: DataTypes.INTEGER,
+        type: DataTypes.FLOAT,
         allowNull: false
     },
     tax: {

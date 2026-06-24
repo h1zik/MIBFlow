@@ -1,318 +1,124 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Create Complain - MIB Flow</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.7.2/font/bootstrap-icons.css" rel="stylesheet">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <%- include('../partials/head', { pageTitle: 'Create Complain' }) %>
     <style>
-        :root {
-            --primary-color: #2e7d32;
-            --primary-light: #4caf50;
-            --primary-dark: #1b5e20;
-            --text-color: #2c3e50;
-            --background-light: #e8f5e9;
-            --shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-            --transition: all 0.3s ease;
-        }
-
-        body {
-            font-family: 'Inter', sans-serif;
-            background-color: var(--background-light);
-            margin: 0;
-            padding: 0;
-            min-height: 100vh;
-        }
-
-        .main-content {
-            margin-left: 280px;
-            padding: 2rem;
-            transition: var(--transition);
-            width: calc(100% - 280px);
-        }
-
-        body.sidebar-collapsed .main-content {
-            margin-left: 70px;
-            width: calc(100% - 70px);
-        }
-
-        .page-header {
-            background: white;
-            padding: 1.5rem;
-            border-radius: 15px;
-            box-shadow: var(--shadow);
-            margin-bottom: 2rem;
-            animation: slideDown 0.5s ease-out;
-        }
-
-        .page-title {
-            margin: 0;
-            color: var(--primary-dark);
-            font-weight: 600;
-            font-size: 1.5rem;
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-        }
-
-        .form-container {
-            background: white;
-            border-radius: 15px;
-            box-shadow: var(--shadow);
-            padding: 2rem;
-            animation: fadeIn 0.5s ease-out;
-        }
-
-        .complain-item {
-            background-color: var(--background-light);
-            padding: 1.5rem;
-            border-radius: 10px;
-            margin-bottom: 1.5rem;
-        }
-
-        .form-label {
-            font-weight: 500;
-            color: var(--text-color);
-        }
-
-        .form-control,
-        .form-select {
-            border: 1px solid rgba(0,0,0,0.1);
-            transition: var(--transition);
-        }
-
-        .form-control:focus,
-        .form-select:focus {
-            border-color: var(--primary-color);
-            box-shadow: 0 0 0 0.2rem rgba(46, 125, 50, 0.25);
-        }
-
-        .btn {
-            padding: 0.5rem 1rem;
-            border-radius: 8px;
-            transition: var(--transition);
-            display: inline-flex;
-            align-items: center;
-            gap: 0.5rem;
-            font-weight: 500;
-        }
-
-        .btn-primary {
-            background-color: var(--primary-color);
-            border: none;
-        }
-
-        .btn-primary:hover {
-            background-color: var(--primary-dark);
-            transform: translateY(-1px);
-            box-shadow: 0 4px 12px rgba(46, 125, 50, 0.25);
-        }
-
-        .btn-secondary {
-            background-color: #6c757d;
-            border: none;
-        }
-
-        .btn-secondary:hover {
-            background-color: #5a6268;
-            transform: translateY(-1px);
-            box-shadow: 0 4px 12px rgba(108, 117, 125, 0.25);
-        }
-
-        .btn-danger {
-            background-color: #dc3545;
-            border: none;
-        }
-
-        .btn-danger:hover {
-            background-color: #bb2d3b;
-            transform: translateY(-1px);
-            box-shadow: 0 4px 12px rgba(220, 53, 69, 0.25);
-        }
-
-        @keyframes slideDown {
-            from {
-                opacity: 0;
-                transform: translateY(-20px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-
-        @keyframes fadeIn {
-            from {
-                opacity: 0;
-                transform: translateY(10px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-
-        @media (max-width: 768px) {
-            .main-content {
-                margin-left: 0;
-                padding: 1rem;
-                width: 100%;
-            }
-
-            .page-header {
-                padding: 1rem;
-            }
-
-            .form-container {
-                padding: 1.5rem;
-            }
-        }
+        .complain-item { background: var(--mib-surface-2); border: 1px solid var(--mib-border); padding: 1.25rem; border-radius: var(--mib-radius-sm); margin-bottom: 1.25rem; }
     </style>
 </head>
-<body>
-    <%- include('../partials/sidebar', { userRole: userRole }) %>
+<body class="app-shell">
+    <%- include('../partials/sidebar', { userRole: userRole, path: '/complain/create' }) %>
 
-    <div class="main-content">
-        <div class="page-header">
-            <h1 class="page-title">
-                <i class="bi bi-pencil-square"></i>
-                Create Complain
-            </h1>
-            <p class="text-muted mb-0">Report a new product complaint</p>
+    <div class="content content-narrow">
+        <div class="page-header fade-in">
+            <div class="page-header__main">
+                <ul class="mib-breadcrumb"><li><a href="/complain">Complains</a></li><li>Create</li></ul>
+                <h1 class="page-title"><i class="bi bi-pencil-square"></i> Create Complain</h1>
+                <p class="page-subtitle">Report a new product complaint from a delivered order.</p>
+            </div>
         </div>
 
-        <div class="form-container">
-            <form id="complainForm" class="needs-validation" novalidate>
-                <div class="mb-3">
-                    <label for="orderId" class="form-label">SO Number</label>
-                    <select class="form-select" id="orderId" name="orderId" required>
-                        <option value="">Select SO Number</option>
-                        <% orders.forEach(order => { %>
-                            <option value="<%= order.id %>" 
-                                    data-customer="<%= order.customerName %>"
-                                    data-sonumber="<%= order.sonumber %>">
-                                <%= order.sonumber %> - <%= order.customerName %>
-                            </option>
-                        <% }); %>
-                    </select>
+        <form id="complainForm" class="needs-validation" novalidate>
+            <div class="form-section">
+                <h3 class="form-section-title"><i class="bi bi-receipt me-1"></i> Order</h3>
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <label for="orderId" class="form-label">SO Number</label>
+                        <select class="form-select" id="orderId" name="orderId" required>
+                            <option value="">Select SO Number</option>
+                            <% orders.forEach(order => { %>
+                                <option value="<%= order.id %>" data-customer="<%= order.customerName %>" data-sonumber="<%= order.sonumber %>"><%= order.sonumber %> - <%= order.customerName %></option>
+                            <% }); %>
+                        </select>
+                    </div>
+                    <div class="col-md-6">
+                        <label for="customerName" class="form-label">Customer Name</label>
+                        <input type="text" class="form-control" id="customerName" name="customerName" readonly>
+                    </div>
                 </div>
+            </div>
 
-                <div class="mb-3">
-                    <label for="customerName" class="form-label">Customer Name</label>
-                    <input type="text" class="form-control" id="customerName" name="customerName" readonly>
-                </div>
-
+            <div class="form-section">
+                <h3 class="form-section-title"><i class="bi bi-box-seam me-1"></i> Complain Items</h3>
                 <div id="complainItems">
-                    <h4 class="mt-4 mb-3">Complain Items</h4>
                     <div class="complain-item">
                         <div class="mb-3">
                             <label class="form-label">Product</label>
-                            <select class="form-select product-select" required>
-                                <option value="">Select Product</option>
-                            </select>
+                            <select class="form-select product-select" required><option value="">Select Product</option></select>
                         </div>
                         <div class="mb-3">
                             <label class="form-label">Quantity Rejected</label>
                             <input type="number" class="form-control quantity-rejected" min="1" required>
                         </div>
-                        <div class="mb-3">
+                        <div class="mb-0">
                             <label class="form-label">Notes</label>
                             <textarea class="form-control notes" rows="2"></textarea>
                         </div>
                     </div>
                 </div>
+                <button type="button" class="btn btn-light btn-sm" id="addItem"><i class="bi bi-plus-circle"></i> Add Another Item</button>
+            </div>
 
-                <div class="mt-4">
-                    <button type="button" class="btn btn-secondary me-2" id="addItem">
-                        <i class="bi bi-plus-circle"></i>
-                        Add Another Item
-                    </button>
-                    <button type="submit" class="btn btn-primary">
-                        <i class="bi bi-check-circle"></i>
-                        Submit Complain
-                    </button>
-                </div>
-            </form>
-        </div>
+            <div class="d-flex gap-2 justify-content-end">
+                <a href="/complain" class="btn btn-light"><i class="bi bi-arrow-left"></i> Back</a>
+                <button type="submit" class="btn btn-primary"><i class="bi bi-check-circle"></i> Submit Complain</button>
+            </div>
+        </form>
     </div>
 
-    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
     <script>
-        document.addEventListener('DOMContentLoaded', function() {
+        document.addEventListener('DOMContentLoaded', function () {
             const orderSelect = document.getElementById('orderId');
             const customerNameInput = document.getElementById('customerName');
             const complainForm = document.getElementById('complainForm');
             const addItemBtn = document.getElementById('addItem');
             const complainItems = document.getElementById('complainItems');
-
-            // Store order data
             const orders = JSON.parse('<%- JSON.stringify(orders) %>');
             let selectedOrder = null;
 
-            // Handle SO Number selection
-            orderSelect.addEventListener('change', function() {
-                const selectedOption = this.options[this.selectedIndex];
-                customerNameInput.value = selectedOption.dataset.customer;
-                
-                // Find selected order and update product dropdowns
+            orderSelect.addEventListener('change', function () {
+                customerNameInput.value = this.options[this.selectedIndex].dataset.customer || '';
                 selectedOrder = orders.find(order => order.id === parseInt(this.value));
                 updateAllProductDropdowns();
             });
 
-            // Add new item
-            addItemBtn.addEventListener('click', function() {
+            addItemBtn.addEventListener('click', function () {
                 const newItem = document.querySelector('.complain-item').cloneNode(true);
-                // Clear values
                 newItem.querySelector('.product-select').value = '';
                 newItem.querySelector('.quantity-rejected').value = '';
                 newItem.querySelector('.notes').value = '';
-                // Add remove button
                 const removeBtn = document.createElement('button');
-                removeBtn.className = 'btn btn-danger mt-2';
+                removeBtn.type = 'button';
+                removeBtn.className = 'btn btn-sm btn-outline-danger mt-2';
                 removeBtn.innerHTML = '<i class="bi bi-trash"></i> Remove Item';
-                removeBtn.onclick = function(e) {
-                    e.preventDefault();
-                    newItem.remove();
-                };
+                removeBtn.onclick = () => newItem.remove();
                 newItem.appendChild(removeBtn);
                 complainItems.appendChild(newItem);
-                if (selectedOrder) {
-                    updateProductDropdown(newItem.querySelector('.product-select'));
-                }
+                if (selectedOrder) updateProductDropdown(newItem.querySelector('.product-select'));
             });
 
-            // Update product dropdowns
             function updateAllProductDropdowns() {
-                document.querySelectorAll('.product-select').forEach(select => {
-                    updateProductDropdown(select);
-                });
+                document.querySelectorAll('.product-select').forEach(updateProductDropdown);
             }
-
             function updateProductDropdown(select) {
                 select.innerHTML = '<option value="">Select Product</option>';
                 if (selectedOrder && selectedOrder.OrderItems) {
                     selectedOrder.OrderItems.forEach(item => {
                         const option = document.createElement('option');
-                        option.value = JSON.stringify({
-                            id: item.Product.id,
-                            name: item.Product.name
-                        });
+                        option.value = JSON.stringify({ id: item.Product.id, name: item.Product.name });
                         option.textContent = item.Product.name;
                         select.appendChild(option);
                     });
                 }
             }
 
-            // Handle form submission
-            complainForm.addEventListener('submit', async function(e) {
+            complainForm.addEventListener('submit', async function (e) {
                 e.preventDefault();
-
                 const items = [];
                 document.querySelectorAll('.complain-item').forEach(item => {
-                    const productData = JSON.parse(item.querySelector('.product-select').value);
+                    const raw = item.querySelector('.product-select').value;
+                    if (!raw) return;
+                    const productData = JSON.parse(raw);
                     items.push({
                         productId: productData.id,
                         product: productData.name,
@@ -320,49 +126,26 @@
                         notes: item.querySelector('.notes').value
                     });
                 });
-
                 const formData = {
                     orderId: orderSelect.value,
                     sonumber: orderSelect.options[orderSelect.selectedIndex].dataset.sonumber,
                     customerName: customerNameInput.value,
                     items: items
                 };
-
                 try {
                     const response = await fetch('/complain/create', {
                         method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json'
-                        },
+                        headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify(formData)
                     });
-
                     const result = await response.json();
-                    if (result.success) {
-                        window.location.href = '/complain';
-                    } else {
-                        alert('Error creating complain: ' + result.message);
-                    }
+                    if (result.success) window.location.href = '/complain';
+                    else alert('Error creating complain: ' + result.message);
                 } catch (error) {
                     console.error('Error:', error);
                     alert('Error creating complain');
                 }
             });
-
-            // Handle sidebar state changes
-            const sidebar = document.querySelector('.sidebar');
-            const observer = new MutationObserver(function(mutations) {
-                mutations.forEach(function(mutation) {
-                    if (mutation.attributeName === 'class') {
-                        if (sidebar.classList.contains('collapsed')) {
-                            document.body.classList.add('sidebar-collapsed');
-                        } else {
-                            document.body.classList.remove('sidebar-collapsed');
-                        }
-                    }
-                });
-            });
-            observer.observe(sidebar, { attributes: true });
         });
     </script>
 </body>

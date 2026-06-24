@@ -573,6 +573,284 @@
             </div>
         <% } %>
 
+        <!-- View toggle: List / Kanban -->
+        <style>
+            .ppic-viewbar { display:flex; align-items:center; gap:0.75rem; margin-bottom:1.25rem; }
+            .ppic-viewbar .vb-label { color: var(--mib-text-muted,#6b7280); font-size:0.85rem; font-weight:600; }
+            .ppic-viewbar .btn-group .btn { display:inline-flex; align-items:center; gap:0.4rem; }
+            .kanban-board { display:grid; grid-template-columns:repeat(auto-fit, minmax(280px, 1fr)); gap:1rem; align-items:start; padding-bottom:0.6rem; }
+            .kanban-col { min-width:0; max-height:calc(100vh - 220px); overflow-y:auto; background: var(--mib-surface-2,#f9fafb); border:1px solid var(--mib-border,#e8ebe9); border-radius:14px; padding:0.85rem; }
+            .kanban-col-title { font-weight:650; color:var(--mib-text,#1f2937); display:flex; align-items:center; gap:0.4rem; font-size:0.92rem; }
+            .kanban-col-head { display:flex; align-items:center; justify-content:space-between; margin-bottom:0.85rem; }
+            .kanban-count { background:#fff; border:1px solid var(--mib-border,#e8ebe9); border-radius:999px; padding:0.05rem 0.55rem; font-size:0.74rem; color:var(--mib-text-muted,#6b7280); font-weight:600; }
+            .kanban-card { position:relative; background:#fff; border:1px solid var(--mib-border,#e8ebe9); border-radius:11px; padding:0.85rem; margin-bottom:0.7rem; box-shadow:0 1px 2px rgba(16,24,40,0.05); }
+            .kanban-del { position:absolute; top:6px; right:6px; width:24px; height:24px; line-height:1; border:none; border-radius:6px; background:transparent; color:var(--mib-text-faint,#9ca3af); font-size:1.05rem; cursor:pointer; display:grid; place-items:center; opacity:0; transition:opacity .15s ease, background .15s ease, color .15s ease; }
+            .kanban-card:hover .kanban-del { opacity:1; }
+            .kanban-del:hover { background:var(--mib-danger-soft,#fee2e2); color:var(--mib-danger,#dc2626); }
+            @media (hover: none){ .kanban-del { opacity:1; } }
+            .kanban-card .so { padding-right:1.4rem; }
+            .kanban-card .so { font-weight:700; color:var(--mib-text,#1f2937); }
+            .kanban-card .cust { color:var(--mib-text-muted,#6b7280); font-size:0.82rem; margin:0.1rem 0 0.6rem; }
+            .kanban-chips { display:flex; flex-wrap:wrap; gap:0.3rem; margin-bottom:0.7rem; }
+            .kanban-chip { background:var(--mib-primary-soft,#e7f1ec); color:var(--mib-primary-dark,#225239); border-radius:999px; padding:0.12rem 0.6rem; font-size:0.73rem; font-weight:500; }
+            .kanban-actions { display:flex; flex-wrap:wrap; gap:0.35rem; }
+            .kanban-actions .btn { width:auto; }
+            .kanban-empty { color:var(--mib-text-faint,#9ca3af); font-size:0.85rem; text-align:center; padding:1.5rem 0; }
+        </style>
+        <div class="ppic-viewbar">
+            <span class="vb-label">View</span>
+            <div class="btn-group" role="group" aria-label="View switch">
+                <button type="button" class="btn btn-outline-primary active" id="btnListView"><i class="bi bi-list-ul"></i> List</button>
+                <button type="button" class="btn btn-outline-primary" id="btnKanbanView"><i class="bi bi-kanban"></i> Kanban</button>
+            </div>
+        </div>
+
+        <!-- Kanban view: one column per List-view section -->
+        <% const sb = (s) => 'status-' + String(s || '').toLowerCase().replace(/\s+/g, '-'); %>
+        <% const qb = (s) => s === 'Pass' ? 'status-completed' : (s === 'Fail' ? 'status-declined' : (s === 'Reject Sebagian' ? 'status-pending' : 'status-pending')); %>
+        <% const unprintedProductions = (completedProductions || []).filter(p => !p.isPrinted); %>
+        <div id="ppicKanbanView" style="display:none;">
+            <div class="kanban-board">
+
+                <!-- 1. Orders -->
+                <div class="kanban-col">
+                    <div class="kanban-col-head">
+                        <span class="kanban-col-title"><i class="bi bi-cart"></i> Orders</span>
+                        <span class="kanban-count"><%= (orders || []).length %></span>
+                    </div>
+                    <% if (!orders || !orders.length) { %><div class="kanban-empty"><i class="bi bi-inbox d-block mb-1"></i>No orders</div><% } %>
+                    <% (orders || []).forEach(order => { %>
+                        <div class="kanban-card" data-card-key="orders-<%= order.id %>">
+                            <button type="button" class="kanban-del" title="Hide from board" aria-label="Hide card">&times;</button>
+                            <div class="so"><%= order.sonumber %> <span class="status-badge <%= sb(order.status) %>"><%= order.status %></span></div>
+                            <div class="cust"><i class="bi bi-person"></i> <%= order.Customer ? order.Customer.name : '' %></div>
+                            <div class="kanban-chips">
+                                <% (order.products || []).forEach(p => { %><span class="kanban-chip"><%= p.name %> (<%= p.quantity %> <%= p.satuan %>)</span><% }) %>
+                            </div>
+                            <div class="kanban-actions">
+                                <a href="/orders/<%= order.id %>" class="btn btn-sm btn-outline-primary"><i class="bi bi-eye"></i> View</a>
+                                <button type="button" class="btn btn-sm btn-outline-primary check-stock-btn" data-order-id="<%= order.id %>"><i class="bi bi-box"></i> Stock</button>
+                                <% if (order.status !== 'On Production' && order.status !== 'Production Completed') { %>
+                                    <a href="/production/request/<%= order.id %>" class="btn btn-sm btn-primary"><i class="bi bi-gear"></i> Request</a>
+                                <% } %>
+                            </div>
+                        </div>
+                    <% }) %>
+                </div>
+
+                <!-- 2. Production List -->
+                <div class="kanban-col">
+                    <div class="kanban-col-head">
+                        <span class="kanban-col-title"><i class="bi bi-list-check"></i> Production List</span>
+                        <span class="kanban-count"><%= unprintedProductions.length %></span>
+                    </div>
+                    <% if (!unprintedProductions.length) { %><div class="kanban-empty"><i class="bi bi-inbox d-block mb-1"></i>Nothing to print</div><% } %>
+                    <% unprintedProductions.forEach(p => { %>
+                        <div class="kanban-card" data-card-key="prod-<%= p.id %>">
+                            <button type="button" class="kanban-del" title="Hide from board" aria-label="Hide card">&times;</button>
+                            <div class="so"><%= p.Product ? p.Product.name : 'Product' %></div>
+                            <div class="cust">Batch: <%= p.batchNumber || 'Not Generated' %> · <%= p.quantity %> Kg</div>
+                            <div class="kanban-chips">
+                                <span class="status-badge <%= sb(p.status) %>"><%= p.status %></span>
+                                <span class="status-badge <%= qb(p.qcStatus) %>">QC: <%= p.qcStatus %></span>
+                            </div>
+                            <% if (p.batchNumber && !p.isPrinted && p.qcStatus !== 'Pass') { %>
+                            <div class="kanban-actions">
+                                <form action="/production/print/<%= p.id %>" method="POST"><button type="submit" class="btn btn-sm btn-primary"><i class="bi bi-printer"></i> Print</button></form>
+                            </div>
+                            <% } %>
+                        </div>
+                    <% }) %>
+                </div>
+
+                <!-- 3. Production Requests -->
+                <div class="kanban-col">
+                    <div class="kanban-col-head">
+                        <span class="kanban-col-title"><i class="bi bi-gear"></i> Production Requests</span>
+                        <span class="kanban-count"><%= (requests || []).length %></span>
+                    </div>
+                    <% if (!requests || !requests.length) { %><div class="kanban-empty"><i class="bi bi-inbox d-block mb-1"></i>No requests</div><% } %>
+                    <% (requests || []).forEach(r => { %>
+                        <div class="kanban-card" data-card-key="prodreq-<%= r.id %>">
+                            <button type="button" class="kanban-del" title="Hide from board" aria-label="Hide card">&times;</button>
+                            <div class="so"><%= r.product %></div>
+                            <div class="cust"><%= r.orderId ? (r.Order ? r.Order.sonumber : 'N/A') : r.prodreqnumber %> · <%= r.quantity %> Kg</div>
+                            <div class="kanban-chips"><span class="status-badge <%= sb(r.status) %>"><%= r.status %></span></div>
+                            <div class="kanban-actions">
+                                <a href="/production/<%= r.id %>/view" class="btn btn-sm btn-outline-primary"><i class="bi bi-eye"></i> View</a>
+                                <% if (r.allCompleted) { %><form action="/production/<%= r.id %>/clear" method="POST"><button type="submit" class="btn btn-sm btn-success"><i class="bi bi-check-lg"></i> Clear</button></form><% } %>
+                            </div>
+                        </div>
+                    <% }) %>
+                </div>
+
+                <!-- 4. Raw Material Requests -->
+                <div class="kanban-col">
+                    <div class="kanban-col-head">
+                        <span class="kanban-col-title"><i class="bi bi-box-seam"></i> Raw Material Requests</span>
+                        <span class="kanban-count"><%= (rawMaterialRequests || []).length %></span>
+                    </div>
+                    <% if (!rawMaterialRequests || !rawMaterialRequests.length) { %><div class="kanban-empty"><i class="bi bi-inbox d-block mb-1"></i>No requests</div><% } %>
+                    <% (rawMaterialRequests || []).forEach(r => { %>
+                        <div class="kanban-card" data-card-key="rawmat-<%= r.id %>">
+                            <button type="button" class="kanban-del" title="Hide from board" aria-label="Hide card">&times;</button>
+                            <div class="so"><%= r.materialName %></div>
+                            <div class="cust"><%= r.quantity %> Kg</div>
+                            <div class="kanban-chips"><span class="status-badge <%= sb(r.status) %>"><%= r.status %></span></div>
+                            <% if (r.allVendorsCompleted) { %>
+                            <div class="kanban-actions"><button type="button" class="btn btn-sm btn-success complete-raw-material" data-id="<%= r.id %>"><i class="bi bi-check-lg"></i> Complete</button></div>
+                            <% } %>
+                        </div>
+                    <% }) %>
+                </div>
+
+                <!-- 5. Packaging Requests -->
+                <div class="kanban-col">
+                    <div class="kanban-col-head">
+                        <span class="kanban-col-title"><i class="bi bi-box2"></i> Packaging Requests</span>
+                        <span class="kanban-count"><%= (packagingRequests || []).length %></span>
+                    </div>
+                    <% if (!packagingRequests || !packagingRequests.length) { %><div class="kanban-empty"><i class="bi bi-inbox d-block mb-1"></i>No requests</div><% } %>
+                    <% (packagingRequests || []).forEach(r => { %>
+                        <div class="kanban-card" data-card-key="pkg-<%= r.id %>">
+                            <button type="button" class="kanban-del" title="Hide from board" aria-label="Hide card">&times;</button>
+                            <div class="so"><%= r.Packaging ? r.Packaging.name : 'Packaging' %></div>
+                            <div class="cust"><%= r.quantity %> pcs</div>
+                            <div class="kanban-chips"><span class="status-badge <%= sb(r.status) %>"><%= r.status %></span></div>
+                            <div class="kanban-actions">
+                                <a href="/packaging-request/<%= r.id %>/view" class="btn btn-sm btn-outline-primary"><i class="bi bi-eye"></i> View</a>
+                                <% if (r.allVendorsCompleted) { %><button type="button" class="btn btn-sm btn-success complete-packaging" data-id="<%= r.id %>"><i class="bi bi-check-lg"></i> Complete</button><% } %>
+                            </div>
+                        </div>
+                    <% }) %>
+                </div>
+
+                <!-- 6. Formula Requests -->
+                <div class="kanban-col">
+                    <div class="kanban-col-head">
+                        <span class="kanban-col-title"><i class="bi bi-file-text"></i> Formula Requests</span>
+                        <span class="kanban-count"><%= (formulaRequests || []).length %></span>
+                    </div>
+                    <% if (!formulaRequests || !formulaRequests.length) { %><div class="kanban-empty"><i class="bi bi-inbox d-block mb-1"></i>No requests</div><% } %>
+                    <% (formulaRequests || []).forEach(r => { %>
+                        <div class="kanban-card" data-card-key="formula-<%= r.id %>">
+                            <button type="button" class="kanban-del" title="Hide from board" aria-label="Hide card">&times;</button>
+                            <div class="so"><%= r.Product ? r.Product.name : 'Product' %></div>
+                            <div class="kanban-chips"><span class="status-badge <%= sb(r.status) %>"><%= r.status %></span></div>
+                            <% if (r.Product && r.Product.formula) { %>
+                            <div class="kanban-actions"><a href="/uploads/<%= r.Product.formula %>" target="_blank" class="btn btn-sm btn-outline-primary"><i class="bi bi-file-pdf"></i> Formula</a></div>
+                            <% } %>
+                        </div>
+                    <% }) %>
+                </div>
+
+                <!-- 7. Product Checks -->
+                <div class="kanban-col">
+                    <div class="kanban-col-head">
+                        <span class="kanban-col-title"><i class="bi bi-check-square"></i> Product Checks</span>
+                        <span class="kanban-count"><%= (productChecks || []).length %></span>
+                    </div>
+                    <% if (!productChecks || !productChecks.length) { %><div class="kanban-empty"><i class="bi bi-inbox d-block mb-1"></i>No checks</div><% } %>
+                    <% (productChecks || []).forEach(c => { %>
+                        <div class="kanban-card" data-card-key="check-<%= c.id %>">
+                            <button type="button" class="kanban-del" title="Hide from board" aria-label="Hide card">&times;</button>
+                            <div class="so"><%= c.productName %></div>
+                            <div class="cust"><%= c.quantity %> KG<%= c.qcComment ? ' · ' + c.qcComment : '' %></div>
+                            <div class="kanban-chips"><span class="status-badge <%= qb(c.qcStatus) %>"><%= c.qcStatus %></span></div>
+                        </div>
+                    <% }) %>
+                </div>
+
+            </div>
+        </div>
+
+        <script>
+            (function () {
+                // Map short card-key prefix -> delete endpoint type + readable label.
+                const TYPE_MAP = {
+                    orders:   { type: 'order',                label: 'order' },
+                    prod:     { type: 'production',           label: 'production batch' },
+                    prodreq:  { type: 'production-request',   label: 'production request' },
+                    rawmat:   { type: 'raw-material-request', label: 'raw material request' },
+                    pkg:      { type: 'packaging-request',    label: 'packaging request' },
+                    formula:  { type: 'formula-request',      label: 'formula request' },
+                    check:    { type: 'product-check',        label: 'product check' },
+                };
+
+                function setView(v) {
+                    const sections = document.querySelectorAll('.dashboard-section');
+                    const kanban = document.getElementById('ppicKanbanView');
+                    const bL = document.getElementById('btnListView');
+                    const bK = document.getElementById('btnKanbanView');
+                    if (v === 'kanban') {
+                        sections.forEach(s => s.style.display = 'none');
+                        kanban.style.display = 'block';
+                        bK.classList.add('active'); bL.classList.remove('active');
+                    } else {
+                        sections.forEach(s => s.style.display = '');
+                        kanban.style.display = 'none';
+                        bL.classList.add('active'); bK.classList.remove('active');
+                    }
+                    try { localStorage.setItem('ppicView', v); } catch (e) {}
+                }
+
+                function updateColumnCounts() {
+                    document.querySelectorAll('#ppicKanbanView .kanban-col').forEach(col => {
+                        const countEl = col.querySelector('.kanban-count');
+                        if (!countEl) return;
+                        countEl.textContent = col.querySelectorAll('.kanban-card').length;
+                    });
+                }
+
+                async function deleteCard(card) {
+                    const key = card.getAttribute('data-card-key') || '';
+                    const dash = key.indexOf('-');
+                    const prefix = key.slice(0, dash);
+                    const id = key.slice(dash + 1);
+                    const map = TYPE_MAP[prefix];
+                    if (!map || !id) return;
+                    if (!confirm(`Hapus ${map.label} ini secara permanen dari database? Tindakan ini tidak bisa dibatalkan.`)) return;
+
+                    const btn = card.querySelector('.kanban-del');
+                    if (btn) { btn.disabled = true; btn.textContent = '…'; }
+                    try {
+                        const res = await fetch(`/ppic/kanban/delete/${map.type}/${id}`, {
+                            method: 'POST',
+                            headers: { 'Accept': 'application/json' }
+                        });
+                        const data = await res.json().catch(() => ({}));
+                        if (res.ok && data.success) {
+                            card.remove();
+                            updateColumnCounts();
+                        } else {
+                            alert('Gagal menghapus: ' + (data.message || res.status));
+                            if (btn) { btn.disabled = false; btn.innerHTML = '&times;'; }
+                        }
+                    } catch (e) {
+                        alert('Gagal menghapus: ' + e.message);
+                        if (btn) { btn.disabled = false; btn.innerHTML = '&times;'; }
+                    }
+                }
+
+                document.addEventListener('DOMContentLoaded', function () {
+                    document.getElementById('btnListView').addEventListener('click', () => setView('list'));
+                    document.getElementById('btnKanbanView').addEventListener('click', () => setView('kanban'));
+
+                    document.querySelectorAll('#ppicKanbanView .kanban-del').forEach(btn => {
+                        btn.addEventListener('click', function (e) {
+                            e.preventDefault();
+                            const card = this.closest('.kanban-card');
+                            if (card) deleteCard(card);
+                        });
+                    });
+
+                    let saved = null;
+                    try { saved = localStorage.getItem('ppicView'); } catch (e) {}
+                    if (saved === 'kanban') setView('kanban');
+                });
+            })();
+        </script>
+
         <!-- Orders Section -->
         <div class="dashboard-section">
             <div class="section-header" data-bs-toggle="collapse" data-bs-target="#orders">

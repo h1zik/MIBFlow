@@ -4,6 +4,7 @@ const RawMaterial = require('../models/rawMaterial');
 const Inbound = require('../models/inbound');
 const Vendor = require('../models/vendor');
 const sequelize = require('../config/database');
+const { adjustStock } = require('../utils/stock');
 
 exports.listQuarantinedRawMaterials = async (req, res) => {
     try {
@@ -83,14 +84,13 @@ exports.reuse = async (req, res) => {
 
         // Only add rejectQuantity to stock if it's greater than 0
         if (material.rejectQuantity > 0) {
-            await rawMaterial.update({
-                stock: rawMaterial.stock + material.rejectQuantity
-            }, { transaction });
+            // Restore rejected quantity to stock (atomic, locked)
+            await adjustStock(RawMaterial, rawMaterial.id, material.rejectQuantity, { transaction });
 
             // Create inbound record for reused raw material
             await Inbound.create({
                 date: new Date(),
-                poSoNumber: material.RawMaterialRequestVendor.ponumber,
+                poSoNumber: material.ponumber,
                 batchNumber: 'N/A',
                 item: rawMaterial.name,
                 vendor: 'Internal Reuse',

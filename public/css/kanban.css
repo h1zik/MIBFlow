@@ -1,0 +1,108 @@
+/* ============================================================
+   Reusable List/Kanban view for dashboards built from
+   .dashboard-section + tables. Activated by kanban-auto.js,
+   which wraps all sections in .kb-board and toggles .kb-mode.
+   Pure CSS transform — no DOM cloning, so all existing
+   action handlers keep working.
+   ============================================================ */
+
+.kb-viewbar {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    margin-bottom: 1.25rem;
+    flex-wrap: wrap;
+}
+.kb-viewbar .vb-label {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--mib-text-muted, #6b7280);
+}
+.kb-viewbar .btn-group .btn { display: inline-flex; align-items: center; gap: 0.4rem; }
+
+/* ---- Kanban mode ----
+   Columns fill the available width (grid auto-fit). Few sections expand to use
+   the full row (no big right gap); many sections wrap onto the next row. */
+.kb-board.kb-mode {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 1rem;
+    align-items: start;
+    padding-bottom: 0.6rem;
+}
+.kb-board.kb-mode > .dashboard-section {
+    margin: 0 !important;
+    min-width: 0;
+    max-height: calc(100vh - 210px);
+    overflow-y: auto;
+    border: 1px solid var(--mib-border, #e8ebe9);
+    border-radius: 14px;
+}
+
+/* Force section content open (override Bootstrap collapse) in kanban mode */
+.kb-board.kb-mode .section-content,
+.kb-board.kb-mode .section-content.collapse {
+    display: block !important;
+    height: auto !important;
+    visibility: visible !important;
+}
+
+/* Section header becomes a sticky column header */
+.kb-board.kb-mode .section-header {
+    position: sticky;
+    top: 0;
+    z-index: 2;
+    cursor: default;
+    background: var(--mib-surface-2, #f9fafb);
+    border-bottom: 1px solid var(--mib-border, #e8ebe9);
+}
+.kb-board.kb-mode .section-header .bi-chevron-down { display: none; }
+
+/* Tables become stacked cards inside columns */
+.kb-board.kb-mode .table-responsive { overflow: visible; }
+.kb-board.kb-mode .table thead { display: none; }
+.kb-board.kb-mode .table,
+.kb-board.kb-mode .table tbody,
+.kb-board.kb-mode .table tr,
+.kb-board.kb-mode .table td {
+    display: block;
+    width: auto;
+}
+.kb-board.kb-mode .table tr {
+    background: #fff;
+    border: 1px solid var(--mib-border, #e8ebe9);
+    border-radius: 11px;
+    padding: 0.65rem 0.8rem;
+    margin: 0 0 0.7rem;
+    box-shadow: 0 1px 2px rgba(16, 24, 40, 0.05);
+}
+.kb-board.kb-mode .table td {
+    border: none !important;
+    padding: 0.2rem 0 !important;
+    font-size: 0.85rem;
+}
+.kb-board.kb-mode .table td[data-label]::before {
+    content: attr(data-label);
+    display: block;
+    font-size: 0.68rem;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+    color: var(--mib-text-faint, #9ca3af);
+    font-weight: 600;
+    margin-bottom: 0.1rem;
+}
+/* action cell: lay buttons out nicely, drop fixed widths */
+.kb-board.kb-mode .table td .action-buttons,
+.kb-board.kb-mode .table td .d-flex {
+    flex-wrap: wrap;
+    gap: 0.35rem;
+}
+.kb-board.kb-mode .table td .btn { width: auto; }
+.kb-board.kb-mode .table td form { display: inline; }
+
+/* empty-state row */
+.kb-board.kb-mode .table td[colspan] {
+    text-align: center;
+    color: var(--mib-text-faint, #9ca3af);
+}
+.kb-board.kb-mode .table td[colspan]::before { content: ""; }

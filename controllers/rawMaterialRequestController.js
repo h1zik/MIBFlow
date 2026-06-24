@@ -16,6 +16,7 @@ const Order = require('../models/order');
 const OrderItem = require('../models/orderItem');
 const Outbound = require('../models/outbound'); // Added Outbound model
 const User = require('../models/user'); // Add User model import
+const { adjustStock, roundQty } = require('../utils/stock');
 
 exports.getRawMaterialRequests = async (req, res) => {
     try {
@@ -456,77 +457,76 @@ exports.updateRawMaterialStock = async (req, res) => {
         });
 
         if (!requestVendor) {
+            await transaction.rollback();
             return res.status(404).send({ error: 'Request vendor not found' });
         }
 
-        const rawMaterial = await RawMaterial.findOne({ 
-            where: { name: requestVendor.RawMaterialRequest.materialName } 
+        const rawMaterial = await RawMaterial.findOne({
+            where: { name: requestVendor.RawMaterialRequest.materialName },
+            transaction
         });
 
         if (!rawMaterial) {
+            await transaction.rollback();
             return res.status(404).send({ error: 'Raw material not found' });
         }
 
         const parsedRejectQty = parseFloat(rejectQuantity);
         const parsedRealQty = parseFloat(realQuantity);
 
+        // Tentukan berapa banyak yang benar-benar masuk stok (stockDelta).
+        let stockDelta = 0;
+
         if (requestVendor.qcStatus === 'Pass') {
             if (requestVendor.rejectQuantity > 0) {
-                rawMaterial.stock += requestVendor.rejectQuantity;
+                stockDelta = requestVendor.rejectQuantity;
                 requestVendor.splitQuantity += requestVendor.rejectQuantity;
                 requestVendor.rejectQuantity = 0;
             } else if (realQuantity) {
-                rawMaterial.stock += parsedRealQty;
+                stockDelta = parsedRealQty;
                 requestVendor.splitQuantity = parsedRealQty;
             } else {
-                rawMaterial.stock += requestVendor.splitQuantity;
+                stockDelta = requestVendor.splitQuantity;
             }
         } else if (requestVendor.qcStatus === 'Reject Sebagian') {
             if (!rejectQuantity) {
+                await transaction.rollback();
                 return res.status(400).send({ error: 'Reject quantity is required for partially rejected items' });
             }
 
             if (requestVendor.rejectQuantity > 0) {
-                // If it's the second or later rejection, this logic works as expected.
+                // Penyesuaian rejection kedua atau lebih.
                 const amountToAddBack = requestVendor.rejectQuantity - parsedRejectQty;
-                rawMaterial.stock += amountToAddBack;
+                stockDelta = amountToAddBack;
                 requestVendor.splitQuantity += amountToAddBack;
                 requestVendor.rejectQuantity = parsedRejectQty;
             } else {
-                // If no stock available, request the full quantity needed
-                const originalQuantity = requestVendor.splitQuantity;
-                const nonRejectedQty = originalQuantity - parsedRejectQty;
-
-                console.log(`Original Split Quantity: ${originalQuantity}`);
-                console.log(`Reject Quantity: ${parsedRejectQty}`);
-                console.log(`Non-Rejected Quantity: ${nonRejectedQty}`);
-
-                // Ensure correct stock update
-                rawMaterial.stock += nonRejectedQty; 
-                requestVendor.rejectQuantity = parsedRejectQty; 
-                requestVendor.splitQuantity -= parsedRejectQty; 
-
-                console.log(`Updated Raw Material Stock: ${rawMaterial.stock}`);
-                console.log(`Updated Split Quantity: ${requestVendor.splitQuantity}`);
+                // Rejection pertama: hanya bagian yang lolos masuk stok.
+                const nonRejectedQty = requestVendor.splitQuantity - parsedRejectQty;
+                stockDelta = nonRejectedQty;
+                requestVendor.rejectQuantity = parsedRejectQty;
+                requestVendor.splitQuantity -= parsedRejectQty;
             }
         } else if (requestVendor.status === 'No Return') {
-            // No Return case
-            rawMaterial.stock += requestVendor.splitQuantity;
+            stockDelta = requestVendor.splitQuantity;
         }
 
-        // Save updated values
+        // Update stok secara atomic dengan lock (lewat helper terpusat).
+        if (stockDelta !== 0) {
+            await adjustStock(RawMaterial, rawMaterial.id, stockDelta, { transaction });
+        }
+
         requestVendor.status = 'Completed';
         await requestVendor.save({ transaction });
-        await rawMaterial.save({ transaction });
 
-        // Create inbound record
+        // Create inbound record — kuantitas = jumlah yang benar-benar masuk stok.
         await Inbound.create({
             date: new Date(),
             poSoNumber: requestVendor.ponumber || 'N/A',
             batchNumber: requestVendor.batchNumber || 'N/A',
             item: requestVendor.RawMaterialRequest.materialName,
             vendor: requestVendor.Vendor?.name || 'Unknown',
-            quantity: requestVendor.qcStatus === 'Pass' ? requestVendor.splitQuantity : requestVendor.splitQuantity,
+            quantity: roundQty(stockDelta),
             expiredDate: requestVendor.expiredDate,
             type: 'Raw Material',
             reason: requestVendor.qcStatus === 'Pass' ? 'Lolos QC' : 'Tolak Beberapa',
@@ -655,48 +655,48 @@ exports.getCompletedRawMaterialRequests = async (req, res) => {
 exports.createRawMaterialRequest = async (req, res) => {
     const { orderId, materialName, quantity } = req.body;
 
-    console.log('Received raw material request:', { orderId, materialName, quantity });
+    const transaction = await sequelize.transaction();
 
     try {
-        // Find the raw material by name
-        const rawMaterial = await RawMaterial.findOne({ where: { name: materialName } });
+        // Find the raw material by name (lock so concurrent requests can't double-allocate stock)
+        const rawMaterial = await RawMaterial.findOne({
+            where: { name: materialName },
+            transaction,
+            lock: transaction.LOCK.UPDATE
+        });
 
         if (!rawMaterial) {
-            console.log('Raw material not found:', materialName);
+            await transaction.rollback();
             return res.status(404).json({ success: false, message: 'Raw material not found.' });
         }
 
-        // Calculate the quantity to be requested
         const neededQuantity = parseFloat(quantity);
-        const currentStock = rawMaterial.stock;
-        
-        // Calculate how much we need to request after using available stock
-        let requestQuantity;
-        if (currentStock > 0) {
-            // If there's stock available, use it for this request
-            requestQuantity = Math.max(0, neededQuantity - currentStock);
-            // Update the raw material stock to 0 since it's being allocated to this request
-            rawMaterial.stock = 0;
-            await rawMaterial.save();
-        } else {
-            // If no stock available, request the full quantity needed
-            requestQuantity = neededQuantity;
+        if (!Number.isFinite(neededQuantity) || neededQuantity <= 0) {
+            await transaction.rollback();
+            return res.status(400).json({ success: false, message: 'Invalid quantity.' });
         }
 
-        console.log('Needed Quantity:', neededQuantity);
-        console.log('Current Stock:', currentStock);
-        console.log('Request Quantity:', requestQuantity);
+        const currentStock = Number(rawMaterial.stock) || 0;
 
-        // Only create a request if we need additional material
+        // Use only as much existing stock as we actually need; keep the rest intact.
+        const usedFromStock = Math.min(currentStock, neededQuantity);
+        const requestQuantity = roundQty(neededQuantity - usedFromStock);
+
+        if (usedFromStock > 0) {
+            await adjustStock(RawMaterial, rawMaterial.id, -usedFromStock, { transaction });
+        }
+
+        // Only create a request if we still need additional material
         if (requestQuantity > 0) {
-            const rawMaterialRequest = await RawMaterialRequest.create({
+            await RawMaterialRequest.create({
                 materialName,
                 quantity: requestQuantity, // Request only what we need after using stock
                 orderId,
                 rawMaterialId: rawMaterial.id,
-            });
-            console.log('Raw material request created successfully:', rawMaterialRequest);
+            }, { transaction });
         }
+
+        await transaction.commit();
 
         // Send SSE notification for new raw material request
         req.app.locals.sendNotification({
@@ -708,6 +708,7 @@ exports.createRawMaterialRequest = async (req, res) => {
 
         res.status(200).json({ success: true, message: 'Raw material request processed successfully!' });
     } catch (error) {
+        await transaction.rollback();
         console.error('Error creating raw material request:', error);
         res.status(500).json({ success: false, message: 'Failed to create raw material request.' });
     }
@@ -814,52 +815,38 @@ exports.markRequestAsCompleted = async (req, res) => {
     }
 };
 
-const generatePoNumber = async () => {
-    const currentMonth = new Date().getMonth() + 1;
-    const currentYear = new Date().getFullYear().toString().slice(-2);
+const ROMAN_MONTHS = ['I', 'II', 'III', 'IV', 'V', 'VI', 'VII', 'VIII', 'IX', 'X', 'XI', 'XII'];
 
-    const lastRequest = await RawMaterialRequest.findOne({
+// Cari nomor urut berikutnya untuk bulan ini. Dibaca di dalam transaksi dengan
+// lock agar dua submit konkuren tidak menghasilkan nomor yang sama.
+const getNextPoNumber = async (Model, transaction) => {
+    const currentMonth = new Date().getMonth() + 1;
+    const last = await Model.findOne({
         where: sequelize.where(
             sequelize.fn('MONTH', sequelize.col('createdAt')),
             currentMonth
         ),
         order: [['createdAt', 'DESC']],
+        transaction,
+        lock: transaction ? transaction.LOCK.UPDATE : undefined,
     });
 
-    let orderNumber = 1;
-    if (lastRequest && lastRequest.ponumber) {
-        const lastPoNumber = lastRequest.ponumber.split('/')[0];
-        orderNumber = parseInt(lastPoNumber, 10) + 1;
+    if (last && last.ponumber) {
+        return parseInt(last.ponumber.split('/')[0], 10) + 1;
     }
+    return 1;
+};
 
-    const romanMonths = ['I', 'II', 'III', 'IV', 'V', 'VI', 'VII', 'VIII', 'IX', 'X', 'XI', 'XII'];
-    const romanMonth = romanMonths[currentMonth - 1];
-
+const formatPoNumber = (orderNumber) => {
+    const currentMonth = new Date().getMonth() + 1;
+    const currentYear = new Date().getFullYear().toString().slice(-2);
+    const romanMonth = ROMAN_MONTHS[currentMonth - 1];
     return `${orderNumber.toString().padStart(3, '0')}/PO/MIB/${romanMonth}/${currentYear}`;
 };
 
-const generatePoNumberForVendor = async () => {
-    const currentMonth = new Date().getMonth() + 1;
-    const currentYear = new Date().getFullYear().toString().slice(-2);
-
-    const lastVendorRequest = await RawMaterialRequestVendor.findOne({
-        where: sequelize.where(
-            sequelize.fn('MONTH', sequelize.col('createdAt')),
-            currentMonth
-        ),
-        order: [['createdAt', 'DESC']],
-    });
-
-    let orderNumber = 1;
-    if (lastVendorRequest && lastVendorRequest.ponumber) {
-        const lastPoNumber = lastVendorRequest.ponumber.split('/')[0];
-        orderNumber = parseInt(lastPoNumber, 10) + 1;
-    }
-
-    const romanMonths = ['I', 'II', 'III', 'IV', 'V', 'VI', 'VII', 'VIII', 'IX', 'X', 'XI', 'XII'];
-    const romanMonth = romanMonths[currentMonth - 1];
-
-    return `${orderNumber.toString().padStart(3, '0')}/PO/MIB/${romanMonth}/${currentYear}`;
+const generatePoNumber = async (transaction) => {
+    const orderNumber = await getNextPoNumber(RawMaterialRequest, transaction);
+    return formatPoNumber(orderNumber);
 };
 
 exports.markRawMaterialPaid = async (req, res) => {
@@ -905,6 +892,8 @@ exports.updatePoNumber = async (req, res) => {
 };
 
 exports.submitSplitQuantities = async (req, res) => {
+    const wantsJson = req.xhr || (req.headers.accept && req.headers.accept.indexOf('json') > -1);
+    const transaction = await sequelize.transaction();
     try {
         const { vendorIds, splitQuantities, taxes, paymentTypes } = req.body;
         const requestId = req.params.id;
@@ -912,12 +901,14 @@ exports.submitSplitQuantities = async (req, res) => {
         // Validate that the total split quantities equal the real quantity
         const realQuantity = await RawMaterialRequest.findOne({
             where: { id: requestId },
-            attributes: ['realQuantity']
+            attributes: ['realQuantity'],
+            transaction
         });
 
         const totalSplitQuantity = splitQuantities.reduce((acc, qty) => acc + parseInt(qty, 10), 0);
         if (totalSplitQuantity !== realQuantity.realQuantity) {
-            if (req.xhr || req.headers.accept.indexOf('json') > -1) {
+            await transaction.rollback();
+            if (wantsJson) {
                 return res.status(400).json({
                     success: false,
                     message: 'Total split quantities must equal the real quantity.'
@@ -926,21 +917,22 @@ exports.submitSplitQuantities = async (req, res) => {
             return res.status(400).send('Total split quantities must equal the real quantity.');
         }
 
-        // Generate PO number for the main request
-        const poNumber = await generatePoNumber();
-
-        // Update the raw material request with the PO number
+        // Generate PO number for the main request (serial, locked)
+        const poNumber = await generatePoNumber(transaction);
         await RawMaterialRequest.update(
             { ponumber: poNumber },
-            { where: { id: requestId } }
+            { where: { id: requestId }, transaction }
         );
 
         // Clear existing splits
-        await RawMaterialRequestVendor.destroy({ where: { rawMaterialRequestId: requestId } });
+        await RawMaterialRequestVendor.destroy({ where: { rawMaterialRequestId: requestId }, transaction });
+
+        // Hitung nomor vendor sekali (locked) lalu increment lokal supaya unik per submit.
+        let vendorPoSeq = await getNextPoNumber(RawMaterialRequestVendor, transaction);
 
         // Create new splits with individual PO numbers
         for (let i = 0; i < vendorIds.length; i++) {
-            const vendorPoNumber = await generatePoNumberForVendor();
+            const vendorPoNumber = formatPoNumber(vendorPoSeq++);
             await RawMaterialRequestVendor.create({
                 rawMaterialRequestId: requestId,
                 vendorId: vendorIds[i],
@@ -948,11 +940,13 @@ exports.submitSplitQuantities = async (req, res) => {
                 tax: taxes[i],
                 paymentType: paymentTypes[i],
                 ponumber: vendorPoNumber
-            });
+            }, { transaction });
         }
 
-        // Update the status to "Forwarded to Finance"
-        await RawMaterialRequest.update({ status: 'Vendor Assigned' }, { where: { id: requestId } });
+        // Update the status to "Vendor Assigned"
+        await RawMaterialRequest.update({ status: 'Vendor Assigned' }, { where: { id: requestId }, transaction });
+
+        await transaction.commit();
 
         // Send SSE notification for finance
         const rawMaterialRequest = await RawMaterialRequest.findByPk(requestId);
@@ -965,8 +959,9 @@ exports.submitSplitQuantities = async (req, res) => {
 
         res.redirect('/dashboard/purchase');
     } catch (error) {
+        await transaction.rollback();
         console.error('Error submitting split quantities:', error);
-        if (req.xhr || req.headers.accept.indexOf('json') > -1) {
+        if (wantsJson) {
             return res.status(500).json({
                 success: false,
                 message: 'Error submitting vendor splits'

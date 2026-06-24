@@ -5,6 +5,7 @@ const RawMaterial = require('../models/rawMaterial');
 const Inbound = require('../models/inbound');
 const Outbound = require('../models/outbound');
 const sequelize = require('../config/database');
+const { adjustStock } = require('../utils/stock');
 
 exports.getCreateComplain = async (req, res) => {
     try {
@@ -514,9 +515,9 @@ exports.proceedToDeliver = async (req, res) => {
         const allCompleted = allReworks.every(r => r.status === 'Completed');
 
         if (allCompleted) {
-            // Update complainItem status to Ready To Deliver
+            // Update complainItem status to Ready to Deliver
             await ComplainItem.update(
-                { status: 'Ready To Deliver' },
+                { status: 'Ready to Deliver' },
                 { 
                     where: { id: rework.complainItemId },
                     transaction 
@@ -683,7 +684,10 @@ exports.addRawMaterial = async (req, res) => {
             return res.status(404).send('Rework not found');
         }
 
-        const rawMaterial = await RawMaterial.findByPk(rawMaterialId, { transaction });
+        const rawMaterial = await RawMaterial.findByPk(rawMaterialId, {
+            transaction,
+            lock: transaction.LOCK.UPDATE
+        });
         if (!rawMaterial) {
             await transaction.rollback();
             return res.status(404).send('Raw material not found');
@@ -704,9 +708,8 @@ exports.addRawMaterial = async (req, res) => {
             unit: 'KG'  // Set unit to KG by default
         }, { transaction });
 
-        // Update raw material stock
-        rawMaterial.stock -= quantity;
-        await rawMaterial.save({ transaction });
+        // Update raw material stock (atomic, locked, never negative)
+        await adjustStock(RawMaterial, rawMaterialId, -quantity, { transaction });
 
         // Update rework status
         rework.rawMaterialAdded = true;

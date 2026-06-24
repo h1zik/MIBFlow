@@ -4,6 +4,7 @@ const Production = require('../models/production').Production;
 const ProductionRequest = require('../models/productionRequest');
 const ComplainRework = require('../models/complainRework');
 const sequelize = require('../config/database');
+const { adjustStock } = require('../utils/stock');
 
 exports.getProductWarehouse = async (req, res) => {
     try {
@@ -109,7 +110,7 @@ exports.getProductWarehouse = async (req, res) => {
             }],
             where: {
                 status: {
-                    [Op.in]: ['Rework Approved', 'Pending', 'Ready To Deliver']
+                    [Op.in]: ['Rework Approved', 'Pending', 'Ready to Deliver']
                 }
             },
             order: [['createdAt', 'DESC']]
@@ -358,23 +359,11 @@ exports.deliverRemaining = async (req, res) => {
         const t = await sequelize.transaction();
 
         try {
-            // Update product stock
-            await Product.update(
-                { stock: sequelize.literal(`stock - ${stockUpdateQuantity}`) },
-                { 
-                    where: { id: orderItem.productId },
-                    transaction: t 
-                }
-            );
+            // Update product stock (atomic, locked, never negative)
+            await adjustStock(Product, orderItem.productId, -stockUpdateQuantity, { transaction: t });
 
-            // Update packaging stock with the entered units
-            await Packaging.update(
-                { stock: sequelize.literal(`stock - ${newSentQuantity}`) },
-                { 
-                    where: { id: orderItem.packagingId },
-                    transaction: t 
-                }
-            );
+            // Update packaging stock with the entered units (integer)
+            await adjustStock(Packaging, orderItem.packagingId, -newSentQuantity, { transaction: t, integer: true });
 
             // Update order item with sent quantities (add to existing sentQuantity)
             await OrderItem.update(

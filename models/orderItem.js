@@ -10,7 +10,7 @@ const OrderItem = sequelize.define('OrderItem', {
         primaryKey: true
     },
     quantity: {
-        type: DataTypes.INTEGER,
+        type: DataTypes.FLOAT,
         allowNull: false
     },
     total: {
@@ -18,7 +18,7 @@ const OrderItem = sequelize.define('OrderItem', {
         allowNull: false
     },
     unit: {
-        type: DataTypes.INTEGER,
+        type: DataTypes.FLOAT,
         allowNull: false
     },
     satuan: { // New column to store the unit of measurement
@@ -26,7 +26,7 @@ const OrderItem = sequelize.define('OrderItem', {
         allowNull: false
     },
     sentQuantity: {
-        type: DataTypes.INTEGER,
+        type: DataTypes.FLOAT,
         allowNull: true,
         defaultValue: 0
     },
@@ -39,12 +39,12 @@ const OrderItem = sequelize.define('OrderItem', {
         }
     },
     invoicedQuantity: {
-        type: DataTypes.INTEGER,
+        type: DataTypes.FLOAT,
         allowNull: true,
         defaultValue: 0
     },
     shippedQuantity: {
-        type: DataTypes.INTEGER,
+        type: DataTypes.FLOAT,
         allowNull: true,
         defaultValue: 0
     }

@@ -25,6 +25,8 @@ const User = require('../models/user'); // Import User model
 const RawMaterialVendor = require('../models/rawMaterialVendor');
 const PackagingVendor = require('../models/packagingVendor');
 const ProductCustomer = require('../models/productCustomer'); // Import ProductCustomer model
+const { adjustStock, roundQty } = require('../utils/stock');
+const { ACTIVE_PRODUCTION_ORDER_STATUSES } = require('../utils/statuses');
 
 exports.createOrderForm = async (req, res) => {
     try {
@@ -432,7 +434,7 @@ exports.getPpicDashboardData = async (req, res) => {
     try {
         const orders = await Order.findAll({
             where: {
-                status: ['Pending','On Production','Production Completed']
+                status: ACTIVE_PRODUCTION_ORDER_STATUSES
             },
             include: [
                 {
@@ -1141,26 +1143,19 @@ exports.approveOrder = async (req, res) => {
                 const sentQuantity = parseInt(sentQuantities[i], 10);
                 
                 const product = await Product.findByPk(orderItem.productId, { transaction: t });
-                const packaging = await Packaging.findByPk(orderItem.packagingId, { transaction: t });
 
             // Calculate product quantity for stock update
             const productQuantityPerUnit = orderItem.quantity / orderItem.unit;
             const productQuantity = productQuantityPerUnit * sentQuantity;
 
-            // Update product stock (stock is always in KG)
-            const stockUpdateQuantity = orderItem.satuan === 'L' ? 
-                productQuantity * product.density : 
+            // Update product stock (stock is always in KG) — atomic, locked, never negative.
+            const stockUpdateQuantity = orderItem.satuan === 'L' ?
+                productQuantity * product.density :
                 productQuantity;
-            await Product.update(
-                { stock: product.stock - stockUpdateQuantity },
-                { where: { id: product.id }, transaction: t }
-            );
+            await adjustStock(Product, orderItem.productId, -stockUpdateQuantity, { transaction: t });
 
-            // Update packaging stock with the entered units
-            await Packaging.update(
-                { stock: packaging.stock - sentQuantity },
-                { where: { id: packaging.id }, transaction: t }
-            );
+            // Update packaging stock with the entered units (integer)
+            await adjustStock(Packaging, orderItem.packagingId, -sentQuantity, { transaction: t, integer: true });
 
             // Update order item with sent quantities (add the input quantity)
             await OrderItem.update(
@@ -1204,7 +1199,10 @@ exports.approveOrder = async (req, res) => {
             // Rollback transaction on error
             await t.rollback();
             console.error('Transaction error:', error);
-            req.flash('error', 'An error occurred while approving the order. Please try again.');
+            const message = /Stok tidak cukup/.test(error.message)
+                ? error.message
+                : 'An error occurred while approving the order. Please try again.';
+            req.flash('error', message);
             res.redirect('/dashboard/ppic');
         }
     } catch (error) {

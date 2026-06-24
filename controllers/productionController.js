@@ -14,6 +14,7 @@ const fs = require('fs');
 const { Op } = require('sequelize');
 const Balance = require('../models/balance');
 const Forklift = require('../models/forklift');
+const { adjustStock } = require('../utils/stock');
 
 
 exports.getScheduleProductionForm = async (req, res) => {
@@ -323,10 +324,6 @@ exports.updateStock = async (req, res) => {
     const { id } = req.params;
     let { realQuantity } = req.body;
 
-    console.log("Received Update Stock Request:");
-    console.log("ID:", id);
-    console.log("Raw realQuantity:", realQuantity);
-
     // Convert and validate realQuantity
     realQuantity = parseFloat(realQuantity);
     if (isNaN(realQuantity) || realQuantity < 0) {
@@ -362,20 +359,8 @@ exports.updateStock = async (req, res) => {
             return res.status(400).send("Product association not found");
         }
 
-        // Ensure current stock is valid
-        const currentStock = parseFloat(production.Product.stock) || 0;
-        console.log("Current stock:", currentStock);
-        console.log("Adding quantity:", realQuantity);
-
-        // Calculate new stock with validated numbers
-        const newStock = currentStock + realQuantity;
-        console.log("New stock will be:", newStock);
-
-        // Update product stock with explicit number conversion and rounding
-        await production.Product.update(
-            { stock: Number(newStock.toFixed(2)) }, // Round to 2 decimal places and ensure it's a number
-            { transaction }
-        );
+        // Add produced quantity to product stock (atomic, locked).
+        await adjustStock(Product, production.Product.id, realQuantity, { transaction });
 
         // Update production record with explicit float value
         await production.update(
@@ -388,7 +373,6 @@ exports.updateStock = async (req, res) => {
         );
 
         await transaction.commit();
-        console.log("Stock updated successfully");
         return res.redirect("/dashboard/production");
     } catch (error) {
         await transaction.rollback();

@@ -448,6 +448,7 @@
         </div>
 
         <!-- Approved Orders Section -->
+        <%- include('../partials/kanban-toggle') %>
         <div class="dashboard-section">
             <div class="section-header" data-bs-toggle="collapse" data-bs-target="#approvedOrders">
                 <h2 class="section-title">
@@ -759,7 +760,7 @@
                                         <td data-label="Notes"><%= item.notes || '-' %></td>
                                         <td data-label="Status"><%= item.status %></td>
                                         <td data-label="Action">
-                                            <% if (item.status === 'Ready To Deliver') { %>
+                                            <% if (item.status === 'Ready to Deliver') { %>
                                                 <form action="/complain/deliver-rework/<%= item.id %>" method="POST" class="d-inline">
                                                     <button type="submit" class="btn btn-success">
                                                         <i class="bi bi-truck"></i>

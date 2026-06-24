@@ -321,7 +321,7 @@
                         <select class="form-select" name="customerId" id="customer" required>
                             <option value="" selected disabled>Choose a customer</option>
                             <% customers.forEach(customer => { %>
-                                <option value="<%= customer.id %>"><%= customer.name %></option>
+                                <option value="<%= customer.id %>"><%= customer.perusahaan %> — <%= customer.name %></option>
                             <% }) %>
                         </select>
                     </div>

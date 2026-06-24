@@ -1,429 +1,79 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Create Order - MIB Flow</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.7.2/font/bootstrap-icons.css" rel="stylesheet">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <%- include('../partials/head', { pageTitle: 'Create Order' }) %>
     <style>
-        :root {
-            --primary-color: #2e7d32;
-            --primary-dark: #1b5e20;
-            --background-light: #e8f5e9;
-            --shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-            --transition: all 0.3s ease;
-        }
-
-        body {
-            font-family: 'Inter', sans-serif;
-            background-color: var(--background-light);
-            margin: 0;
-            padding: 0;
-            min-height: 100vh;
-        }
-
-        .main-content {
-            margin-left: 0;
-            padding: 1rem;
-            width: 100%;
-            transition: var(--transition);
-        }
-
-        .page-header {
-            background: white;
-            padding: 1rem;
-            border-radius: 15px;
-            box-shadow: var(--shadow);
-            margin-bottom: 1rem;
-        }
-
-        .page-title {
-            margin: 0;
-            color: var(--primary-dark);
-            font-weight: 600;
-            font-size: 1.25rem;
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-            margin-bottom: 1rem;
-        }
-
-        .card {
-            background: white;
-            border-radius: 15px;
-            box-shadow: var(--shadow);
-            margin-bottom: 1rem;
-            border: none;
-            overflow: hidden;
-        }
-
-        .card-header {
-            background-color: var(--background-light);
-            border-bottom: 1px solid rgba(0,0,0,0.1);
-            padding: 1rem;
-        }
-
-        .card-title {
-            color: var(--primary-dark);
-            font-weight: 600;
-            font-size: 1rem;
-            margin: 0;
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-        }
-
-        .card-body {
-            padding: 1rem;
-        }
-
-        .form-label {
-            font-weight: 500;
-            color: #2c3e50;
-            margin-bottom: 0.5rem;
-            font-size: 0.875rem;
-        }
-
-        .form-control, .form-select {
-            border-radius: 8px;
-            border: 1px solid rgba(0,0,0,0.1);
-            padding: 0.75rem 1rem;
-            transition: var(--transition);
-            font-size: 0.875rem;
-        }
-
-        .form-control:focus, .form-select:focus {
-            border-color: var(--primary-color);
-            box-shadow: 0 0 0 0.2rem rgba(46, 125, 50, 0.25);
-        }
-
-        .nav-tabs {
-            border: none;
-            margin-bottom: 1rem;
-            flex-wrap: nowrap;
-            overflow-x: auto;
-            scrollbar-width: none;
-            -ms-overflow-style: none;
-            gap: 0.5rem;
-            padding-bottom: 0.5rem;
-        }
-
-        .nav-tabs::-webkit-scrollbar {
-            display: none;
-        }
-
+        /* page-specific components */
+        .nav-tabs { border: none; gap: 0.25rem; margin-bottom: 1.25rem; flex-wrap: nowrap; overflow-x: auto; }
         .nav-tabs .nav-link {
-            border: none;
-            color: #6c757d;
-            padding: 0.75rem 1rem;
-            font-weight: 500;
-            position: relative;
-            white-space: nowrap;
-            font-size: 0.875rem;
-            min-width: max-content;
+            border: none; color: var(--mib-text-muted); font-weight: 550; font-size: 0.9rem;
+            padding: 0.7rem 1rem; border-radius: var(--mib-radius-sm); white-space: nowrap;
         }
-
-        .nav-tabs .nav-link.active {
-            color: var(--primary-color);
-            background: none;
-        }
-
-        .nav-tabs .nav-link.active::after {
-            content: '';
-            position: absolute;
-            bottom: 0;
-            left: 0;
-            right: 0;
-            height: 2px;
-            background-color: var(--primary-color);
-        }
-
-        .btn {
-            padding: 0.75rem 1rem;
-            border-radius: 8px;
-            font-weight: 500;
-            display: inline-flex;
-            align-items: center;
-            gap: 0.5rem;
-            transition: var(--transition);
-            font-size: 0.875rem;
-            width: 100%;
-            justify-content: center;
-        }
-
-        .btn-primary {
-            background-color: var(--primary-color);
-            border: none;
-        }
-
-        .btn-primary:hover {
-            background-color: var(--primary-dark);
-            transform: translateY(-1px);
-        }
-
-        .btn-outline-secondary {
-            color: #6c757d;
-            border-color: #6c757d;
-        }
-
-        .btn-outline-secondary:hover {
-            background-color: #6c757d;
-            transform: translateY(-1px);
-        }
-
-        .product-card {
-            position: relative;
-            margin-bottom: 1rem;
-        }
-
+        .nav-tabs .nav-link:hover { color: var(--mib-primary); background: var(--mib-primary-soft); }
+        .nav-tabs .nav-link.active { color: var(--mib-primary); background: var(--mib-primary-soft); }
+        .product-card { position: relative; }
         .remove-product {
-            position: absolute;
-            top: 0.75rem;
-            right: 0.75rem;
-            color: #dc3545;
-            cursor: pointer;
-            padding: 0.5rem;
-            border-radius: 50%;
-            transition: var(--transition);
-            z-index: 1;
+            position: absolute; top: 1rem; right: 1rem; color: var(--mib-danger);
+            cursor: pointer; padding: 0.4rem; border-radius: 50%; transition: var(--mib-transition);
         }
-
-        .remove-product:hover {
-            background-color: #f8d7da;
-        }
-
-        .packaging-row {
-            background-color: var(--background-light);
-            padding: 1rem;
-            border-radius: 8px;
-            margin-bottom: 1rem;
-        }
-
-        .consumables-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
-            gap: 0.5rem;
-        }
-
-        .form-check {
-            padding: 0.75rem;
-            border-radius: 8px;
-            transition: var(--transition);
-            margin: 0;
-        }
-
-        .form-check:hover {
-            background-color: var(--background-light);
-        }
-
-        .form-check-input:checked {
-            background-color: var(--primary-color);
-            border-color: var(--primary-color);
-        }
-
-        .floating-action-btn {
-            position: fixed;
-            bottom: 1rem;
-            right: 1rem;
-            z-index: 1040;
-        }
-
-        .floating-action-btn .btn {
-            width: 48px;
-            height: 48px;
-            border-radius: 50%;
-            padding: 0;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-        }
-
-        .floating-action-btn .btn i {
-            font-size: 1.25rem;
-        }
-
-        .fade-in {
-            animation: fadeIn 0.3s ease-in;
-        }
-
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(10px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-
-        /* Desktop styles */
-        @media (min-width: 769px) {
-            .main-content {
-                margin-left: 280px;
-                padding: 2rem;
-                width: calc(100% - 280px);
-            }
-
-            body:has(.sidebar.collapsed) .main-content {
-                margin-left: 70px;
-                width: calc(100% - 70px);
-            }
-
-            .page-header {
-                padding: 1.5rem;
-                margin-bottom: 2rem;
-                display: flex;
-                justify-content: space-between;
-                align-items: center;
-            }
-
-            .page-title {
-                font-size: 1.5rem;
-                margin-bottom: 0;
-            }
-
-            .card-header {
-                padding: 1.5rem;
-            }
-
-            .card-title {
-                font-size: 1.2rem;
-            }
-
-            .card-body {
-                padding: 1.5rem;
-            }
-
-            .nav-tabs {
-                margin-bottom: 1.5rem;
-            }
-
-            .nav-tabs .nav-link {
-                padding: 1rem 1.5rem;
-                font-size: 1rem;
-            }
-
-            .form-label {
-                font-size: 1rem;
-            }
-
-            .form-control, .form-select {
-                font-size: 1rem;
-            }
-
-            .btn {
-                font-size: 1rem;
-                width: auto;
-            }
-
-            .consumables-grid {
-                grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
-                gap: 1rem;
-            }
-
-            .floating-action-btn {
-                bottom: 2rem;
-                right: 2rem;
-            }
-
-            .floating-action-btn .btn {
-                width: 56px;
-                height: 56px;
-            }
-
-            .floating-action-btn .btn i {
-                font-size: 1.5rem;
-            }
-        }
-
-        /* Mobile styles */
-        @media (max-width: 768px) {
-            .page-header {
-                flex-direction: column;
-                align-items: stretch;
-            }
-
-            .btn-group {
-                display: grid;
-                gap: 0.5rem;
-            }
-
-            .packaging-row .row {
-                row-gap: 1rem;
-            }
-
-            .packaging-row .btn-outline-danger {
-                width: 100%;
-            }
-        }
+        .remove-product:hover { background: var(--mib-danger-soft); }
+        .packaging-row { background: var(--mib-surface-2); padding: 1rem; border-radius: var(--mib-radius-sm); border: 1px solid var(--mib-border); }
+        .consumables-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(170px, 1fr)); gap: 0.5rem; }
+        .form-check { padding: 0.6rem 0.75rem; border-radius: var(--mib-radius-sm); margin: 0; transition: var(--mib-transition); }
+        .form-check:hover { background: var(--mib-surface-2); }
+        .floating-action-btn { position: fixed; bottom: 1.5rem; right: 1.5rem; z-index: 1040; }
+        .floating-action-btn .btn { width: 54px; height: 54px; border-radius: 50%; padding: 0; box-shadow: var(--mib-shadow-lg); }
+        .floating-action-btn .btn i { font-size: 1.35rem; }
     </style>
 </head>
-<body>
-    <%- include('../partials/sidebar', { userRole: userRole }) %>
+<body class="app-shell">
+    <%- include('../partials/sidebar', { userRole: userRole, path: '/orders/create' }) %>
 
-    <div class="main-content">
+    <div class="content content-wide">
         <% if (locals.error) { %>
             <div class="alert alert-danger alert-dismissible fade show" role="alert">
-                <strong>Error Creating Order:</strong> <%= error %>
-                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                <i class="bi bi-exclamation-triangle-fill"></i>
+                <div><strong>Error creating order:</strong> <%= error %></div>
+                <button type="button" class="btn-close ms-auto" data-bs-dismiss="alert"></button>
             </div>
         <% } %>
+
         <div class="page-header fade-in">
-            <h1 class="page-title">
-                <i class="bi bi-cart-plus"></i>
-                Create Order
-            </h1>
-            <div class="btn-group">
-                <button type="submit" form="orderForm" class="btn btn-primary">
-                    <i class="bi bi-check-lg"></i>
-                    Create Order
-                </button>
-                <a href="/dashboard/marketing" class="btn btn-outline-secondary">
-                    <i class="bi bi-arrow-left"></i>
-                    Back
-                </a>
+            <div class="page-header__main">
+                <ul class="mib-breadcrumb"><li><a href="/dashboard/marketing">Dashboard</a></li><li>Create Order</li></ul>
+                <h1 class="page-title"><i class="bi bi-cart-plus"></i> Create Order</h1>
+                <p class="page-subtitle">Add customer, products and packaging, then submit.</p>
+            </div>
+            <div class="page-actions">
+                <a href="/dashboard/marketing" class="btn btn-light"><i class="bi bi-arrow-left"></i> Back</a>
+                <button type="submit" form="orderForm" class="btn btn-primary"><i class="bi bi-check-lg"></i> Create Order</button>
             </div>
         </div>
 
         <form id="orderForm" action="/orders/create" method="POST" enctype="multipart/form-data">
             <ul class="nav nav-tabs fade-in" role="tablist">
-                <li class="nav-item">
-                    <a class="nav-link active" data-bs-toggle="tab" href="#customer-info">
-                        <i class="bi bi-person"></i>
-                        Customer Info
-                    </a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link" data-bs-toggle="tab" href="#products-tab">
-                        <i class="bi bi-box-seam"></i>
-                        Products
-                    </a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link" data-bs-toggle="tab" href="#additional-info">
-                        <i class="bi bi-info-circle"></i>
-                        Additional Info
-                    </a>
-                </li>
+                <li class="nav-item"><a class="nav-link active" data-bs-toggle="tab" href="#customer-info"><i class="bi bi-person"></i> Customer Info</a></li>
+                <li class="nav-item"><a class="nav-link" data-bs-toggle="tab" href="#products-tab"><i class="bi bi-box-seam"></i> Products</a></li>
+                <li class="nav-item"><a class="nav-link" data-bs-toggle="tab" href="#additional-info"><i class="bi bi-info-circle"></i> Additional Info</a></li>
             </ul>
 
             <div class="tab-content">
                 <!-- Customer Info Tab -->
                 <div class="tab-pane fade show active fade-in" id="customer-info">
                     <div class="card">
-                        <div class="card-header">
-                            <h2 class="card-title">
-                                <i class="bi bi-person-badge"></i>
-                                Customer Details
-                            </h2>
-                        </div>
+                        <div class="card-header"><h2 class="card-title"><i class="bi bi-person-badge"></i> Customer Details</h2></div>
                         <div class="card-body">
-                            <div class="mb-3">
-                                <label class="form-label" for="customerId">Company Name</label>
-                                <select class="form-select" id="customerId" name="customerId" required onchange="loadCustomerProducts(this.value)">
-                                    <option value="" disabled selected>Select a customer</option>
-                                    <% customers.forEach(customer => { %>
-                                        <option value="<%= customer.id %>"><%= customer.perusahaan %></option>
-                                    <% }) %>
-                                </select>
+                            <div class="row g-3">
+                                <div class="col-md-6">
+                                    <label class="form-label" for="customerId">Company Name</label>
+                                    <select class="form-select" id="customerId" name="customerId" required onchange="loadCustomerProducts(this.value)">
+                                        <option value="" disabled selected>Select a customer</option>
+                                        <% customers.forEach(customer => { %>
+                                            <option value="<%= customer.id %>"><%= customer.perusahaan %> — <%= customer.name %></option>
+                                        <% }) %>
+                                    </select>
+                                    <div class="form-text">Products available depend on the selected customer.</div>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -431,18 +81,18 @@
 
                 <!-- Products Tab -->
                 <div class="tab-pane fade fade-in" id="products-tab">
+                    <div id="productsPlaceholder" class="card"><div class="empty-state">
+                        <i class="bi bi-box-seam"></i>
+                        <h4>Select a customer first</h4>
+                        <p>Go to the <strong>Customer Info</strong> tab and choose a customer. Products that have been <strong>assigned to that customer</strong> will load here automatically.</p>
+                    </div></div>
                     <div id="products"></div>
                 </div>
 
                 <!-- Additional Info Tab -->
                 <div class="tab-pane fade fade-in" id="additional-info">
                     <div class="card">
-                        <div class="card-header">
-                            <h2 class="card-title">
-                                <i class="bi bi-info-circle"></i>
-                                Order Details
-                            </h2>
-                        </div>
+                        <div class="card-header"><h2 class="card-title"><i class="bi bi-info-circle"></i> Order Details</h2></div>
                         <div class="card-body">
                             <div class="row g-3">
                                 <div class="col-12">
@@ -457,20 +107,12 @@
                                     </div>
                                 </div>
                                 <div class="col-12">
-                                    <div class="mb-3">
-                                        <label class="form-label">Deadline</label>
-                                        <div class="d-flex gap-3 align-items-center">
-                                            <div class="form-check">
-                                                <input class="form-check-input" type="radio" id="deadlineNo" name="deadlineOption" value="no" checked>
-                                                <label class="form-check-label" for="deadlineNo">No</label>
-                                            </div>
-                                            <div class="form-check">
-                                                <input class="form-check-input" type="radio" id="deadlineYes" name="deadlineOption" value="yes">
-                                                <label class="form-check-label" for="deadlineYes">Yes</label>
-                                            </div>
-                                        </div>
-                                        <input type="date" class="form-control mt-2" id="deadlineDate" name="deadlineDate" disabled>
+                                    <label class="form-label">Deadline</label>
+                                    <div class="d-flex gap-3 align-items-center">
+                                        <div class="form-check"><input class="form-check-input" type="radio" id="deadlineNo" name="deadlineOption" value="no" checked><label class="form-check-label" for="deadlineNo">No</label></div>
+                                        <div class="form-check"><input class="form-check-input" type="radio" id="deadlineYes" name="deadlineOption" value="yes"><label class="form-check-label" for="deadlineYes">Yes</label></div>
                                     </div>
+                                    <input type="date" class="form-control mt-2" id="deadlineDate" name="deadlineDate" disabled style="max-width:240px">
                                 </div>
                                 <div class="col-md-6">
                                     <label class="form-label" for="paymentType">Payment Type</label>
@@ -495,7 +137,7 @@
                                     <label class="form-label" for="notes">Notes</label>
                                     <textarea class="form-control" id="notes" name="notes" rows="3"></textarea>
                                 </div>
-                                <div class="col-12">
+                                <div class="col-md-6">
                                     <label class="form-label" for="po">PO (PDF)</label>
                                     <input type="file" class="form-control" id="po" name="po" accept="application/pdf" required>
                                 </div>
@@ -507,113 +149,65 @@
         </form>
 
         <div class="floating-action-btn">
-            <button type="button" class="btn btn-primary" onclick="addProduct()">
-                <i class="bi bi-plus-lg"></i>
-            </button>
+            <button type="button" class="btn btn-primary" onclick="addProduct()" aria-label="Add product"><i class="bi bi-plus-lg"></i></button>
         </div>
     </div>
 
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
     <script>
         let productIndex = 0;
-        let customerProducts = []; // Store customer-specific products and pricing
-        
-        // Function to load products for a specific customer
+        let customerProducts = [];
+
         function loadCustomerProducts(customerId) {
             if (!customerId) return;
-            
-            // Clear existing products
             customerProducts = [];
-            
-            // Clear existing product cards
             document.getElementById('products').innerHTML = '';
-            
-            // Reset product index
             productIndex = 0;
-            
-            // Disable the add product button until products are loaded
             document.querySelector('.floating-action-btn button').disabled = true;
-            
-            // Fetch products for this customer
             fetch(`/orders/customer-products/${customerId}`)
-                .then(response => {
-                    if (!response.ok) {
-                        throw new Error('Failed to load customer products');
-                    }
-                    return response.json();
-                })
+                .then(response => { if (!response.ok) throw new Error('Failed to load customer products'); return response.json(); })
                 .then(products => {
-                    // Store the products with their customer-specific pricing
                     customerProducts = products;
-                    
-                    // Update any existing product dropdowns
                     updateProductDropdowns();
-                    
-                    // Enable the add product button
                     document.querySelector('.floating-action-btn button').disabled = false;
-                    
-                    // If no products are available for this customer, show a message
+                    const placeholder = document.getElementById('productsPlaceholder');
                     if (products.length === 0) {
-                        alert('No products have been assigned to this customer. Please assign products to this customer first.');
-                    } else {
-                        // Add a default product card if none exists
-                        if (document.querySelectorAll('.product-card').length === 0) {
-                            addProduct();
+                        if (placeholder) {
+                            placeholder.style.display = '';
+                            placeholder.innerHTML = '<div class="empty-state"><i class="bi bi-link-45deg"></i><h4>This customer has no products linked</h4><p>Selecting a customer here is not the same as assigning products to them.<br>Open <strong>Product List</strong>, click <strong>Assign</strong> on a product, and choose this customer — then come back and reselect the customer.</p><a href="/products/listProduct" class="btn btn-soft btn-sm"><i class="bi bi-box-seam"></i> Go to Product List</a></div>';
                         }
+                    } else {
+                        if (placeholder) placeholder.style.display = 'none';
+                        if (document.querySelectorAll('.product-card').length === 0) addProduct();
                     }
                 })
-                .catch(error => {
-                    console.error('Error loading customer products:', error);
-                    alert('Error loading products for this customer. Please try again.');
-                });
+                .catch(error => { console.error('Error loading customer products:', error); alert('Error loading products for this customer. Please try again.'); });
         }
-        
-        // Function to update all product dropdowns with customer-specific products
+
         function updateProductDropdowns() {
-            const productSelects = document.querySelectorAll('.product-select');
-            
-            productSelects.forEach(select => {
-                // Save the currently selected value if any
+            document.querySelectorAll('.product-select').forEach(select => {
                 const currentValue = select.value;
-                
-                // Clear the dropdown
                 select.innerHTML = '';
-                
-                // Add a default option
                 if (customerProducts.length === 0) {
                     const option = document.createElement('option');
-                    option.value = '';
-                    option.disabled = true;
-                    option.selected = true;
+                    option.value = ''; option.disabled = true; option.selected = true;
                     option.textContent = 'No products available for this customer';
                     select.appendChild(option);
                 } else {
                     const option = document.createElement('option');
-                    option.value = '';
-                    option.disabled = true;
-                    option.selected = true;
+                    option.value = ''; option.disabled = true; option.selected = true;
                     option.textContent = 'Select a product';
                     select.appendChild(option);
-                    
-                    // Add options for each product
                     customerProducts.forEach(product => {
-                        const option = document.createElement('option');
-                        option.value = product.id;
-                        option.setAttribute('data-density', product.density);
-                        option.setAttribute('data-price', product.price); // Store customer-specific price
-                        option.textContent = product.name;
-                        select.appendChild(option);
-                        
-                        // Restore the previously selected value if it exists
-                        if (product.id.toString() === currentValue) {
-                            option.selected = true;
-                        }
+                        const o = document.createElement('option');
+                        o.value = product.id;
+                        o.setAttribute('data-density', product.density);
+                        o.setAttribute('data-price', product.price);
+                        o.textContent = product.name;
+                        select.appendChild(o);
+                        if (product.id.toString() === currentValue) o.selected = true;
                     });
                 }
-                
-                // Trigger change event to update calculations
-                const event = new Event('change');
-                select.dispatchEvent(event);
+                select.dispatchEvent(new Event('change'));
             });
         }
 
@@ -621,22 +215,16 @@
             return `
                 <div class="card product-card fade-in" data-product-index="${productIndex}">
                     <div class="card-header">
-                        <h2 class="card-title">
-                            <i class="bi bi-box"></i>
-                            Product ${productIndex + 1}
-                        </h2>
+                        <h2 class="card-title"><i class="bi bi-box"></i> Product ${productIndex + 1}</h2>
                         <i class="bi bi-x-lg remove-product" onclick="removeProduct(this)"></i>
                     </div>
                     <div class="card-body">
                         <div class="row g-3">
-                            <!-- Product select with data-density -->
                             <div class="col-md-4">
                                 <label class="form-label">Product</label>
                                 <select class="form-select product-select" name="products[${productIndex}][productId]" onchange="updateCalculations(this.closest('.row').querySelector('input[type=number]'))" required>
                                     <option value="" disabled selected>${customerProducts.length > 0 ? 'Select a product' : 'No products available for this customer'}</option>
-                                    ${customerProducts.map(product => 
-                                        `<option value="${product.id}" data-density="${product.density}" data-price="${product.price}">${product.name}</option>`
-                                    ).join('')}
+                                    ${customerProducts.map(product => `<option value="${product.id}" data-density="${product.density}" data-price="${product.price}">${product.name}</option>`).join('')}
                                 </select>
                             </div>
                             <div class="col-md-4">
@@ -654,13 +242,11 @@
                         </div>
 
                         <div class="mt-4">
-                            <h6 class="mb-3">Packaging Options</h6>
+                            <h6 class="mb-3 fw-medium">Packaging Options</h6>
                             <div class="packaging-calculation" style="display: none;">
                                 <div class="alert alert-info mb-2">
-                                    Total Packaging Volume: <span class="total-volume">0</span> L
-                                    <br>
-                                    Required Volume: <span class="required-volume">0</span> L
-                                    <br>
+                                    Total Packaging Volume: <span class="total-volume">0</span> L<br>
+                                    Required Volume: <span class="required-volume">0</span> L<br>
                                     Difference: <span class="volume-difference">0</span> L
                                 </div>
                                 <div class="alert alert-warning minimality-warning" style="display: none;"></div>
@@ -673,9 +259,7 @@
                                             <label class="form-label">Packaging</label>
                                             <select class="form-select" name="products[${productIndex}][packaging][0][packagingId]" onchange="handlePackagingChange(this)" required>
                                                 <% packagings.forEach(packaging => { %>
-                                                    <option value="<%= packaging.id %>" data-volume="<%= packaging.volume %>">
-                                                        <%= packaging.name %> (<%= packaging.volume %> L)
-                                                    </option>
+                                                    <option value="<%= packaging.id %>" data-volume="<%= packaging.volume %>"><%= packaging.name %> (<%= packaging.volume %> L)</option>
                                                 <% }) %>
                                             </select>
                                         </div>
@@ -686,11 +270,7 @@
                                     </div>
                                 </div>
                             </div>
-                            <button type="button" class="btn btn-outline-secondary btn-sm mt-3" 
-                                    onclick="addPackaging(this)">
-                                <i class="bi bi-plus-lg"></i>
-                                Add Packaging
-                            </button>
+                            <button type="button" class="btn btn-light btn-sm mt-3" onclick="addPackaging(this)"><i class="bi bi-plus-lg"></i> Add Packaging</button>
                         </div>
                     </div>
                 </div>
@@ -698,73 +278,30 @@
         }
 
         function addProduct() {
-            if (customerProducts.length === 0) {
-                alert('Please select a customer with assigned products first.');
-                return;
-            }
-            
+            if (customerProducts.length === 0) { alert('Please select a customer with assigned products first.'); return; }
+            const ph = document.getElementById('productsPlaceholder');
+            if (ph) ph.style.display = 'none';
             const productContainer = document.getElementById('products');
-            const newProductIndex = productIndex++;
-            
-            // Create a new product card
-            const productCardHtml = createProductCard();
-            
-            // Create a temporary container to hold the HTML
+            productIndex++;
             const tempContainer = document.createElement('div');
-            tempContainer.innerHTML = productCardHtml;
-            
-            // Get the card element
+            tempContainer.innerHTML = createProductCard();
             const productCard = tempContainer.firstElementChild;
-            
-            // Add the card to the container
             productContainer.appendChild(productCard);
-            
-            // Initialize the first packaging row with default values
             const packagingQuantityInput = productCard.querySelector('input[name*="[packaging][0][quantity]"]');
-            if (packagingQuantityInput) {
-                packagingQuantityInput.value = 1;
-            }
-            
-            // Add product card class for styling
-            productCard.classList.add('product-card');
-            
-            // Activate tooltips
-            const tooltips = productCard.querySelectorAll('[data-bs-toggle="tooltip"]');
-            tooltips.forEach(tooltip => {
-                new bootstrap.Tooltip(tooltip);
-            });
-            
-            // Show the Products tab after adding a product
+            if (packagingQuantityInput) packagingQuantityInput.value = 1;
             const productsTab = document.querySelector('a[href="#products-tab"]');
-            if (productsTab) {
-                const tab = new bootstrap.Tab(productsTab);
-                tab.show();
-            }
+            if (productsTab) new bootstrap.Tab(productsTab).show();
         }
 
-        function removeProduct(element) {
-            element.closest('.product-card').remove();
-        }
+        function removeProduct(element) { element.closest('.product-card').remove(); }
 
         function addPackaging(element) {
-            // Find the product card by its index in the data attribute
             const productCard = element.closest('.product-card');
-            if (!productCard) {
-                console.error(`Product card not found`);
-                return;
-            }
-            
-            // Get the product index from the data attribute
+            if (!productCard) return;
             const productIdx = productCard.getAttribute('data-product-index');
-            if (!productIdx) {
-                console.error('Product index not found in data attribute');
-                return;
-            }
-            
+            if (!productIdx) return;
             const packagingList = productCard.querySelector('.packaging-list');
-            const packagingRows = packagingList.querySelectorAll('.packaging-row');
-            const newRowIndex = packagingRows.length;
-            
+            const newRowIndex = packagingList.querySelectorAll('.packaging-row').length;
             const newPackagingRow = document.createElement('div');
             newPackagingRow.className = 'packaging-row mt-3';
             newPackagingRow.innerHTML = `
@@ -773,9 +310,7 @@
                         <label class="form-label">Packaging</label>
                         <select class="form-select" name="products[${productIdx}][packaging][${newRowIndex}][packagingId]" onchange="handlePackagingChange(this)" required>
                             <% packagings.forEach(packaging => { %>
-                                <option value="<%= packaging.id %>" data-volume="<%= packaging.volume %>">
-                                    <%= packaging.name %> (<%= packaging.volume %> L)
-                                </option>
+                                <option value="<%= packaging.id %>" data-volume="<%= packaging.volume %>"><%= packaging.name %> (<%= packaging.volume %> L)</option>
                             <% }) %>
                         </select>
                     </div>
@@ -784,387 +319,197 @@
                         <input type="number" class="form-control" name="products[${productIdx}][packaging][${newRowIndex}][quantity]" onchange="handlePackagingChange(this)" required min="1" value="1">
                     </div>
                     <div class="col-md-1 d-flex align-items-end">
-                        <button type="button" class="btn btn-outline-danger" onclick="removePackaging(this)">
-                            <i class="bi bi-trash"></i>
-                        </button>
+                        <button type="button" class="btn btn-outline-danger" onclick="removePackaging(this)"><i class="bi bi-trash"></i></button>
                     </div>
-                </div>
-            `;
-            
+                </div>`;
             packagingList.appendChild(newPackagingRow);
-            
-            // Update packaging calculations after adding new packaging
             handlePackagingChange(newPackagingRow.querySelector('select'));
         }
-        
+
         function removePackaging(button) {
             const packagingRow = button.closest('.packaging-row');
             const productCard = packagingRow.closest('.product-card');
             packagingRow.remove();
-            
-            // Update calculations after removing packaging
             updatePackagingCalculations(productCard);
         }
 
         function updatePackagingCalculations(element) {
             const card = element.closest('.product-card');
-            if (card) {
-                updatePackagingCalculationsCard(card);
-            }
+            if (card) updatePackagingCalculationsCard(card);
         }
 
         function updatePackagingCalculationsCard(card) {
             const productSelect = card.querySelector('.product-select');
             const unitSelect = card.querySelector('select[name*="satuan"]');
-            
             if (!productSelect || !unitSelect) return;
-            
             const selectedProductOption = productSelect.options[productSelect.selectedIndex];
             if (!selectedProductOption || selectedProductOption.disabled) return;
-            
             const density = parseFloat(selectedProductOption.getAttribute('data-density'));
             const unit = unitSelect.value;
             const inputQuantity = parseFloat(card.querySelector('input[name*="[quantity]"]').value);
-            
-            // Update packaging calculations
             const packagingCalculation = card.querySelector('.packaging-calculation');
             if (!packagingCalculation) return;
-            
             if (inputQuantity > 0) {
-                // Compute required volume (if unit is KG, convert using density)
                 const requiredVolume = (unit === 'KG') ? inputQuantity / density : inputQuantity;
-
-                // Calculate exact total packaging volume (do not round this value)
                 let exactTotalPackagingVolume = 0;
                 const packagingRows = card.querySelectorAll('.packaging-row');
                 packagingRows.forEach((row) => {
                     const packagingSelect = row.querySelector('select');
                     if (!packagingSelect) return;
-                    
                     const selectedPackagingOption = packagingSelect.options[packagingSelect.selectedIndex];
                     if (!selectedPackagingOption) return;
-                    
                     const packVol = parseFloat(selectedPackagingOption.getAttribute('data-volume')) || 0;
                     const packQty = parseFloat(row.querySelector('input[type="number"]').value) || 0;
                     exactTotalPackagingVolume += packVol * packQty;
                 });
-
-                // Calculate rounded values for display purposes only
                 const displayTotal = Math.round(exactTotalPackagingVolume * 100) / 100;
                 const displayRequired = Math.round(requiredVolume * 100) / 100;
                 const displayDifference = Math.round((exactTotalPackagingVolume - requiredVolume) * 100) / 100;
-
-                // Update display elements with rounded values
                 const totalVolumeSpan = packagingCalculation.querySelector('.total-volume');
                 const requiredVolumeSpan = packagingCalculation.querySelector('.required-volume');
                 const volumeDifferenceSpan = packagingCalculation.querySelector('.volume-difference');
-                
                 if (totalVolumeSpan) totalVolumeSpan.textContent = displayTotal.toFixed(2);
                 if (requiredVolumeSpan) requiredVolumeSpan.textContent = displayRequired.toFixed(2);
                 if (volumeDifferenceSpan) volumeDifferenceSpan.textContent = displayDifference.toFixed(2);
-
                 packagingCalculation.style.display = 'block';
-
-                // Insufficient Packaging Warning
                 const insufficientWarningDiv = packagingCalculation.querySelector('.insufficient-volume-warning');
                 if (insufficientWarningDiv) {
                     if (exactTotalPackagingVolume < requiredVolume) {
                         insufficientWarningDiv.textContent = `Warning: Packaging volume is insufficient. Required: ${requiredVolume.toFixed(2)} L, Provided: ${exactTotalPackagingVolume.toFixed(2)} L.`;
                         insufficientWarningDiv.style.display = 'block';
-                    } else {
-                        insufficientWarningDiv.style.display = 'none';
-                    }
+                    } else { insufficientWarningDiv.style.display = 'none'; }
                 }
-
-                // Minimality Check
-                // Check if any one packaging unit can be removed and still cover the required volume.
                 let minimalityIssue = false;
                 packagingRows.forEach(row => {
                     const packagingSelect = row.querySelector('select');
                     if (!packagingSelect) return;
-                    
                     const selectedPackagingOption = packagingSelect.options[packagingSelect.selectedIndex];
                     if (!selectedPackagingOption) return;
-                    
                     const packVol = parseFloat(selectedPackagingOption.getAttribute('data-volume'));
                     const packQty = parseFloat(row.querySelector('input[type="number"]').value);
-                    if (packQty > 0) {
-                        const reducedTotal = exactTotalPackagingVolume - packVol;
-                        if (reducedTotal >= requiredVolume) {
-                            minimalityIssue = true;
-                        }
-                    }
+                    if (packQty > 0 && (exactTotalPackagingVolume - packVol) >= requiredVolume) minimalityIssue = true;
                 });
-
-                // Show/hide minimality warning
                 const minimalityWarningDiv = packagingCalculation.querySelector('.minimality-warning');
                 if (minimalityWarningDiv) {
                     if (minimalityIssue) {
                         minimalityWarningDiv.textContent = `Warning: The packaging configuration is not minimal. Please reduce the packaging quantity to the minimum required.`;
                         minimalityWarningDiv.style.display = 'block';
-                    } else {
-                        minimalityWarningDiv.style.display = 'none';
-                    }
+                    } else { minimalityWarningDiv.style.display = 'none'; }
                 }
-            } else {
-                packagingCalculation.style.display = 'none';
-            }
+            } else { packagingCalculation.style.display = 'none'; }
         }
 
         function handlePackagingChange(element) {
             const productCard = element.closest('.product-card');
-            if (productCard) {
-                updatePackagingCalculationsCard(productCard);
-            }
+            if (productCard) updatePackagingCalculationsCard(productCard);
         }
 
         function updateCalculations(quantityInput) {
             if (!quantityInput || !quantityInput.value) return;
-            
             const card = quantityInput.closest('.product-card');
             const row = quantityInput.closest('.row');
             const productSelect = row.querySelector('.product-select');
             const unitSelect = row.querySelector('select[name*="satuan"]');
             const calculationResult = row.querySelector('.calculation-result');
-            
             if (!productSelect || !unitSelect) return;
-            
             const selectedOption = productSelect.options[productSelect.selectedIndex];
             if (!selectedOption || selectedOption.disabled) return;
-            
             const density = parseFloat(selectedOption.getAttribute('data-density')) || 1;
             const customerPrice = parseFloat(selectedOption.getAttribute('data-price')) || 0;
             const quantity = parseFloat(quantityInput.value) || 0;
             const unit = unitSelect.value;
-            
-            // Show calculation result for KG to L conversion
             if (unit === 'KG' && !isNaN(density) && density > 0) {
-                const volumeInLiters = quantity / density;
-                let resultText = `Equivalent to ${volumeInLiters.toFixed(2)} L`;
-                
-                // Add price information if available
-                if (customerPrice > 0) {
-                    const totalPrice = quantity * customerPrice;
-                    resultText += ` | Total: Rp ${totalPrice.toLocaleString('id-ID')}`;
-                }
-                
-                calculationResult.textContent = resultText;
-                calculationResult.style.display = 'block';
-            } 
-            // Show calculation result for L to KG conversion
-            else if (unit === 'L' && !isNaN(density) && density > 0) {
-                const weightInKg = quantity * density;
-                let resultText = `Equivalent to ${weightInKg.toFixed(2)} KG`;
-                
-                // Add price information if available
-                if (customerPrice > 0) {
-                    const totalPrice = quantity * customerPrice;
-                    resultText += ` | Total: Rp ${totalPrice.toLocaleString('id-ID')}`;
-                }
-                
-                calculationResult.textContent = resultText;
-                calculationResult.style.display = 'block';
-            } else {
-                calculationResult.style.display = 'none';
-            }
-            
-            // Update packaging calculations
+                let resultText = `Equivalent to ${(quantity / density).toFixed(2)} L`;
+                if (customerPrice > 0) resultText += ` | Total: Rp ${(quantity * customerPrice).toLocaleString('id-ID')}`;
+                calculationResult.textContent = resultText; calculationResult.style.display = 'block';
+            } else if (unit === 'L' && !isNaN(density) && density > 0) {
+                let resultText = `Equivalent to ${(quantity * density).toFixed(2)} KG`;
+                if (customerPrice > 0) resultText += ` | Total: Rp ${(quantity * customerPrice).toLocaleString('id-ID')}`;
+                calculationResult.textContent = resultText; calculationResult.style.display = 'block';
+            } else { calculationResult.style.display = 'none'; }
             updatePackagingCalculationsCard(card);
         }
-        
-        // Enable/disable deadline date input
+
         document.querySelectorAll('input[name="deadlineOption"]').forEach((elem) => {
-            elem.addEventListener("change", function(event) {
-                const deadlineInput = document.getElementById('deadlineDate');
-                deadlineInput.disabled = this.value === "no";
+            elem.addEventListener("change", function () {
+                document.getElementById('deadlineDate').disabled = this.value === "no";
             });
         });
 
-        document.addEventListener('DOMContentLoaded', function() {
-            // Sidebar resize logic remains unchanged…
-            const sidebar = document.querySelector('.sidebar');
-            const mainContent = document.querySelector('.main-content');
+        // Products load after a customer is selected — no auto-add on page load.
 
-            function updateContentWidth() {
-                if (window.innerWidth > 768) {
-                    if (sidebar.classList.contains('collapsed')) {
-                        mainContent.style.marginLeft = '70px';
-                        mainContent.style.width = 'calc(100% - 70px)';
-                    } else {
-                        mainContent.style.marginLeft = '280px';
-                        mainContent.style.width = 'calc(100% - 280px)';
-                    }
-                } else {
-                    mainContent.style.marginLeft = '0';
-                    mainContent.style.width = '100%';
-                }
-            }
-
-            updateContentWidth();
-
-            const observer = new MutationObserver(function(mutations) {
-                mutations.forEach(function(mutation) {
-                    if (mutation.attributeName === 'class') {
-                        updateContentWidth();
-                    }
-                });
-            });
-            observer.observe(sidebar, { attributes: true });
-            window.addEventListener('resize', updateContentWidth);
-
-            // Add first product by default
-            addProduct();
-        });
-
-        // ***** Client-side validation for packaging minimality *****
-        document.getElementById('orderForm').addEventListener('submit', function(event) {
-            // For every product card validate that the packaging volumes cover the required volume minimally.
+        // Validation: packaging minimality + sufficiency
+        document.getElementById('orderForm').addEventListener('submit', function (event) {
             const productCards = document.querySelectorAll('.product-card');
             for (const card of productCards) {
-                // Get selected product and its density
                 const productSelect = card.querySelector('select[name*="[productId]"]');
                 const selectedProductOption = productSelect.options[productSelect.selectedIndex];
                 const density = parseFloat(selectedProductOption.getAttribute('data-density'));
-                
-                const unitSelect = card.querySelector('select[name*="satuan"]');
-                const unit = unitSelect.value;
-                const quantityInput = card.querySelector('input[name*="[quantity]"]');
-                const inputQuantity = parseFloat(quantityInput.value);
-                
-                // Compute required volume (in Liters). If KG, convert using density.
+                const unit = card.querySelector('select[name*="satuan"]').value;
+                const inputQuantity = parseFloat(card.querySelector('input[name*="[quantity]"]').value);
                 const requiredVolume = (unit === 'KG') ? inputQuantity / density : inputQuantity;
-                
-                // Sum total packaging volume for this product
                 let totalPackagingVolume = 0;
                 const packagingRows = card.querySelectorAll('.packaging-row');
                 packagingRows.forEach(row => {
-                    const packagingSelect = row.querySelector('select');
-                    const selectedPackagingOption = packagingSelect.options[packagingSelect.selectedIndex];
+                    const selectedPackagingOption = row.querySelector('select').options[row.querySelector('select').selectedIndex];
                     const packVol = parseFloat(selectedPackagingOption.getAttribute('data-volume'));
                     const packQty = parseFloat(row.querySelector('input[type="number"]').value);
                     totalPackagingVolume += packVol * packQty;
                 });
-                
-                // Check that packaging covers the required volume
                 if (totalPackagingVolume < requiredVolume) {
                     alert(`For product ${selectedProductOption.text.trim()}: Total packaging volume (${totalPackagingVolume} L) is less than required volume (${requiredVolume.toFixed(2)} L).`);
-                    event.preventDefault();
-                    return false;
+                    event.preventDefault(); return false;
                 }
-                
-                // Minimality check: if you can remove one unit of packaging from any row and still cover the required volume, show an error.
                 let minimalityIssue = false;
                 packagingRows.forEach(row => {
-                    const packagingSelect = row.querySelector('select');
-                    const selectedPackagingOption = packagingSelect.options[packagingSelect.selectedIndex];
+                    const selectedPackagingOption = row.querySelector('select').options[row.querySelector('select').selectedIndex];
                     const packVol = parseFloat(selectedPackagingOption.getAttribute('data-volume'));
                     const packQty = parseFloat(row.querySelector('input[type="number"]').value);
-                    if (packQty > 0) {
-                        const reducedTotal = totalPackagingVolume - packVol;
-                        if (reducedTotal >= requiredVolume) {
-                            minimalityIssue = true;
-                        }
-                    }
+                    if (packQty > 0 && (totalPackagingVolume - packVol) >= requiredVolume) minimalityIssue = true;
                 });
                 if (minimalityIssue) {
                     alert(`For product ${selectedProductOption.text.trim()}: The packaging configuration is not minimal. Please reduce the packaging quantity to the minimum required.`);
-                    event.preventDefault();
-                    return false;
+                    event.preventDefault(); return false;
                 }
             }
         });
 
-        // ***** Client-side validation for form submission *****
-        document.getElementById('orderForm').addEventListener('submit', function(event) {
-            // For debugging - log the form data
-            console.log('Form submission attempt');
-            
-            // Check if a customer is selected
+        // Validation: required selections
+        document.getElementById('orderForm').addEventListener('submit', function (event) {
             const customerId = document.getElementById('customerId').value;
-            if (!customerId) {
-                event.preventDefault();
-                alert('Please select a customer.');
-                return;
-            }
-            
-            // Check if at least one product is selected
+            if (!customerId) { event.preventDefault(); alert('Please select a customer.'); return; }
             const productCards = document.querySelectorAll('.product-card');
-            console.log('Product cards found:', productCards.length);
-            
-            if (productCards.length === 0) {
-                event.preventDefault();
-                alert('Please add at least one product.');
-                return;
-            }
-            
-            // Check if all products have valid selections
+            if (productCards.length === 0) { event.preventDefault(); alert('Please add at least one product.'); return; }
             let hasInvalidProduct = false;
-            
-            productCards.forEach((card, index) => {
+            productCards.forEach((card) => {
                 const productSelect = card.querySelector('.product-select');
                 const quantityInput = card.querySelector('input[name*="[quantity]"]');
-                
-                console.log(`Product ${index + 1}:`, {
-                    productSelectExists: !!productSelect,
-                    productId: productSelect ? productSelect.value : 'N/A',
-                    quantityExists: !!quantityInput,
-                    quantity: quantityInput ? quantityInput.value : 'N/A'
-                });
-                
                 if (productSelect && quantityInput) {
                     const productId = productSelect.value;
                     const quantity = parseFloat(quantityInput.value);
-                    
-                    if (!productId || productId === '' || isNaN(quantity) || quantity <= 0) {
-                        hasInvalidProduct = true;
-                        console.log(`Invalid product ${index + 1}: productId=${productId}, quantity=${quantity}`);
-                    }
-                    
-                    // Ensure all packaging has valid quantities
-                    const packagingRows = card.querySelectorAll('.packaging-row');
-                    console.log(`Product ${index + 1} packaging rows:`, packagingRows.length);
-                    
-                    packagingRows.forEach((row, rowIndex) => {
+                    if (!productId || isNaN(quantity) || quantity <= 0) hasInvalidProduct = true;
+                    card.querySelectorAll('.packaging-row').forEach((row) => {
                         const packagingQty = parseFloat(row.querySelector('input[type="number"]').value);
-                        console.log(`Packaging ${rowIndex + 1} quantity:`, packagingQty);
-                        
-                        if (isNaN(packagingQty) || packagingQty <= 0) {
-                            hasInvalidProduct = true;
-                            console.log(`Invalid packaging quantity for product ${index + 1}, packaging ${rowIndex + 1}: ${packagingQty}`);
-                        }
+                        if (isNaN(packagingQty) || packagingQty <= 0) hasInvalidProduct = true;
                     });
-                } else {
-                    hasInvalidProduct = true;
-                    console.log(`Missing product select or quantity input for product ${index + 1}`);
-                }
+                } else { hasInvalidProduct = true; }
             });
-            
             if (hasInvalidProduct) {
                 event.preventDefault();
                 alert('Please select a valid product and quantity for all product entries and ensure all packaging has valid quantities.');
                 return;
             }
-            
-            // Check if packaging volumes are sufficient
             let insufficientPackaging = false;
             productCards.forEach(card => {
                 const packagingCalculation = card.querySelector('.packaging-calculation');
                 if (packagingCalculation && packagingCalculation.style.display !== 'none') {
                     const insufficientWarning = packagingCalculation.querySelector('.insufficient-volume-warning');
-                    if (insufficientWarning && insufficientWarning.style.display !== 'none') {
-                        insufficientPackaging = true;
-                    }
+                    if (insufficientWarning && insufficientWarning.style.display !== 'none') insufficientPackaging = true;
                 }
             });
-            
-            if (insufficientPackaging) {
+            if (insufficientPackaging && !confirm('Some products have insufficient packaging volume. Do you want to continue anyway?')) {
                 event.preventDefault();
-                if (!confirm('Some products have insufficient packaging volume. Do you want to continue anyway?')) {
-                    return;
-                }
             }
-            
-            console.log('Form validation passed, submitting form');
         });
     </script>
 </body>

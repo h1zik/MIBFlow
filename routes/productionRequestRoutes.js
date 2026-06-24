@@ -5,7 +5,11 @@ const upload = require('../middleware/fileUpload');
 const { getScheduleProductionForm, scheduleProduction, produceBatch, printProduction, quarantineProduction, setBGReceived} = require('../controllers/productionController');
 const { retainSample} = require('../controllers/qcController');
 const { createAutoRawMaterialRequest} = require('../controllers/rawMaterialRequestController');
+const { deleteKanbanCard } = require('../controllers/ppicKanbanController');
 const router = express.Router();
+
+// Kanban: permanently delete a card's record (PPIC only)
+router.post('/kanban/delete/:type/:id', authenticate, authorize(['PPIC']), deleteKanbanCard);
 
 router.get('/requestProduction', authenticate, authorize(['PPIC']), requestProductionForm);
 router.post('/requestProduction', authenticate, authorize(['PPIC']), upload.single('formula'), requestProduction);
