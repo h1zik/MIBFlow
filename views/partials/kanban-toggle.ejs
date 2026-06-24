@@ -1,0 +1,11 @@
+<%# Reusable List/Kanban toggle. Include once near the top of a dashboard that
+    is built from .dashboard-section blocks. kanban-auto.js does the rest. %>
+<link rel="stylesheet" href="/css/kanban.css">
+<div class="kb-viewbar">
+    <span class="vb-label">View</span>
+    <div class="btn-group" role="group" aria-label="View switch">
+        <button type="button" class="btn btn-outline-primary active" data-kbview="list"><i class="bi bi-list-ul"></i> List</button>
+        <button type="button" class="btn btn-outline-primary" data-kbview="kanban"><i class="bi bi-kanban"></i> Kanban</button>
+    </div>
+</div>
+<script src="/js/kanban-auto.js" defer></script>

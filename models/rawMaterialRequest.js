@@ -31,11 +31,11 @@ const RawMaterialRequest = sequelize.define('RawMaterialRequest', {
         allowNull: false
     },
     quantity: {
-        type: DataTypes.INTEGER,
+        type: DataTypes.FLOAT,
         allowNull: false
     },
     realQuantity: {
-        type: DataTypes.INTEGER,  // This will store the actual quantity to be ordered
+        type: DataTypes.FLOAT,  // This will store the actual quantity to be ordered
         allowNull: true
     },
     status: {

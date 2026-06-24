@@ -6,6 +6,7 @@ const Outbound = require('../models/outbound');
 const Customer = require('../models/customer');
 const ProductCustomer = require('../models/productCustomer');
 const sequelize = require('../config/database');
+const { adjustStock } = require('../utils/stock');
 
 exports.addProductForm = async (req, res) => {
     const userRole = req.user.role;
@@ -434,9 +435,8 @@ exports.completeProductCheck = async (req, res) => {
                 return res.redirect('/dashboard/ppic');
             }
 
-            // Ensure stock doesn't go below 0
-            const newStock = Math.max(0, product.stock - parseFloat(quantity));
-            await product.update({ stock: newStock }, { transaction });
+            // Subtract failed quantity from product stock (atomic, locked, never negative)
+            await adjustStock(Product, productId, -parseFloat(quantity), { transaction });
 
             // Create outbound record for failed QC product
             await Outbound.create({
@@ -521,9 +521,8 @@ exports.updateProductCheckStock = async (req, res) => {
             });
         }
 
-        // Ensure stock doesn't go below 0
-        const newStock = Math.max(0, product.stock - parseFloat(rejectQuantity));
-        await product.update({ stock: newStock }, { transaction });
+        // Subtract rejected quantity from product stock (atomic, locked, never negative)
+        await adjustStock(Product, productId, -parseFloat(rejectQuantity), { transaction });
 
         // Create outbound record for partially rejected product
         await Outbound.create({

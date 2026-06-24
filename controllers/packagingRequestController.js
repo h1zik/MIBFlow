@@ -6,6 +6,7 @@ const Order = require('../models/order');
 const Inbound = require('../models/inbound');
 const { Op } = require('sequelize');
 const sequelize = require('../config/database');
+const { adjustStock, roundQty } = require('../utils/stock');
 
 exports.getPackagingRequests = async (req, res) => {
     try {
@@ -196,55 +197,43 @@ exports.viewPackagingRequest = async (req, res) => {
     }
 };
 
-const generatePackagingPoNumber = async () => {
-    const currentMonth = new Date().getMonth() + 1;
-    const currentYear = new Date().getFullYear().toString().slice(-2);
+const ROMAN_MONTHS = ['I', 'II', 'III', 'IV', 'V', 'VI', 'VII', 'VIII', 'IX', 'X', 'XI', 'XII'];
 
-    const lastRequest = await PackagingRequest.findOne({
+// Cari nomor urut berikutnya untuk bulan ini. Dibaca di dalam transaksi dengan
+// lock agar dua submit konkuren tidak menghasilkan nomor yang sama.
+const getNextPoNumber = async (Model, transaction) => {
+    const currentMonth = new Date().getMonth() + 1;
+    const last = await Model.findOne({
         where: sequelize.where(
             sequelize.fn('MONTH', sequelize.col('createdAt')),
             currentMonth
         ),
         order: [['createdAt', 'DESC']],
+        transaction,
+        lock: transaction ? transaction.LOCK.UPDATE : undefined,
     });
 
-    let orderNumber = 1;
-    if (lastRequest && lastRequest.ponumber) {
-        const lastPoNumber = lastRequest.ponumber.split('/')[0];
-        orderNumber = parseInt(lastPoNumber, 10) + 1;
+    if (last && last.ponumber) {
+        return parseInt(last.ponumber.split('/')[0], 10) + 1;
     }
-
-    const romanMonths = ['I', 'II', 'III', 'IV', 'V', 'VI', 'VII', 'VIII', 'IX', 'X', 'XI', 'XII'];
-    const romanMonth = romanMonths[currentMonth - 1];
-
-    return `${orderNumber.toString().padStart(3, '0')}/POPK/MIB/${romanMonth}/${currentYear}`;
+    return 1;
 };
 
-const generatePackagingPoNumberForVendor = async () => {
+const formatPoNumber = (orderNumber, infix) => {
     const currentMonth = new Date().getMonth() + 1;
     const currentYear = new Date().getFullYear().toString().slice(-2);
+    const romanMonth = ROMAN_MONTHS[currentMonth - 1];
+    return `${orderNumber.toString().padStart(3, '0')}/${infix}/MIB/${romanMonth}/${currentYear}`;
+};
 
-    const lastVendorRequest = await PackagingRequestVendor.findOne({
-        where: sequelize.where(
-            sequelize.fn('MONTH', sequelize.col('createdAt')),
-            currentMonth
-        ),
-        order: [['createdAt', 'DESC']],
-    });
-
-    let orderNumber = 1;
-    if (lastVendorRequest && lastVendorRequest.ponumber) {
-        const lastPoNumber = lastVendorRequest.ponumber.split('/')[0];
-        orderNumber = parseInt(lastPoNumber, 10) + 1;
-    }
-
-    const romanMonths = ['I', 'II', 'III', 'IV', 'V', 'VI', 'VII', 'VIII', 'IX', 'X', 'XI', 'XII'];
-    const romanMonth = romanMonths[currentMonth - 1];
-
-    return `${orderNumber.toString().padStart(3, '0')}/PO/MIB/${romanMonth}/${currentYear}`;
+const generatePackagingPoNumber = async (transaction) => {
+    const orderNumber = await getNextPoNumber(PackagingRequest, transaction);
+    return formatPoNumber(orderNumber, 'POPK');
 };
 
 exports.submitSplitQuantities = async (req, res) => {
+    const wantsJson = req.xhr || (req.headers.accept && req.headers.accept.indexOf('json') > -1);
+    const transaction = await sequelize.transaction();
     try {
         const { vendorIds, splitQuantities, taxes, paymentTypes } = req.body;
         const requestId = req.params.id;
@@ -252,12 +241,14 @@ exports.submitSplitQuantities = async (req, res) => {
         // Validate that the total split quantities equal the real quantity
         const request = await PackagingRequest.findOne({
             where: { id: requestId },
-            include: [{ model: Packaging }]
+            include: [{ model: Packaging }],
+            transaction
         });
 
         const totalSplitQuantity = splitQuantities.reduce((acc, qty) => acc + parseInt(qty, 10), 0);
         if (totalSplitQuantity !== request.realQuantity) {
-            if (req.xhr || req.headers.accept.indexOf('json') > -1) {
+            await transaction.rollback();
+            if (wantsJson) {
                 return res.status(400).json({
                     success: false,
                     message: 'Total split quantities must equal the real quantity.'
@@ -266,17 +257,18 @@ exports.submitSplitQuantities = async (req, res) => {
             return res.status(400).send('Total split quantities must equal the real quantity.');
         }
 
-        // Generate PO number for the main request
-        const poNumber = await generatePackagingPoNumber();
-
-        // Update the packaging request with the PO number
+        // Generate PO number for the main request (serial, locked)
+        const poNumber = await generatePackagingPoNumber(transaction);
         await PackagingRequest.update(
             { ponumber: poNumber },
-            { where: { id: requestId } }
+            { where: { id: requestId }, transaction }
         );
 
         // Clear existing splits
-        await PackagingRequestVendor.destroy({ where: { packagingRequestId: requestId } });
+        await PackagingRequestVendor.destroy({ where: { packagingRequestId: requestId }, transaction });
+
+        // Hitung nomor vendor sekali (locked) lalu increment lokal supaya unik per submit.
+        let vendorPoSeq = await getNextPoNumber(PackagingRequestVendor, transaction);
 
         // Create PackagingRequestVendor records for each split
         for (let i = 0; i < vendorIds.length; i++) {
@@ -287,7 +279,7 @@ exports.submitSplitQuantities = async (req, res) => {
                 paymentDueDate.setDate(paymentDueDate.getDate() + days);
             }
 
-            const vendorPoNumber = await generatePackagingPoNumberForVendor();
+            const vendorPoNumber = formatPoNumber(vendorPoSeq++, 'PO');
             await PackagingRequestVendor.create({
                 packagingRequestId: requestId,
                 vendorId: vendorIds[i],
@@ -297,14 +289,16 @@ exports.submitSplitQuantities = async (req, res) => {
                 paymentDueDate,
                 ponumber: vendorPoNumber,
                 status: 'Pending'
-            });
+            }, { transaction });
         }
 
         // Update original request status
         await PackagingRequest.update(
             { status: 'Vendor Assigned' },
-            { where: { id: requestId } }
+            { where: { id: requestId }, transaction }
         );
+
+        await transaction.commit();
 
         // Send SSE notification for finance
         const packagingRequest = await PackagingRequest.findByPk(requestId);
@@ -316,8 +310,9 @@ exports.submitSplitQuantities = async (req, res) => {
         });
         res.redirect('/dashboard/purchase');
     } catch (error) {
+        await transaction.rollback();
         console.error('Error submitting split quantities:', error);
-        if (req.xhr || req.headers.accept.indexOf('json') > -1) {
+        if (wantsJson) {
             return res.status(500).json({
                 success: false,
                 message: 'Error submitting vendor splits'
@@ -349,71 +344,68 @@ exports.updatePackagingStock = async (req, res) => {
         });
 
         if (!requestVendor) {
+            await transaction.rollback();
             return res.status(404).send({ error: 'Request vendor not found' });
         }
 
         const packaging = await Packaging.findByPk(requestVendor.PackagingRequest.packagingId, { transaction });
         if (!packaging) {
+            await transaction.rollback();
             return res.status(404).send({ error: 'Packaging not found' });
         }
 
         const parsedRejectQty = parseInt(rejectQuantity);
-        const parsedRealQty = parseInt(realQuantity);
+
+        // Tentukan berapa banyak unit yang benar-benar masuk stok (stockDelta).
+        let stockDelta = 0;
 
         if (requestVendor.qcStatus === 'Pass') {
             if (requestVendor.rejectQuantity > 0) {
-                packaging.stock += requestVendor.rejectQuantity;
+                stockDelta = requestVendor.rejectQuantity;
                 requestVendor.splitQuantity += requestVendor.rejectQuantity;
                 requestVendor.rejectQuantity = 0;
             } else {
-                packaging.stock += requestVendor.splitQuantity;
+                stockDelta = requestVendor.splitQuantity;
             }
         } else if (requestVendor.qcStatus === 'Reject Sebagian') {
             if (!rejectQuantity) {
+                await transaction.rollback();
                 return res.status(400).send({ error: 'Reject quantity is required for partially rejected items' });
             }
 
             if (requestVendor.rejectQuantity > 0) {
-                // If it's the second or later rejection
+                // Penyesuaian rejection kedua atau lebih.
                 const amountToAddBack = requestVendor.rejectQuantity - parsedRejectQty;
-                packaging.stock += amountToAddBack;
+                stockDelta = amountToAddBack;
                 requestVendor.splitQuantity += amountToAddBack;
                 requestVendor.rejectQuantity = parsedRejectQty;
             } else {
-                // First time rejection
-                console.log('First Reject Sebagian Processing');
-                const originalQuantity = requestVendor.splitQuantity;
-                const nonRejectedQty = originalQuantity - parsedRejectQty;
-
-                console.log(`Original Split Quantity: ${originalQuantity}`);
-                console.log(`Reject Quantity: ${parsedRejectQty}`);
-                console.log(`Non-Rejected Quantity: ${nonRejectedQty}`);
-
-                packaging.stock += nonRejectedQty;
+                // Rejection pertama: hanya bagian yang lolos masuk stok.
+                const nonRejectedQty = requestVendor.splitQuantity - parsedRejectQty;
+                stockDelta = nonRejectedQty;
                 requestVendor.rejectQuantity = parsedRejectQty;
                 requestVendor.splitQuantity -= parsedRejectQty;
-
-                console.log(`Updated Packaging Stock: ${packaging.stock}`);
-                console.log(`Updated Split Quantity: ${requestVendor.splitQuantity}`);
             }
         } else if (requestVendor.status === 'No Return') {
-            // No Return case
-            packaging.stock += requestVendor.splitQuantity;
+            stockDelta = requestVendor.splitQuantity;
         }
 
-        // Save updated values
+        // Update stok packaging (integer unit) secara atomic dengan lock.
+        if (stockDelta !== 0) {
+            await adjustStock(Packaging, packaging.id, stockDelta, { transaction, integer: true });
+        }
+
         requestVendor.status = 'Completed';
         await requestVendor.save({ transaction });
-        await packaging.save({ transaction });
 
-        // Create inbound record
+        // Create inbound record — kuantitas = jumlah unit yang benar-benar masuk stok.
         await Inbound.create({
             date: new Date(),
             poSoNumber: requestVendor.ponumber || 'N/A',
             batchNumber: 'N/A',
             item: requestVendor.PackagingRequest.packagingName,
             vendor: requestVendor.Vendor?.name || 'Unknown',
-            quantity: requestVendor.qcStatus === 'Pass' ? requestVendor.splitQuantity : requestVendor.splitQuantity,
+            quantity: Math.round(stockDelta),
             expiredDate: requestVendor.expiredDate,
             type: 'Packaging',
             reason: requestVendor.qcStatus === 'Pass' ? 'Lolos QC' : 'Tolak Beberapa',

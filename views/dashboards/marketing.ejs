@@ -1,839 +1,178 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Marketing Dashboard</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.7.2/font/bootstrap-icons.css" rel="stylesheet">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <style>
-        :root {
-            --primary-color: #2e7d32;
-            --primary-light: #4caf50;
-            --primary-dark: #1b5e20;
-            --secondary-color: #2c3e50;
-            --background-light: #e8f5e9;
-            --text-primary: #2c3e50;
-            --text-secondary: #4e4e4e;
-            --shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-            --transition: all 0.3s ease;
-        }
-
-        body {
-            font-family: 'Inter', sans-serif;
-            background-color: var(--background-light);
-            margin: 0;
-            padding: 0;
-            min-height: 100vh;
-        }
-
-        .content {
-            margin-left: 0;
-            padding: 1rem;
-            width: 100%;
-            transition: var(--transition);
-        }
-
-        .dashboard-header {
-            background-color: white;
-            padding: 1rem;
-            border-radius: 0.5rem;
-            box-shadow: var(--shadow);
-            margin-bottom: 1rem;
-        }
-
-        .dashboard-title {
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-            margin-bottom: 1rem;
-        }
-
-        .dashboard-title h2 {
-            color: var(--primary-dark);
-            margin: 0;
-            font-size: 1.25rem;
-            font-weight: 600;
-        }
-
-        .filters {
-            display: grid;
-            gap: 1rem;
-        }
-
-        .quick-stats {
-            display: grid;
-            grid-template-columns: 1fr;
-            gap: 1rem;
-            margin-bottom: 1rem;
-        }
-
-        .stat-card {
-            background: white;
-            padding: 1rem;
-            border-radius: 0.5rem;
-            box-shadow: var(--shadow);
-            transition: var(--transition);
-        }
-
-        .stat-card h3 {
-            color: var(--text-secondary);
-            font-size: 0.875rem;
-            margin: 0 0 0.5rem 0;
-        }
-
-        .stat-card .value {
-            color: var(--primary-color);
-            font-size: 1.5rem;
-            font-weight: 600;
-        }
-
-        .chart-grid {
-            display: grid;
-            grid-template-columns: 1fr;
-            gap: 1rem;
-            margin-bottom: 1rem;
-        }
-
-        .chart-card {
-            background: white;
-            padding: 1rem;
-            border-radius: 0.5rem;
-            box-shadow: var(--shadow);
-            height: 300px;
-            display: flex;
-            flex-direction: column;
-        }
-
-        .chart-card h3 {
-            color: var(--text-primary);
-            font-size: 1rem;
-            margin: 0 0 1rem 0;
-            flex-shrink: 0;
-        }
-
-        .chart-container {
-            position: relative;
-            flex: 1;
-            min-height: 0;
-            width: 100%;
-        }
-
-        .table-responsive {
-            background: white;
-            padding: 1rem;
-            border-radius: 0.5rem;
-            box-shadow: var(--shadow);
-            margin-bottom: 1rem;
-            overflow-x: auto;
-        }
-
-        .table-responsive h3 {
-            font-size: 1rem;
-            margin-bottom: 1rem;
-        }
-
-        .table {
-            margin: 0;
-            white-space: nowrap;
-        }
-
-        .table th {
-            background-color: var(--primary-color);
-            color: white;
-            font-weight: 500;
-            border: none;
-            font-size: 0.875rem;
-            padding: 0.75rem;
-        }
-
-        .table td {
-            vertical-align: middle;
-            color: var(--text-secondary);
-            font-size: 0.875rem;
-            padding: 0.75rem;
-        }
-
-        .status-badge {
-            padding: 0.25rem 0.75rem;
-            border-radius: 1rem;
-            font-size: 0.75rem;
-            font-weight: 500;
-            white-space: nowrap;
-            display: inline-flex;
-            align-items: center;
-            gap: 0.25rem;
-        }
-
-        .status-pending {
-            background-color: #ffeeba; /* Light yellow to indicate waiting */
-            color: #856404; /* Dark yellowish brown for readability */
-        }
-
-        .status-delivered {
-            background-color: #d4edda; /* Soft green to indicate completion */
-            color: #155724; /* Dark green for contrast */
-        }
-
-        .status-approved {
-            background-color: #c3e6cb; /* Softer green, different from delivered */
-            color: #1d643b; /* Slightly darker green for visibility */
-        }
-
-        .status-ready-to-deliver {
-            background-color: #b8daff; /* Light blue to indicate readiness */
-            color: #004085; /* Dark blue for contrast */
-        }
-
-        .status-on-production {
-            background-color: #dad3ff; /* Light purple to indicate work in progress */
-            color: #4b0082; /* Indigo for clarity */
-        }
-
-        .status-production-completed {
-            background-color: #c6f6f7; /* Cyan to differentiate from production */
-            color: #065666; /* Dark cyan for readability */
-        }
-
-        .status-on-delivery {
-            background-color: #ffcccb; /* Soft red to indicate movement */
-            color: #a94442; /* Dark red for contrast */
-        }
-
-        .status-paid {
-            background-color: #d1e7dd; /* Soft green to indicate payment confirmation */
-            color: #0f5132; /* Dark green for clarity */
-        }
-        
-        .status-declined {
-            background-color: #e2e3e5;
-            color: #383d41;
-        }
-
-        .btn-action {
-            padding: 0.25rem 0.75rem;
-            font-size: 0.75rem;
-            border-radius: 0.25rem;
-            transition: var(--transition);
-            white-space: nowrap;
-        }
-
-        .btn-primary {
-            background-color: var(--primary-color);
-            border-color: var(--primary-color);
-        }
-
-        .btn-primary:hover {
-            background-color: var(--primary-dark);
-            border-color: var(--primary-dark);
-        }
-
-        .dashboard-section {
-            background: white;
-            border-radius: 15px;
-            box-shadow: var(--shadow);
-            margin-bottom: 2rem;
-            overflow: hidden;
-            animation: fadeIn 0.5s ease-out;
-        }
-
-        .section-header {
-            padding: 1.5rem;
-            background-color: var(--background-light);
-            border-bottom: 1px solid rgba(0,0,0,0.1);
-            cursor: pointer;
-            transition: var(--transition);
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
-        .section-header:hover {
-            background-color: #d7ecd8;
-        }
-
-        .section-title {
-            margin: 0;
-            color: var(--primary-dark);
-            font-weight: 600;
-            font-size: 1.2rem;
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-        }
-
-        .section-content {
-            padding: 1.5rem;
-            display: none;
-        }
-
-        .section-content.show {
-            display: block;
-            animation: slideDown 0.3s ease-out;
-        }
-
-        .fade-in {
-            animation: fadeIn 0.3s ease-in;
-        }
-
-        @keyframes slideDown {
-            from {
-                opacity: 0;
-                transform: translateY(-20px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(10px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-
-        /* Desktop styles */
-        @media (min-width: 769px) {
-            .content {
-                margin-left: 280px;
-                padding: 2rem;
-                width: calc(100% - 280px);
-            }
-
-            body:has(.sidebar.collapsed) .content {
-                margin-left: 70px;
-                width: calc(100% - 70px);
-            }
-
-            .dashboard-header {
-                padding: 1.5rem;
-                margin-bottom: 2rem;
-            }
-
-            .dashboard-title {
-                margin-bottom: 0;
-            }
-
-            .dashboard-title h2 {
-                font-size: 1.5rem;
-            }
-
-            .filters {
-                display: flex;
-                gap: 1rem;
-            }
-
-            .quick-stats {
-                grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-                margin-bottom: 2rem;
-            }
-
-            .stat-card {
-                padding: 1.5rem;
-            }
-
-            .stat-card h3 {
-                font-size: 0.9rem;
-            }
-
-            .stat-card .value {
-                font-size: 1.8rem;
-            }
-
-            .chart-grid {
-                grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-                margin-bottom: 2rem;
-            }
-
-            .chart-card {
-                padding: 1.5rem;
-                height: 400px;
-            }
-
-            .chart-card h3 {
-                font-size: 1.1rem;
-            }
-
-            .table-responsive {
-                padding: 1.5rem;
-                margin-bottom: 2rem;
-            }
-
-            .table-responsive h3 {
-                font-size: 1.1rem;
-            }
-
-            .table th,
-            .table td {
-                font-size: 0.9rem;
-                padding: 1rem;
-            }
-
-            .btn-action {
-                font-size: 0.85rem;
-            }
-        }
-
-        /* Enhanced Mobile Styles */
-        @media (max-width: 768px) {
-            /* Layout Improvements */
-            .dashboard-header {
-                display: flex;
-                flex-direction: column;
-                gap: 1rem;
-                padding: 0.75rem;
-            }
-
-            .dashboard-title {
-                flex-direction: column;
-                align-items: flex-start;
-            }
-
-            .filters {
-                width: 100%;
-                display: flex;
-                flex-direction: column;
-                gap: 0.5rem;
-            }
-
-            .filters select {
-                width: 100%;
-                height: 40px;
-                font-size: 16px;
-                padding: 0.5rem;
-            }
-
-            /* Mobile Table Improvements */
-            .table-responsive {
-                border-radius: 8px;
-                background: white;
-                box-shadow: var(--shadow);
-                margin-bottom: 1rem;
-                padding: 0;
-            }
-
-            .table {
-                display: block;
-            }
-
-            .table thead {
-                display: none; /* Hide headers on mobile */
-            }
-
-            .table tbody {
-                display: block;
-            }
-
-            .table tr {
-                display: block;
-                margin-bottom: 1rem;
-                border: 1px solid var(--background-light);
-                border-radius: 8px;
-                background: white;
-            }
-
-            .table td {
-                display: flex;
-                padding: 0.75rem;
-                align-items: center;
-                border: none;
-                border-bottom: 1px solid rgba(0,0,0,0.05);
-                max-width: none;
-                overflow: visible;
-                text-overflow: initial;
-                white-space: normal;
-            }
-
-            .table td:last-child {
-                border-bottom: none;
-            }
-
-            .table td::before {
-                content: attr(data-label);
-                font-weight: 600;
-                width: 120px;
-                min-width: 120px;
-                color: var(--primary-dark);
-                font-size: 0.85rem;
-            }
-
-            .table td > * {
-                flex: 1;
-                margin-left: 1rem;
-            }
-
-            /* Form Controls */
-            .form-control {
-                height: 40px;
-                font-size: 16px; /* Prevents iOS zoom */
-                padding: 0.5rem;
-            }
-
-            /* Button Improvements */
-            .btn {
-                height: 40px;
-                padding: 0 1rem;
-                margin: 0.25rem;
-                font-size: 0.9rem;
-                display: inline-flex;
-                align-items: center;
-                justify-content: center;
-                min-width: 100px;
-                touch-action: manipulation;
-            }
-
-            .btn-action {
-                width: auto;
-                min-width: 40px;
-                padding: 0.5rem;
-            }
-
-            .d-flex.gap-2 {
-                flex-wrap: wrap;
-                gap: 0.5rem !important;
-            }
-
-            /* Modal Improvements */
-            .modal-content {
-                border-radius: 12px;
-            }
-
-            .modal-body {
-                padding: 1rem;
-            }
-
-            .modal-footer {
-                padding: 0.75rem;
-                gap: 0.5rem;
-            }
-
-            .modal-footer .btn {
-                flex: 1;
-                margin: 0;
-            }
-
-            /* Chart Improvements */
-            .chart-container {
-                height: 300px !important;
-            }
-
-            /* Status Badge Adjustments */
-            .status-badge {
-                font-size: 0.8rem;
-                padding: 0.4rem 0.8rem;
-                width: auto;
-                justify-content: center;
-            }
-
-            /* Touch-friendly Improvements */
-            .btn, 
-            .form-control,
-            select,
-            .section-header {
-                cursor: pointer;
-                -webkit-tap-highlight-color: transparent;
-            }
-
-            .btn:active,
-            .section-header:active {
-                transform: scale(0.98);
-            }
-
-            /* Scrollbar Improvements */
-            .table-responsive::-webkit-scrollbar {
-                height: 6px;
-            }
-
-            .table-responsive::-webkit-scrollbar-track {
-                background: transparent;
-            }
-
-            .table-responsive::-webkit-scrollbar-thumb {
-                background-color: var(--primary-light);
-                border-radius: 3px;
-            }
-        }
-
-        /* Chat Feature Styles */
-        .chat-button {
-            position: fixed;
-            bottom: 20px;
-            right: 20px;
-            width: 60px;
-            height: 60px;
-            border-radius: 50%;
-            background-color: var(--primary-color);
-            color: white;
-            border: none;
-            cursor: pointer;
-            box-shadow: var(--shadow);
-            z-index: 1000;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            transition: var(--transition);
-        }
-
-        .chat-button:hover {
-            background-color: var(--primary-dark);
-            transform: scale(1.05);
-        }
-
-        .chat-container {
-            position: fixed;
-            bottom: 90px;
-            right: 20px;
-            width: 300px;
-            height: 400px;
-            background-color: white;
-            border-radius: 10px;
-            box-shadow: var(--shadow);
-            z-index: 1000;
-            display: none;
-            flex-direction: column;
-            overflow: hidden;
-        }
-
-        .chat-header {
-            background-color: var(--primary-color);
-            color: white;
-            padding: 10px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
-        .chat-messages {
-            flex-grow: 1;
-            padding: 10px;
-            overflow-y: auto;
-        }
-
-        .message {
-            margin-bottom: 10px;
-            padding: 8px 12px;
-            border-radius: 15px;
-            max-width: 80%;
-            word-wrap: break-word;
-        }
-
-        .message.sent {
-            background-color: var(--primary-light);
-            color: white;
-            margin-left: auto;
-        }
-
-        .message.received {
-            background-color: #f0f0f0;
-            margin-right: auto;
-        }
-
-        .chat-input {
-            display: flex;
-            padding: 10px;
-            border-top: 1px solid #eee;
-        }
-
-        .chat-input input {
-            flex-grow: 1;
-            padding: 8px;
-            border: 1px solid #ddd;
-            border-radius: 20px;
-            margin-right: 8px;
-        }
-
-        .chat-input button {
-            background-color: var(--primary-color);
-            color: white;
-            border: none;
-            padding: 8px 15px;
-            border-radius: 20px;
-            cursor: pointer;
-        }
-
-        .chat-input button:hover {
-            background-color: var(--primary-dark);
-        }
-    </style>
+    <%- include('../partials/head', { pageTitle: 'Marketing Dashboard', extraScripts: ['https://cdn.jsdelivr.net/npm/chart.js'] }) %>
 </head>
-<body>
+<body class="app-shell">
     <%- include('../partials/sidebar', { userRole: userRole, path: '/dashboard/marketing' }) %>
     <%- include('../partials/chat', { userId: userId, users: users }) %>
 
-    <div class="content">
-        <div class="dashboard-header">
-            <div class="dashboard-title">
-                <h2>Marketing Dashboard</h2>
-                <button class="btn btn-primary" onclick="location.href='/orders/create'">
-                    <i class="bi bi-plus-lg"></i> New Order
-                </button>
+    <div class="content content-wide">
+        <div class="page-header fade-in">
+            <div class="page-header__main">
+                <h1 class="page-title"><i class="bi bi-speedometer2"></i> Marketing Dashboard</h1>
+                <p class="page-subtitle">Overview of your orders, customers and sales activity.</p>
             </div>
-            <div class="filters">
-                <select id="dateRange" class="form-select">
-                    <option value="lastWeek">Last Week</option>
-                    <option value="lastMonth">Last Month</option>
-                    <option value="lastYear">Last Year</option>
-                </select>
-                <select id="statusFilter" class="form-select">
-                    <option value="all">All Status</option>
-                    <option value="pending">Pending</option>
-                    <option value="processing">Processing</option>
-                    <option value="delivered">Delivered</option>
-                    <option value="on-production">On Production</option>
-                    <option value="production-completed">Production Completed</option>
-                    <option value="on-delivery">On Delivery</option>
-                    <option value="paid">Paid</option>
-                    <option value="completed">Completed</option>
-                    <option value="cancelled">Cancelled</option>
-                </select>
+            <div class="page-actions">
+                <a href="/orders/create" class="btn btn-primary"><i class="bi bi-plus-lg"></i> New Order</a>
             </div>
         </div>
 
+        <!-- Quick stats -->
         <div class="quick-stats fade-in">
             <div class="stat-card">
-                <h3>Total Orders</h3>
-                <div class="value"><%= orders.length %></div>
+                <div class="stat-icon"><i class="bi bi-receipt"></i></div>
+                <div class="stat-body">
+                    <div class="stat-label">Total Orders</div>
+                    <div class="stat-value"><%= orders.length %></div>
+                </div>
             </div>
             <div class="stat-card">
-                <h3>Pending Orders</h3>
-                <div class="value"><%= orders.filter(o => o.status === 'Pending').length %></div>
+                <div class="stat-icon is-warning"><i class="bi bi-hourglass-split"></i></div>
+                <div class="stat-body">
+                    <div class="stat-label">Pending</div>
+                    <div class="stat-value"><%= orders.filter(o => o.status === 'Pending').length %></div>
+                </div>
             </div>
             <div class="stat-card">
-                <h3>Processing Orders</h3>
-                <div class="value"><%= orders.filter(o => o.status === 'Processing').length %></div>
+                <div class="stat-icon is-info"><i class="bi bi-arrow-repeat"></i></div>
+                <div class="stat-body">
+                    <div class="stat-label">Processing</div>
+                    <div class="stat-value"><%= orders.filter(o => o.status === 'Processing').length %></div>
+                </div>
             </div>
             <div class="stat-card">
-                <h3>Delivered Orders</h3>
-                <div class="value"><%= orders.filter(o => o.status === 'Delivered').length %></div>
+                <div class="stat-icon is-success"><i class="bi bi-truck"></i></div>
+                <div class="stat-body">
+                    <div class="stat-label">Delivered</div>
+                    <div class="stat-value"><%= orders.filter(o => o.status === 'Delivered').length %></div>
+                </div>
             </div>
         </div>
 
-        <div class="row mb-4">
-            <div class="col-md-6">
-                <div class="dashboard-section h-100">
-                    <div class="section-header">
-                        <h2 class="section-title">
-                            <i class="bi bi-pie-chart"></i>
-                            Top Products Distribution
-                        </h2>
-                        <div class="btn-group">
-                            <button type="button" class="btn btn-sm btn-outline-primary active" data-chart-type="pie">
-                                <i class="bi bi-pie-chart"></i>
-                            </button>
-                            <button type="button" class="btn btn-sm btn-outline-primary" data-chart-type="bar">
-                                <i class="bi bi-bar-chart"></i>
-                            </button>
-                        </div>
-                    </div>
-                    <div class="section-content show">
-                        <div class="chart-container" style="height: 400px;">
-                            <canvas id="pieChart"></canvas>
-                            <canvas id="barChart" style="display: none;"></canvas>
-                        </div>
+        <!-- Charts -->
+        <div class="chart-grid">
+            <div class="chart-card">
+                <div class="d-flex align-items-center justify-content-between mb-2">
+                    <h3 class="mb-0"><i class="bi bi-pie-chart me-1"></i> Top Products Distribution</h3>
+                    <div class="btn-group">
+                        <button type="button" class="btn btn-sm btn-outline-primary active" data-chart-type="pie" aria-label="Pie chart"><i class="bi bi-pie-chart"></i></button>
+                        <button type="button" class="btn btn-sm btn-outline-primary" data-chart-type="bar" aria-label="Bar chart"><i class="bi bi-bar-chart"></i></button>
                     </div>
                 </div>
+                <div class="chart-container">
+                    <canvas id="pieChart"></canvas>
+                </div>
             </div>
-            <div class="col-md-6">
-                <div class="dashboard-section h-100">
-                    <div class="section-header">
-                        <h2 class="section-title">
-                            <i class="bi bi-people"></i>
-                            Top 5 Customers
-                        </h2>
+
+            <div class="chart-card">
+                <h3><i class="bi bi-people me-1"></i> Top 5 Customers</h3>
+                <% if (topCustomers && topCustomers.length) { %>
+                <div class="list-group list-group-flush">
+                    <% topCustomers.forEach((customer, index) => { %>
+                    <div class="list-group-item d-flex justify-content-between align-items-center px-0">
+                        <div class="d-flex align-items-center gap-2">
+                            <span class="pill"><%= index + 1 %></span>
+                            <span class="cell-strong"><%= customer.name %></span>
+                        </div>
+                        <div class="text-end">
+                            <div class="fw-bold">Rp <%= customer.totalAmount.toLocaleString() %></div>
+                            <small class="cell-sub"><%= customer.totalOrders %> orders</small>
+                        </div>
                     </div>
-                    <div class="section-content show">
-                        <div class="list-group list-group-flush">
-                            <% 
-                                // Display pre-calculated top customers from controller
-                                topCustomers.forEach((customer, index) => { 
-                            %>
-                                <div class="list-group-item d-flex justify-content-between align-items-center">
-                                    <div>
-                                        <span class="badge bg-primary rounded-pill me-2"><%= index + 1 %></span>
-                                        <%= customer.name %>
-                                    </div>
-                                    <div class="text-end">
-                                        <div class="fw-bold">Rp <%= customer.totalAmount.toLocaleString() %></div>
-                                        <small class="text-muted"><%= customer.totalOrders %> orders</small>
-                                    </div>
+                    <% }); %>
+                </div>
+                <% } else { %>
+                <div class="empty-state"><i class="bi bi-people"></i><p>No customer data yet.</p></div>
+                <% } %>
+            </div>
+        </div>
+
+        <!-- Recent orders -->
+        <div class="table-card">
+            <div class="card-header">
+                <h2 class="card-title"><i class="bi bi-clock-history"></i> Recent Orders</h2>
+                <div class="toolbar mb-0">
+                    <div class="search">
+                        <i class="bi bi-search"></i>
+                        <input type="text" id="orderSearch" class="form-control form-control-sm" placeholder="Search orders…">
+                    </div>
+                    <select id="dateRange" class="form-select form-select-sm" style="width:auto">
+                        <option value="lastWeek">Last Week</option>
+                        <option value="lastMonth">Last Month</option>
+                        <option value="lastYear">Last Year</option>
+                    </select>
+                    <select id="statusFilter" class="form-select form-select-sm" style="width:auto">
+                        <option value="all">All Status</option>
+                        <option value="pending">Pending</option>
+                        <option value="processing">Processing</option>
+                        <option value="delivered">Delivered</option>
+                        <option value="on-production">On Production</option>
+                        <option value="production-completed">Production Completed</option>
+                        <option value="on-delivery">On Delivery</option>
+                        <option value="paid">Paid</option>
+                        <option value="completed">Completed</option>
+                        <option value="cancelled">Cancelled</option>
+                    </select>
+                </div>
+            </div>
+            <div class="table-responsive">
+                <table class="table table-cards align-middle">
+                    <thead>
+                        <tr>
+                            <th>SO Number</th>
+                            <th>Date</th>
+                            <th>Customer</th>
+                            <th>Products</th>
+                            <th>Status</th>
+                            <th class="text-end">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <% if (!orders.length) { %>
+                        <tr><td colspan="6"><div class="empty-state"><i class="bi bi-inbox"></i><h4>No orders yet</h4><p>Create your first order to get started.</p><a href="/orders/create" class="btn btn-primary btn-sm"><i class="bi bi-plus-lg"></i> New Order</a></div></td></tr>
+                        <% } %>
+                        <% orders.forEach(order => { %>
+                        <tr>
+                            <td data-label="SO Number">
+                                <div class="d-flex align-items-center gap-2 justify-content-end justify-content-md-start">
+                                    <span class="cell-strong"><%= order.sonumber %></span>
+                                    <button class="btn btn-icon btn-sm btn-ghost" onclick="openEditSOModal('<%= order.id %>', '<%= order.sonumber %>')" aria-label="Edit SO"><i class="bi bi-pencil"></i></button>
                                 </div>
-                            <% }); %>
-                        </div>
-                    </div>
-                </div>
+                            </td>
+                            <td data-label="Date">
+                                <div class="d-flex align-items-center gap-2 justify-content-end justify-content-md-start">
+                                    <span><%= new Date(order.createdAt).toLocaleDateString() %></span>
+                                    <button class="btn btn-icon btn-sm btn-ghost" onclick="openEditDateModal('<%= order.id %>', '<%= order.createdAt %>')" aria-label="Edit date"><i class="bi bi-pencil"></i></button>
+                                </div>
+                            </td>
+                            <td data-label="Customer"><%= order.customerName %></td>
+                            <td data-label="Products">
+                                <span class="cell-sub">
+                                <% order.products.forEach((product, index) => { %><%= product.name %> (<%= product.quantity %> <%= product.satuan %>)<%= index < order.products.length - 1 ? ', ' : '' %><% }) %>
+                                </span>
+                            </td>
+                            <td data-label="Status">
+                                <span class="status-badge status-<%= order.status.toLowerCase().replace(/\s+/g, '-') %>"><%= order.status %></span>
+                            </td>
+                            <td data-label="Actions" class="text-end">
+                                <div class="d-flex gap-1 justify-content-end">
+                                    <a href="/orders/<%= order.id %>" class="btn btn-icon btn-sm btn-soft" aria-label="View"><i class="bi bi-eye"></i></a>
+                                    <% if (order.status === 'On Delivery') { %>
+                                    <form action="/orders/deliver/<%= order.id %>" method="POST" class="d-inline">
+                                        <button type="submit" class="btn btn-icon btn-sm btn-success" aria-label="Mark delivered"><i class="bi bi-check-lg"></i></button>
+                                    </form>
+                                    <% } %>
+                                    <% if (order.po) { %>
+                                    <a href="/uploads/<%= order.po %>" target="_blank" class="btn btn-icon btn-sm btn-ghost" aria-label="View PO"><i class="bi bi-file-earmark-pdf"></i></a>
+                                    <% } %>
+                                </div>
+                            </td>
+                        </tr>
+                        <% }) %>
+                    </tbody>
+                </table>
             </div>
-        </div>
-
-        <div class="table-responsive fade-in">
-            <h3>Recent Orders</h3>
-            <table class="table">
-                <thead>
-                    <tr>
-                        <th>ID</th>
-                        <th>SO Number</th>
-                        <th>Date</th>
-                        <th>Customer</th>
-                        <th>Products</th>
-                        <th>Status</th>
-                        <th>Actions</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <% orders.forEach(order => { %>
-                    <tr>
-                        <td data-label="ID">#<%= order.id %></td>
-                        <td data-label="SO Number">
-                            <div class="d-flex align-items-center gap-2">
-                                <span><%= order.sonumber %></span>
-                            <button class="btn btn-sm btn-link text-primary" onclick="openEditSOModal('<%= order.id %>', '<%= order.sonumber %>')">
-                                <i class="bi bi-pencil"></i>
-                            </button>
-                        </td>
-                        <td data-label="Date">
-                            <div class="d-flex align-items-center gap-2">
-                                <span><%= new Date(order.createdAt).toLocaleDateString() %></span>
-                            <button class="btn btn-sm btn-link text-primary" onclick="openEditDateModal('<%= order.id %>', '<%= order.createdAt %>')">
-                                <i class="bi bi-pencil"></i>
-                            </button>
-                        </td>
-                        <td data-label="Customer"><%= order.customerName %></td>
-                        <td data-label="Products">
-                            <% order.products.forEach((product, index) => { %>
-                                <%= product.name %> (<%= product.quantity %> <%= product.satuan %>)
-                                <%= index < order.products.length - 1 ? ',' : '' %>
-                            <% }) %>
-                        </td>
-                        <td data-label="Status">
-                            <span class="status-badge status-<%= order.status.toLowerCase().replace(/\s+/g, '-') %>">
-                                <%= order.status %>
-                            </span>
-                        </td>
-                        <td data-label="Actions">
-                            <div class="d-flex gap-2">
-                                <a href="/orders/<%= order.id %>" class="btn btn-action btn-primary">
-                                    <i class="bi bi-eye"></i>
-                                </a>
-                                <% if (order.status === 'On Delivery') { %>
-                                <form action="/orders/deliver/<%= order.id %>" method="POST" class="d-inline">
-                                    <button type="submit" class="btn btn-action btn-success">
-                                        <i class="bi bi-check-lg"></i>
-                                    </button>
-                                </form>
-                                <% } %>
-                                <% if (order.po) { %>
-                                <a href="/uploads/<%= order.po %>" target="_blank" class="btn btn-action btn-secondary">
-                                    <i class="bi bi-file-pdf"></i>
-                                </a>
-                                <% } %>
-                            </div>
-                        </td>
-                    </tr>
-                    <% }) %>
-                </tbody>
-            </table>
         </div>
     </div>
 
@@ -853,7 +192,7 @@
                         </div>
                     </div>
                     <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                        <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancel</button>
                         <button type="submit" class="btn btn-primary">Save Changes</button>
                     </div>
                 </form>
@@ -877,7 +216,7 @@
                         </div>
                     </div>
                     <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                        <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancel</button>
                         <button type="submit" class="btn btn-primary">Save Changes</button>
                     </div>
                 </form>
@@ -886,277 +225,81 @@
     </div>
 
     <script>
-        // Set up SSE for notifications
+        // ---- SSE notifications ----
         const evtSource = new EventSource('/notifications');
         const audio = new Audio('/audio/marketing.mp3');
-
         evtSource.onmessage = function(event) {
             const data = JSON.parse(event.data);
-            
-            if (data.type === 'tdsMsdsRequestApproved') {
-                // Show notification for approved request
-                const notification = `TDS/MSDS request for ${data.productName} (${data.requestType}) has been approved`;
-                showNotification(notification);
-                
-                // Play audio if specified
-                if (data.audio) {
-                    audio.play().catch(e => console.error('Error playing audio:', e));
-                }
-
-                // Refresh the page to show updated status
-                setTimeout(() => {
-                    location.reload();
-                }, 3000);
-            } else if (data.type === 'tdsMsdsRequestDeclined') {
-                // Show notification for declined request
-                const notification = `TDS/MSDS request for ${data.productName} (${data.requestType}) has been declined`;
-                showNotification(notification);
-                
-                // Play audio if specified
-                if (data.audio) {
-                    audio.play().catch(e => console.error('Error playing audio:', e));
-                }
-
-                // Refresh the page to show updated status
-                setTimeout(() => {
-                    location.reload();
-                }, 3000);
+            if (data.type === 'tdsMsdsRequestApproved' || data.type === 'tdsMsdsRequestDeclined') {
+                const verb = data.type === 'tdsMsdsRequestApproved' ? 'approved' : 'declined';
+                showNotification(`TDS/MSDS request for ${data.productName} (${data.requestType}) has been ${verb}`);
+                if (data.audio) audio.play().catch(() => {});
+                setTimeout(() => location.reload(), 3000);
             }
         };
-
         function showNotification(message) {
-            const notificationDiv = document.createElement('div');
-            notificationDiv.className = 'alert alert-info alert-dismissible fade show';
-            notificationDiv.style.position = 'fixed';
-            notificationDiv.style.top = '20px';
-            notificationDiv.style.right = '20px';
-            notificationDiv.style.zIndex = '9999';
-            notificationDiv.innerHTML = `
-                ${message}
-                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-            `;
-            document.body.appendChild(notificationDiv);
-
-            // Auto-remove after 5 seconds
-            setTimeout(() => {
-                notificationDiv.remove();
-            }, 5000);
+            const n = document.createElement('div');
+            n.className = 'alert alert-info alert-dismissible fade show';
+            n.style.cssText = 'position:fixed;top:20px;right:20px;z-index:9999;max-width:360px';
+            n.innerHTML = `${message}<button type="button" class="btn-close" data-bs-dismiss="alert"></button>`;
+            document.body.appendChild(n);
+            setTimeout(() => n.remove(), 5000);
         }
 
-        document.addEventListener('DOMContentLoaded', function() {
-            // Handle sidebar state changes
-            const sidebar = document.querySelector('.sidebar');
-            const mainContent = document.querySelector('.content');
-
-            function updateContentWidth() {
-                if (window.innerWidth > 768) {
-                    if (sidebar.classList.contains('collapsed')) {
-                        mainContent.style.marginLeft = '70px';
-                        mainContent.style.width = 'calc(100% - 70px)';
-                    } else {
-                        mainContent.style.marginLeft = '280px';
-                        mainContent.style.width = 'calc(100% - 280px)';
-                    }
-                } else {
-                    mainContent.style.marginLeft = '0';
-                    mainContent.style.width = '100%';
-                }
-            }
-
-            // Initial width update
-            updateContentWidth();
-
-            // Watch for sidebar class changes
-            const observer = new MutationObserver(function(mutations) {
-                mutations.forEach(function(mutation) {
-                    if (mutation.attributeName === 'class') {
-                        updateContentWidth();
-                    }
-                });
-            });
-
-            observer.observe(sidebar, { attributes: true });
-
-            // Handle window resize
-            window.addEventListener('resize', updateContentWidth);
-
+        document.addEventListener('DOMContentLoaded', function () {
+            // ---- Product chart ----
             const aggregatedProducts = JSON.parse('<%- JSON.stringify(aggregatedProducts) %>');
-
-            const productLabels = aggregatedProducts.map(product => product.name);
-            const productData = aggregatedProducts.map(product => parseFloat(product.quantity).toFixed(2));
-
-            const colors = [
-                '#4caf50', '#2e7d32', '#1b5e20', '#43a047',
-                '#388e3c', '#66bb6a', '#81c784', '#a5d6a7',
-                '#c8e6c9', '#e8f5e9'
-            ];
-
+            const productLabels = aggregatedProducts.map(p => p.name);
+            const productData = aggregatedProducts.map(p => parseFloat(p.quantity).toFixed(2));
+            const colors = ['#2f6f4e','#3f8c63','#16a34a','#43a047','#66bb6a','#81c784','#a5d6a7','#c8e6c9','#225239','#1b5e20'];
             let productChart = null;
 
             function createProductChart(type) {
-                const container = document.querySelector('#pieChart').closest('.chart-container');
-                if (!container.offsetParent) {
-                    container.style.display = 'block';
-                }
-
                 const ctx = document.getElementById('pieChart').getContext('2d');
-
-                if (productChart) {
-                    productChart.destroy();
-                    productChart = null;
-                }
-
-                void ctx.canvas.offsetWidth;
-
-                const formattedData = productData.map(value => parseFloat(value).toFixed(2));
-
+                if (productChart) { productChart.destroy(); productChart = null; }
                 productChart = new Chart(ctx, {
                     type: type,
                     data: {
                         labels: productLabels,
                         datasets: [{
-                            data: formattedData,
-                            backgroundColor: type === 'pie' ? colors : colors.map(color => `${color}CC`),
+                            data: productData,
+                            backgroundColor: type === 'pie' ? colors : colors.map(c => `${c}CC`),
                             borderColor: type === 'pie' ? '#ffffff' : colors,
                             borderWidth: type === 'pie' ? 2 : 1,
                             maxBarThickness: 50,
-                            label: 'Quantity',
-                            hoverBackgroundColor: colors,
-                            hoverBorderColor: type === 'pie' ? '#ffffff' : colors,
-                            hoverBorderWidth: 2
+                            label: 'Quantity'
                         }]
                     },
                     options: {
                         responsive: true,
                         maintainAspectRatio: false,
-                        animation: {
-                            duration: 750,
-                            easing: 'easeInOutQuart'
-                        },
                         plugins: {
                             legend: {
                                 display: type === 'pie',
                                 position: window.innerWidth > 768 ? 'right' : 'bottom',
-                                labels: {
-                                    boxWidth: 12,
-                                    padding: 15,
-                                    font: {
-                                        size: 11,
-                                        weight: 500
-                                    },
-                                    generateLabels: function(chart) {
-                                        const data = chart.data;
-                                        if (data.labels.length && data.datasets.length) {
-                                            return data.labels.map((label, i) => {
-                                                const value = data.datasets[0].data[i];
-                                                return {
-                                                    text: `${label}: ${value}`,
-                                                    fillStyle: colors[i],
-                                                    strokeStyle: '#ffffff',
-                                                    lineWidth: 2,
-                                                    hidden: false,
-                                                    index: i
-                                                };
-                                            });
-                                        }
-                                        return [];
-                                    }
-                                }
+                                labels: { boxWidth: 12, padding: 14, font: { size: 11, weight: 500 } }
                             },
-                            tooltip: {
-                                callbacks: {
-                                    label: function(context) {
-                                        const label = context.label || '';
-                                        const value = context.raw || 0;
-                                        return `${label}: ${value}`;
-                                    }
-                                }
-                            }
+                            tooltip: { callbacks: { label: (c) => `${c.label || ''}: ${c.raw || 0}` } }
                         },
-                        ...(type === 'pie' ? {
-                            cutout: '60%',
-                            radius: '90%'
-                        } : {
-                            scales: {
-                                y: {
-                                    beginAtZero: true,
-                                    grid: {
-                                        display: true,
-                                        drawBorder: false,
-                                        color: 'rgba(0,0,0,0.1)'
-                                    },
-                                    ticks: {
-                                        font: {
-                                            size: 11,
-                                            weight: 500
-                                        }
-                                    },
-                                    title: {
-                                        display: true,
-                                        text: 'Quantity',
-                                        font: {
-                                            size: 12,
-                                            weight: 600
-                                        }
-                                    }
-                                },
-                                x: {
-                                    grid: {
-                                        display: false
-                                    },
-                                    ticks: {
-                                        font: {
-                                            size: 11,
-                                            weight: 500
-                                        },
-                                        maxRotation: 45,
-                                        minRotation: 45
-                                    }
-                                }
-                            }
-                        })
+                        ...(type === 'pie'
+                            ? { cutout: '60%', radius: '90%' }
+                            : { scales: {
+                                    y: { beginAtZero: true, grid: { color: 'rgba(0,0,0,0.06)' } },
+                                    x: { grid: { display: false }, ticks: { maxRotation: 45, minRotation: 45 } }
+                                } })
                     }
                 });
             }
-
-            // Initialize chart
             createProductChart('pie');
 
-            // Handle chart type toggle for both charts
             document.querySelectorAll('[data-chart-type]').forEach(button => {
-                button.addEventListener('click', function(e) {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    
+                button.addEventListener('click', function () {
                     if (this.classList.contains('active')) return;
-                    
-                    const buttonGroup = this.closest('.btn-group');
-                    buttonGroup.querySelectorAll('[data-chart-type]').forEach(btn => {
-                        btn.classList.remove('active');
-                    });
+                    this.closest('.btn-group').querySelectorAll('[data-chart-type]').forEach(b => b.classList.remove('active'));
                     this.classList.add('active');
-                    
-                    const chartType = this.dataset.chartType;
-                    const isProductChart = this.closest('.dashboard-section').querySelector('#pieChart');
-                    
-                    requestAnimationFrame(() => {
-                        const pieCanvas = document.getElementById('pieChart');
-                        const barCanvas = document.getElementById('barChart');
-                        
-                        if (chartType === 'pie') {
-                            pieCanvas.style.display = 'block';
-                            barCanvas.style.display = 'none';
-                            createProductChart('pie');
-                        } else {
-                            pieCanvas.style.display = 'none';
-                            barCanvas.style.display = 'block';
-                            createProductChart('bar');
-                        }
-                    });
+                    createProductChart(this.dataset.chartType);
                 });
             });
-
-            // Handle responsive legend position
             window.addEventListener('resize', () => {
                 if (productChart) {
                     productChart.options.plugins.legend.position = window.innerWidth > 768 ? 'right' : 'bottom';
@@ -1164,69 +307,37 @@
                 }
             });
 
-            // Event Listeners
-            document.getElementById('dateRange').addEventListener('change', function() {
-                const dateRange = this.value;
-                window.location.href = `/dashboard/marketing?dateRange=${dateRange}`;
+            // ---- Filters ----
+            document.getElementById('dateRange').addEventListener('change', function () {
+                window.location.href = `/dashboard/marketing?dateRange=${this.value}`;
             });
 
-            document.getElementById('statusFilter').addEventListener('change', function() {
-                const rows = document.querySelectorAll('tbody tr');
-                const status = this.value;
-                
-                rows.forEach(row => {
-                    const statusCell = row.querySelector('td:nth-child(6)');
-                    if (status === 'all' || statusCell.textContent.trim().toLowerCase().includes(status)) {
-                        row.style.display = '';
-                    } else {
-                        row.style.display = 'none';
-                    }
+            function applyTableFilter() {
+                const status = document.getElementById('statusFilter').value;
+                const q = document.getElementById('orderSearch').value.trim().toLowerCase();
+                document.querySelectorAll('tbody tr').forEach(row => {
+                    if (!row.querySelector('td[data-label]')) return; // skip empty-state row
+                    const statusCell = row.querySelector('td:nth-child(5)');
+                    const matchStatus = status === 'all' || (statusCell && statusCell.textContent.trim().toLowerCase().includes(status));
+                    const matchText = !q || row.textContent.toLowerCase().includes(q);
+                    row.style.display = (matchStatus && matchText) ? '' : 'none';
                 });
-            });
+            }
+            document.getElementById('statusFilter').addEventListener('change', applyTableFilter);
+            document.getElementById('orderSearch').addEventListener('input', applyTableFilter);
 
-            // Initialize sections
-            const sections = document.querySelectorAll('.dashboard-section');
-            sections.forEach(section => {
-                const header = section.querySelector('.section-header');
-                const content = section.querySelector('.section-content');
-                const icon = header.querySelector('.bi-chevron-down');
-                
-                if (header && content && icon) {
-                    header.addEventListener('click', () => {
-                        content.classList.toggle('show');
-                        icon.style.transform = content.classList.contains('show') ? 'rotate(180deg)' : 'rotate(0)';
-                    });
-                }
-            });
-
-            // Initialize modals
-            let editPOModal;
-            let editDateModal;
-            
-            // Function to open SO edit modal
-            window.openEditSOModal = function(orderId, currentSO) {
-                if (!editPOModal) {
-                    editPOModal = new bootstrap.Modal(document.getElementById('editSOModal'));
-                }
-                const form = document.getElementById('editSOForm');
-                form.action = `/orders/${orderId}/updateSO`;
+            // ---- Modals ----
+            let editSOModal, editDateModal;
+            window.openEditSOModal = function (orderId, currentSO) {
+                editSOModal = editSOModal || new bootstrap.Modal(document.getElementById('editSOModal'));
+                document.getElementById('editSOForm').action = `/orders/${orderId}/updateSO`;
                 document.getElementById('soNumber').value = currentSO;
-                editPOModal.show();
+                editSOModal.show();
             };
-
-            // Function to open date edit modal
-            window.openEditDateModal = function(orderId, currentDate) {
-                if (!editDateModal) {
-                    editDateModal = new bootstrap.Modal(document.getElementById('editDateModal'));
-                }
-                const form = document.getElementById('editDateForm');
-                form.action = `/orders/${orderId}/updateDate`;
-                
-                // Format the date for the input
-                const date = new Date(currentDate);
-                const formattedDate = date.toISOString().split('T')[0];
-                document.getElementById('orderDate').value = formattedDate;
-                
+            window.openEditDateModal = function (orderId, currentDate) {
+                editDateModal = editDateModal || new bootstrap.Modal(document.getElementById('editDateModal'));
+                document.getElementById('editDateForm').action = `/orders/${orderId}/updateDate`;
+                document.getElementById('orderDate').value = new Date(currentDate).toISOString().split('T')[0];
                 editDateModal.show();
             };
         });

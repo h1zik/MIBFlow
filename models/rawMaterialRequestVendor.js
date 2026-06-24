@@ -26,7 +26,7 @@ const RawMaterialRequestVendor = sequelize.define('RawMaterialRequestVendor', {
         allowNull: false
     },
     splitQuantity: {
-        type: DataTypes.INTEGER,
+        type: DataTypes.FLOAT,
         allowNull: false
     },
     tax: {

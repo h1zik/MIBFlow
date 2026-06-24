@@ -1,0 +1,33 @@
+<%#
+  Reusable page header.
+  Locals:
+    pageTitle      (string, required)
+    pageSubtitle   (string, optional)
+    pageIcon       (string, optional bootstrap-icon name e.g. 'bi-cart')
+    breadcrumb     (array of { label, href? }, optional)
+    actionsHtml    (raw HTML string for right-side actions, optional)
+  Usage:
+    <%- include('../partials/page-header', { pageTitle: 'Orders', pageIcon: 'bi-cart',
+          actionsHtml: '<a href="/orders/create" class="btn btn-primary"><i class="bi bi-plus-lg"></i> New Order</a>' }) %>
+%>
+<div class="page-header fade-in">
+    <div class="page-header__main">
+        <% if (typeof breadcrumb !== 'undefined' && breadcrumb && breadcrumb.length) { %>
+        <ul class="mib-breadcrumb">
+            <% breadcrumb.forEach(function(c) { %>
+                <li><% if (c.href) { %><a href="<%= c.href %>"><%= c.label %></a><% } else { %><%= c.label %><% } %></li>
+            <% }); %>
+        </ul>
+        <% } %>
+        <h1 class="page-title">
+            <% if (typeof pageIcon !== 'undefined' && pageIcon) { %><i class="bi <%= pageIcon %>"></i><% } %>
+            <%= pageTitle %>
+        </h1>
+        <% if (typeof pageSubtitle !== 'undefined' && pageSubtitle) { %>
+        <p class="page-subtitle"><%= pageSubtitle %></p>
+        <% } %>
+    </div>
+    <% if (typeof actionsHtml !== 'undefined' && actionsHtml) { %>
+    <div class="page-actions"><%- actionsHtml %></div>
+    <% } %>
+</div>

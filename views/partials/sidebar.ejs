@@ -1,27 +1,5 @@
 <link href="/css/mibflow.css" rel="stylesheet">
 <link href="/css/sidebar.css" rel="stylesheet">
-<style>
-    /* Override per-page inline styles that set margin-left: 0 */
-    .main-content, .content {
-        margin-left: var(--sidebar-width, 280px);
-        width: calc(100% - var(--sidebar-width, 280px));
-        min-height: 100vh;
-        transition: margin-left 0.2s ease, width 0.2s ease;
-    }
-    body.sidebar-collapsed .main-content,
-    body.sidebar-collapsed .content {
-        margin-left: var(--sidebar-collapsed-width, 70px);
-        width: calc(100% - var(--sidebar-collapsed-width, 70px));
-    }
-    @media (max-width: 768px) {
-        .main-content, .content {
-            margin-left: 0;
-            width: 100%;
-            padding-top: 4.5rem;
-        }
-    }
-</style>
-
 <button class="mobile-toggle d-md-none" id="mobileToggle" aria-label="Open menu">
     <i class="bi bi-list"></i>
 </button>
@@ -29,7 +7,6 @@
 <div class="sidebar" id="sidebar">
     <div class="sidebar-header">
         <div class="brand-wrapper">
-            <img src="/images/logomib.svg" alt="MibFlow" class="brand-logo" id="brandLogo">
             <span class="brand-text">MibFlow</span>
         </div>
         <button class="sidebar-toggle d-none d-md-flex" id="sidebarToggle" aria-label="Toggle sidebar">
@@ -38,7 +15,9 @@
     </div>
 
     <div class="user-profile">
+        <div class="user-avatar" aria-hidden="true"><%= (userRole || '?').charAt(0).toUpperCase() %></div>
         <div class="user-info">
+            <div class="user-eyebrow">Signed in as</div>
             <div class="user-role"><%= userRole %></div>
         </div>
     </div>
