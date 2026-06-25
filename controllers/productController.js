@@ -345,6 +345,28 @@ exports.updateFormula = async (req, res) => {
     }
 };
 
+// Save the per-product Blending Guide xlsx template (authored once by RnD).
+// The narrative sections (PPE, preparation, production steps, QC spec, packaging,
+// label) live in this template; production only stamps batch-dynamic fields onto it.
+exports.uploadBlendingGuideTemplate = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const product = await Product.findByPk(id);
+        if (!product) {
+            return res.status(404).send('Product not found');
+        }
+        if (!req.file) {
+            return res.status(400).send('No template file uploaded');
+        }
+        product.blendingGuideTemplate = req.file.filename;
+        await product.save();
+        res.redirect(`/products/${id}/editFormula`);
+    } catch (error) {
+        console.error('Error uploading blending guide template:', error);
+        res.status(500).send('Internal Server Error');
+    }
+};
+
 // Add a product check
 // Pass QC check
 exports.passQC = async (req, res) => {
@@ -413,6 +435,7 @@ exports.failQC = async (req, res) => {
 };
 
 exports.completeProductCheck = async (req, res) => {
+    const wantsJson = req.xhr || (req.headers.accept && req.headers.accept.indexOf('json') > -1);
     const transaction = await sequelize.transaction();
 
     try {
@@ -422,6 +445,7 @@ exports.completeProductCheck = async (req, res) => {
         const productCheck = await ProductCheck.findByPk(id, { transaction });
         if (!productCheck) {
             await transaction.rollback();
+            if (wantsJson) return res.status(404).json({ success: false, message: 'Product check not found' });
             req.flash('error', 'Product check not found');
             return res.redirect('/dashboard/ppic');
         }
@@ -431,6 +455,7 @@ exports.completeProductCheck = async (req, res) => {
             const product = await Product.findByPk(productId, { transaction });
             if (!product) {
                 await transaction.rollback();
+                if (wantsJson) return res.status(404).json({ success: false, message: 'Product not found' });
                 req.flash('error', 'Product not found');
                 return res.redirect('/dashboard/ppic');
             }
@@ -457,11 +482,13 @@ exports.completeProductCheck = async (req, res) => {
         await productCheck.update({ qcStatus: 'Completed' }, { transaction });
 
         await transaction.commit();
+        if (wantsJson) return res.json({ success: true });
         req.flash('success', 'Product check completed successfully');
         res.redirect('/dashboard/ppic');
     } catch (error) {
         await transaction.rollback();
         console.error('Error completing product check:', error);
+        if (wantsJson) return res.status(500).json({ success: false, message: 'Failed to complete product check' });
         req.flash('error', 'Failed to complete product check');
         res.redirect('/dashboard/ppic');
     }

@@ -1,11 +1,19 @@
-<%# Reusable List/Kanban toggle. Include once near the top of a dashboard that
-    is built from .dashboard-section blocks. kanban-auto.js does the rest. %>
+<%# Reusable List/Board (Kanban) toggle. Include once near the top of a dashboard
+    that is built from .dashboard-section blocks. kanban-auto.js does the rest.
+    The outer .kb-viewbar class is required — kanban-auto.js looks for it. %>
 <link rel="stylesheet" href="/css/kanban.css">
 <div class="kb-viewbar">
-    <span class="vb-label">View</span>
-    <div class="btn-group" role="group" aria-label="View switch">
-        <button type="button" class="btn btn-outline-primary active" data-kbview="list"><i class="bi bi-list-ul"></i> List</button>
-        <button type="button" class="btn btn-outline-primary" data-kbview="kanban"><i class="bi bi-kanban"></i> Kanban</button>
+    <div class="kb-segment" role="group" aria-label="Switch between list and board view">
+        <button type="button" class="kb-seg-btn active" data-kbview="list">
+            <i class="bi bi-list-ul"></i><span>List</span>
+        </button>
+        <button type="button" class="kb-seg-btn" data-kbview="kanban">
+            <i class="bi bi-kanban"></i><span>Board</span>
+        </button>
     </div>
+    <span class="kb-scroll-hint">
+        <i class="bi bi-arrow-left-right"></i>
+        Scroll sideways to see every stage
+    </span>
 </div>
 <script src="/js/kanban-auto.js" defer></script>

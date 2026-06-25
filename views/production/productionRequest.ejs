@@ -346,24 +346,22 @@
                         </div>
                         <div class="card-body">
                             <div class="row">
-                                <% const consumables = [
-                                    { name: 'Pallet', flag: order.pallet },
-                                    { name: 'Sticker', flag: order.sticker },
-                                    { name: 'Wrap', flag: order.wrap },
-                                    { name: 'Handling', flag: order.handling },
-                                    { name: 'Logistic', flag: order.logistic },
-                                    { name: 'Triplek', flag: order.triplek },
-                                    { name: 'Peti', flag: order.peti },
-                                    { name: 'Kabel Ties', flag: order.kabelties }
-                                ] %>
-                                <% consumables.forEach(consumable => { %>
-                                    <div class="col-md-3 mb-2">
-                                        <div class="d-flex align-items-center">
-                                            <i class="bi bi-<%= consumable.flag ? 'check-circle-fill text-success' : 'x-circle-fill text-danger' %> me-2"></i>
-                                            <span><%= consumable.name %></span>
+                                <% const orderConsumables = (order && order.OrderConsumables) ? order.OrderConsumables : []; %>
+                                <% if (orderConsumables.length > 0) { %>
+                                    <% orderConsumables.forEach(consumable => { %>
+                                        <div class="col-md-4 mb-2">
+                                            <div class="d-flex align-items-center justify-content-between">
+                                                <span class="d-flex align-items-center">
+                                                    <i class="bi bi-check-circle-fill text-success me-2"></i>
+                                                    <span><%= consumable.name %></span>
+                                                </span>
+                                                <span class="text-muted">Rp <%= consumable.fee.toLocaleString() %></span>
+                                            </div>
                                         </div>
-                                    </div>
-                                <% }) %>
+                                    <% }) %>
+                                <% } else { %>
+                                    <div class="col-12"><span class="text-muted">No consumables selected.</span></div>
+                                <% } %>
                             </div>
                         </div>
                     </div>

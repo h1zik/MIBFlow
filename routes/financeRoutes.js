@@ -30,6 +30,7 @@ router.get('/finance/rawMaterialRequestHistory', authenticate, authorize(['Finan
 router.get('/finance/orderHistory', authenticate, authorize(['Finance']), getOrderHistory);
 router.post('/finance/markRawMaterialPaid/:id', authenticate, authorize(['Finance']), markRawMaterialPaid);
 router.get('/finance/consumables', authenticate, authorize(['Finance']), consumableController.renderConsumablesPage);
+router.post('/consumables/add', authenticate, authorize(['Finance']), consumableController.addConsumable);
 router.post('/consumables/update/:id', authenticate, authorize(['Finance']), consumableController.updateConsumablePrice);
 
 

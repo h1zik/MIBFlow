@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Blending Guide<%= production.batchNumber ? ' - ' + production.batchNumber : '' %></title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --green: #2e7d32;
+            --green-dark: #1b5e20;
+            --ink: #1f2937;
+            --muted: #6b7280;
+            --line: #d1d5db;
+            --soft: #f3f4f6;
+        }
+        * { box-sizing: border-box; }
+        body {
+            font-family: 'Inter', Arial, sans-serif;
+            color: var(--ink);
+            background: #e5e7eb;
+            margin: 0;
+            padding: 24px;
+        }
+        .toolbar {
+            max-width: 800px;
+            margin: 0 auto 16px;
+            display: flex;
+            justify-content: flex-end;
+            gap: 8px;
+        }
+        .btn {
+            border: 1px solid var(--green);
+            background: var(--green);
+            color: #fff;
+            font: inherit;
+            font-weight: 600;
+            font-size: 0.9rem;
+            padding: 0.55rem 1.1rem;
+            border-radius: 8px;
+            cursor: pointer;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.4rem;
+        }
+        .btn.secondary { background: #fff; color: var(--ink); border-color: var(--line); }
+
+        .sheet {
+            max-width: 800px;
+            margin: 0 auto;
+            background: #fff;
+            padding: 36px 40px;
+            box-shadow: 0 4px 18px rgba(0,0,0,0.12);
+            border-radius: 4px;
+        }
+
+        .doc-head {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            border-bottom: 3px solid var(--green);
+            padding-bottom: 14px;
+            margin-bottom: 18px;
+        }
+        .brand { font-size: 1.4rem; font-weight: 700; color: var(--green-dark); letter-spacing: 0.5px; }
+        .brand small { display: block; font-size: 0.72rem; font-weight: 500; color: var(--muted); letter-spacing: 1px; text-transform: uppercase; }
+        .doc-title { text-align: right; }
+        .doc-title h1 { margin: 0; font-size: 1.25rem; color: var(--ink); text-transform: uppercase; letter-spacing: 1px; }
+        .doc-title .meta { font-size: 0.74rem; color: var(--muted); margin-top: 4px; }
+
+        .info-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px 28px;
+            margin-bottom: 22px;
+        }
+        .info-item { display: flex; font-size: 0.88rem; padding: 4px 0; border-bottom: 1px dotted var(--line); }
+        .info-item .k { width: 130px; color: var(--muted); font-weight: 500; flex: 0 0 130px; }
+        .info-item .v { font-weight: 600; }
+
+        table { width: 100%; border-collapse: collapse; margin-bottom: 8px; }
+        thead th {
+            background: var(--green);
+            color: #fff;
+            font-size: 0.74rem;
+            text-transform: uppercase;
+            letter-spacing: 0.4px;
+            padding: 9px 10px;
+            text-align: left;
+        }
+        thead th.num, tbody td.num { text-align: right; }
+        thead th.center, tbody td.center { text-align: center; }
+        tbody td { padding: 9px 10px; border-bottom: 1px solid var(--line); font-size: 0.9rem; }
+        tbody tr:nth-child(even) { background: #fafafa; }
+        tfoot td {
+            padding: 10px;
+            font-weight: 700;
+            border-top: 2px solid var(--green);
+            background: var(--soft);
+            font-size: 0.92rem;
+        }
+        tfoot td.num { text-align: right; }
+        .muted { color: var(--muted); }
+
+        .empty-note {
+            border: 1px dashed #d92d20;
+            background: #fff5f5;
+            color: #b42318;
+            padding: 14px 16px;
+            border-radius: 8px;
+            font-size: 0.9rem;
+            margin-bottom: 8px;
+        }
+        .calc-note { font-size: 0.76rem; color: var(--muted); margin: 6px 0 26px; }
+
+        .sign-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 26px;
+            margin-top: 36px;
+        }
+        .sign-box { text-align: center; }
+        .sign-box .role { font-size: 0.78rem; color: var(--muted); margin-bottom: 48px; font-weight: 600; }
+        .sign-box .line { border-top: 1px solid var(--ink); padding-top: 6px; font-size: 0.78rem; color: var(--muted); }
+
+        @media print {
+            body { background: #fff; padding: 0; }
+            .toolbar { display: none; }
+            .sheet { box-shadow: none; max-width: none; margin: 0; padding: 0; }
+            thead th { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+            tfoot td { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+        }
+        @page { margin: 14mm; }
+    </style>
+</head>
+<body>
+    <% const fmt = (n) => (n === null || n === undefined || isNaN(n)) ? '-' : Number(n).toLocaleString('id-ID', { minimumFractionDigits: 2, maximumFractionDigits: 2 }); %>
+    <% const dt = (d) => new Date(d).toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' }); %>
+
+    <div class="toolbar">
+        <a href="#" onclick="if(window.opener&&!window.opener.closed){window.close();}else{history.back();}return false;" class="btn secondary">Tutup</a>
+        <button class="btn" onclick="window.print()">🖨️ Print</button>
+    </div>
+
+    <div class="sheet">
+        <div class="doc-head">
+            <div class="brand">MIB<small>Manufacturing</small></div>
+            <div class="doc-title">
+                <h1>Blending Guide</h1>
+                <div class="meta">Dicetak: <%= new Date(generatedAt).toLocaleString('id-ID') %></div>
+            </div>
+        </div>
+
+        <div class="info-grid">
+            <div class="info-item"><span class="k">Produk</span><span class="v"><%= product ? product.name : '-' %></span></div>
+            <div class="info-item"><span class="k">No. Batch</span><span class="v"><%= production.batchNumber || '-' %></span></div>
+            <div class="info-item"><span class="k">Jumlah Produksi</span><span class="v"><%= fmt(totalQty) %> Kg</span></div>
+            <div class="info-item"><span class="k">Tangki</span><span class="v"><%= tankNames %></span></div>
+            <div class="info-item"><span class="k">Production ID</span><span class="v">#<%= production.id %></span></div>
+            <div class="info-item"><span class="k">Tanggal Mulai</span><span class="v"><%= production.startDate ? dt(production.startDate) : '-' %></span></div>
+        </div>
+
+        <% if (rows && rows.length > 0) { %>
+            <table>
+                <thead>
+                    <tr>
+                        <th class="center" style="width:42px;">No</th>
+                        <th>Bahan Baku</th>
+                        <th class="num" style="width:90px;">Persentase</th>
+                        <th class="num" style="width:120px;">Jumlah (Kg)</th>
+                        <th class="num" style="width:120px;">Jumlah (L)</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <% rows.forEach(r => { %>
+                        <tr>
+                            <td class="center"><%= r.no %></td>
+                            <td><%= r.name %><% if (r.form) { %> <span class="muted">(<%= r.form %>)</span><% } %></td>
+                            <td class="num"><%= fmt(r.percentage) %>%</td>
+                            <td class="num"><%= fmt(r.qtyKg) %></td>
+                            <td class="num"><%= r.qtyL === null ? '-' : fmt(r.qtyL) %></td>
+                        </tr>
+                    <% }) %>
+                </tbody>
+                <tfoot>
+                    <tr>
+                        <td colspan="2">TOTAL</td>
+                        <td class="num"><%= fmt(totalPct) %>%</td>
+                        <td class="num"><%= fmt(totalKg) %></td>
+                        <td class="num">-</td>
+                    </tr>
+                </tfoot>
+            </table>
+            <div class="calc-note">
+                Jumlah tiap bahan dihitung otomatis dari formula produk: persentase &times; jumlah produksi (<%= fmt(totalQty) %> Kg).
+                Kolom Liter dihitung dari densitas bahan (hanya untuk bahan cair yang memiliki densitas).
+            </div>
+        <% } else { %>
+            <div class="empty-note">
+                <strong>Formula belum tersedia.</strong> Produk ini belum memiliki formula terstruktur dari RnD,
+                sehingga jumlah bahan baku tidak dapat dihitung. Mohon lengkapi formula produk terlebih dahulu.
+            </div>
+        <% } %>
+
+        <div class="sign-grid">
+            <div class="sign-box"><div class="role">Disiapkan (PPIC)</div><div class="line">Nama &amp; Tanggal</div></div>
+            <div class="sign-box"><div class="role">Operator Produksi</div><div class="line">Nama &amp; Tanggal</div></div>
+            <div class="sign-box"><div class="role">Diperiksa (QC)</div><div class="line">Nama &amp; Tanggal</div></div>
+        </div>
+    </div>
+</body>
+</html>

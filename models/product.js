@@ -37,6 +37,10 @@ const Product = sequelize.define('Product', {
     msds: { // New column for MSDS file path
         type: DataTypes.STRING,
         allowNull: true
+    },
+    blendingGuideTemplate: { // Per-product Blending Guide xlsx template (authored once by RnD)
+        type: DataTypes.STRING,
+        allowNull: true
     }
 
 });

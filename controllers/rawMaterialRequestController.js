@@ -49,6 +49,7 @@ exports.requestRawMaterialForm = async (req, res) => {
 exports.requestRawMaterial = async (req, res) => {
     const { materialName, quantity, unit } = req.body;
     const orderId = req.body.orderId || null;
+    const wantsJson = req.xhr || (req.headers.accept && req.headers.accept.indexOf('json') > -1);
 
     try {
         // Find the raw material by name
@@ -95,9 +96,11 @@ exports.requestRawMaterial = async (req, res) => {
             audio: 'purchase.mp3'
         });
 
+        if (wantsJson) { return res.json({ success: true }); }
         res.redirect('/dashboard/ppic');
     } catch (error) {
         console.error('Error requesting raw material:', error);
+        if (wantsJson) return res.status(500).json({ success: false, message: 'Internal Server Error' });
         res.status(500).send('Internal Server Error');
     }
 };
@@ -548,11 +551,11 @@ exports.updateRawMaterialStock = async (req, res) => {
             }
         }
 
-        res.redirect('/dashboard/raw-material-warehouse');
+        res.json({ success: true, status: 'Completed' });
     } catch (error) {
         await transaction.rollback();
         console.error('Error updating raw material stock:', error);
-        res.status(400).send(error);
+        res.status(400).json({ success: false, message: error.message });
     }
 };
 
@@ -582,10 +585,10 @@ exports.testToQC = async (req, res) => {
             audio: 'qc.mp3'
         });
 
-        res.redirect('/dashboard/raw-material-warehouse');
+        res.json({ success: true, status: 'QC Testing' });
     } catch (error) {
         console.error('Error updating QC status:', error);
-        res.status(500).send('Internal Server Error');
+        res.status(500).json({ success: false, message: 'Internal Server Error' });
     }
 };
 
@@ -604,10 +607,10 @@ exports.receivedFailedMaterial = async (req, res) => {
         rawMaterialRequestVendor.status = 'Quarantined';
         await rawMaterialRequestVendor.save();
 
-        res.redirect('/dashboard/raw-material-warehouse');
+        res.json({ success: true, status: 'Quarantined' });
     } catch (error) {
         console.error('Error marking as quarantined:', error);
-        res.status(500).send('Internal Server Error');
+        res.status(500).json({ success: false, message: 'Internal Server Error' });
     }
 };
 
@@ -624,10 +627,10 @@ exports.markAsReceived = async (req, res) => {
         rawMaterialRequestVendor.status = 'Received';
         await rawMaterialRequestVendor.save();
 
-        res.redirect('/dashboard/raw-material-warehouse');
+        res.json({ success: true, status: 'Received' });
     } catch (error) {
         console.error('Error marking as received:', error);
-        res.status(500).send('Internal Server Error');
+        res.status(500).json({ success: false, message: 'Internal Server Error' });
     }
 };
 
@@ -782,6 +785,7 @@ exports.createAutoRawMaterialRequest = async (req, res) => {
 
 exports.markRequestAsCompleted = async (req, res) => {
     const { id } = req.params;
+    const wantsJson = req.xhr || (req.headers.accept && req.headers.accept.indexOf('json') > -1);
 
     try {
         // Find the raw material request and include its vendors
@@ -790,17 +794,19 @@ exports.markRequestAsCompleted = async (req, res) => {
         });
 
         if (!request) {
+            if (wantsJson) return res.status(404).json({ success: false, error: 'Raw material request not found' });
             return res.status(404).send({ error: 'Raw material request not found' });
         }
 
         // Check if all vendors are either Completed or Quarantined
-        const allVendorsCompleted = request.RawMaterialRequestVendors.every(vendor => 
+        const allVendorsCompleted = request.RawMaterialRequestVendors.every(vendor =>
             vendor.status === 'Completed' || vendor.status === 'Quarantined'
         );
 
         if (!allVendorsCompleted) {
-            return res.status(400).send({ 
-                error: 'Cannot mark as completed. Some vendors are still pending.' 
+            if (wantsJson) return res.status(400).json({ success: false, error: 'Cannot mark as completed. Some vendors are still pending.' });
+            return res.status(400).send({
+                error: 'Cannot mark as completed. Some vendors are still pending.'
             });
         }
 
@@ -808,6 +814,7 @@ exports.markRequestAsCompleted = async (req, res) => {
         request.status = 'Completed';
         await request.save();
 
+        if (wantsJson) { return res.json({ success: true }); }
         res.redirect('/dashboard/ppic');
     } catch (error) {
         console.error('Error marking request as completed:', error);
@@ -957,6 +964,9 @@ exports.submitSplitQuantities = async (req, res) => {
             audio: 'finance.mp3'
         });
 
+        if (wantsJson) {
+            return res.json({ success: true, status: 'Vendor Assigned', message: 'Vendor splits submitted successfully.' });
+        }
         res.redirect('/dashboard/purchase');
     } catch (error) {
         await transaction.rollback();

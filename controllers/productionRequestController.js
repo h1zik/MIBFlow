@@ -16,6 +16,7 @@ const ComplainItem = require('../models/complainItem');
 const Complain = require('../models/complain');
 const ComplainRework = require('../models/complainRework');
 const ProductionRequestPackaging = require('../models/productionRequestPackaging');
+const OrderConsumable = require('../models/orderConsumable');
 const User = require('../models/user'); // Add User model
 const { Op } = require('sequelize');
 const { adjustStock } = require('../utils/stock');
@@ -666,6 +667,7 @@ exports.declineProductionRequest = async (req, res) => {
 };
 
 exports.sendToQC = async (req, res) => {
+    const wantsJson = req.xhr || (req.headers.accept && req.headers.accept.indexOf('json') > -1);
     const { id } = req.params;
 
     try {
@@ -677,8 +679,9 @@ exports.sendToQC = async (req, res) => {
                 }
             ]
         });
-        
+
         if (!production) {
+            if (wantsJson) return res.status(404).json({ success: false, message: 'Production not found' });
             return res.status(404).send({ error: 'Production not found' });
         }
 
@@ -695,19 +698,23 @@ exports.sendToQC = async (req, res) => {
             audio: 'qc.mp3'
         });
 
+        if (wantsJson) return res.json({ success: true });
         res.redirect('/dashboard/production');
     } catch (error) {
+        if (wantsJson) return res.status(400).json({ success: false, message: 'Error sending to QC' });
         res.status(400).send(error);
     }
 };
 
 exports.updateStock = async (req, res) => {
+    const wantsJson = req.xhr || (req.headers.accept && req.headers.accept.indexOf('json') > -1);
     const { id } = req.params;
     let { realQuantity } = req.body;
 
     // Convert and validate realQuantity
     realQuantity = parseFloat(realQuantity);
     if (isNaN(realQuantity) || realQuantity < 0) {
+        if (wantsJson) return res.status(400).json({ success: false, message: 'Invalid quantity value. Please enter a valid non-negative number.' });
         return res.status(400).send('Invalid quantity value. Please enter a valid non-negative number.');
     }
 
@@ -733,11 +740,13 @@ exports.updateStock = async (req, res) => {
 
         if (!production) {
             await transaction.rollback();
+            if (wantsJson) return res.status(404).json({ success: false, message: 'Production not found' });
             return res.status(404).send('Production not found');
         }
 
         if (production.qcStatus !== 'Pass') {
             await transaction.rollback();
+            if (wantsJson) return res.status(400).json({ success: false, message: 'Production has not passed QC' });
             return res.status(400).send('Production has not passed QC');
         }
 
@@ -774,10 +783,12 @@ exports.updateStock = async (req, res) => {
 
         await transaction.commit();
         console.log("Stock updated successfully");
+        if (wantsJson) return res.json({ success: true });
         return res.redirect('/dashboard/production');
     } catch (error) {
         await transaction.rollback();
         console.error('Error updating stock:', error);
+        if (wantsJson) return res.status(500).json({ success: false, message: 'Error updating stock. Please try again.' });
         return res.status(500).send('Error updating stock. Please try again.');
     }
 };
@@ -981,30 +992,17 @@ exports.createProductionRequest = async (req, res) => {
             return res.status(400).send('Missing required fields');
         }
 
-        // Get the formula source and existing formula for this specific product
-        const formulaSource = req.body[`formulaSource-${productId}`];
+        // Formula now comes from the structured DB formula (ProductFormula); a file
+        // upload is no longer required. Keep optional backward-compat: use an uploaded
+        // file if one was provided, else any legacy existing-formula reference, else ''.
+        // Raw-material quantities are computed from ProductFormula below regardless.
         const existingFormula = req.body[`existingFormula-${productId}`];
-        
-        // Check if we're using an existing formula or a new upload
-        let formulaFilename;
-        if (formulaSource === 'existing' && existingFormula) {
-            // Use the existing formula from the product
-            formulaFilename = existingFormula;
-            // Ensure it's a string
-            if (typeof formulaFilename !== 'string') {
-                formulaFilename = String(formulaFilename);
-            }
-        } else {
-            // Require a file upload if not using existing formula
-            // Find the file with the correct field name for this product
-            const fileFieldName = `formula-${productId}`;
-            const formulaFile = req.files ? req.files.find(file => file.fieldname === fileFieldName) : null;
-            
-            if (!formulaFile) {
-                await transaction.rollback();
-                return res.status(400).send('Formula file is required when not using existing formula');
-            }
-            formulaFilename = formulaFile.filename;
+        const uploadedFormula = req.files ? req.files.find(file => file.fieldname === `formula-${productId}`) : null;
+        let formulaFilename = '';
+        if (uploadedFormula) {
+            formulaFilename = uploadedFormula.filename;
+        } else if (existingFormula) {
+            formulaFilename = String(existingFormula);
         }
 
         const productionQuantity = parseFloat(quantity);
@@ -1216,10 +1214,13 @@ exports.viewProductionRequest = async (req, res) => {
             include: [
                 {
                     model: Order,
-                    include: [{
-                        model: OrderItem,
-                        include: [Product, Packaging]
-                    }],
+                    include: [
+                        {
+                            model: OrderItem,
+                            include: [Product, Packaging]
+                        },
+                        { model: OrderConsumable }
+                    ],
                     required: false  // Make the Order association optional
                 },
                 {
@@ -1347,26 +1348,31 @@ exports.requestRework = async (req, res) => {
 };
 
 exports.setRawMaterialChoice = async (req, res) => {
+    const wantsJson = req.xhr || (req.headers.accept && req.headers.accept.indexOf('json') > -1);
     const { id } = req.params;
     const { choice } = req.body;
 
     try {
         const production = await Production.findByPk(id);
         if (!production) {
+            if (wantsJson) return res.status(404).json({ success: false, message: 'Production not found' });
             return res.status(404).send('Production not found');
         }
 
         production.rawMaterialChoice = choice;
         await production.save();
 
+        if (wantsJson) return res.json({ success: true });
         res.redirect('/dashboard/production');
     } catch (error) {
         console.error('Error setting raw material choice:', error);
+        if (wantsJson) return res.status(500).json({ success: false, message: 'Internal Server Error' });
         res.status(500).send('Internal Server Error');
     }
 };
 
 exports.addRawMaterial = async (req, res) => {
+    const wantsJson = req.xhr || (req.headers.accept && req.headers.accept.indexOf('json') > -1);
     const { id } = req.params;
     const { rawMaterialId, quantity } = req.body;
     const transaction = await sequelize.transaction();
@@ -1385,6 +1391,7 @@ exports.addRawMaterial = async (req, res) => {
 
         if (!production) {
             await transaction.rollback();
+            if (wantsJson) return res.status(404).json({ success: false, message: 'Production not found' });
             return res.status(404).send('Production not found');
         }
 
@@ -1395,12 +1402,14 @@ exports.addRawMaterial = async (req, res) => {
         });
         if (!rawMaterial) {
             await transaction.rollback();
+            if (wantsJson) return res.status(404).json({ success: false, message: 'Raw material not found' });
             return res.status(404).send('Raw material not found');
         }
 
         // Check if there's enough stock
         if (rawMaterial.stock < quantity) {
             await transaction.rollback();
+            if (wantsJson) return res.status(400).json({ success: false, message: 'Not enough raw material stock' });
             return res.status(400).send('Not enough raw material stock');
         }
 
@@ -1420,10 +1429,12 @@ exports.addRawMaterial = async (req, res) => {
         }, { transaction });
 
         await transaction.commit();
+        if (wantsJson) return res.json({ success: true });
         res.redirect('/dashboard/production');
     } catch (error) {
         await transaction.rollback();
         console.error('Error adding raw material:', error);
+        if (wantsJson) return res.status(500).json({ success: false, message: 'Internal Server Error' });
         res.status(500).send('Internal Server Error');
     }
 };

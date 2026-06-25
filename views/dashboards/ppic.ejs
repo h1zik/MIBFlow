@@ -654,9 +654,12 @@
                                 <span class="status-badge <%= sb(p.status) %>"><%= p.status %></span>
                                 <span class="status-badge <%= qb(p.qcStatus) %>">QC: <%= p.qcStatus %></span>
                             </div>
-                            <% if (p.batchNumber && !p.isPrinted && p.qcStatus !== 'Pass') { %>
+                            <% if (p.batchNumber) { %>
                             <div class="kanban-actions">
-                                <form action="/production/print/<%= p.id %>" method="POST"><button type="submit" class="btn btn-sm btn-primary"><i class="bi bi-printer"></i> Print</button></form>
+                                <a href="/production/blending-guide/<%= p.id %>" target="_blank" class="btn btn-sm btn-outline-primary"><i class="bi bi-file-earmark-text"></i> Blending Guide</a>
+                                <% if (!p.isPrinted && p.qcStatus !== 'Pass') { %>
+                                <form action="/production/print/<%= p.id %>" method="POST" style="display:inline-block;"><button type="submit" class="btn btn-sm btn-primary"><i class="bi bi-printer"></i> Print</button></form>
+                                <% } %>
                             </div>
                             <% } %>
                         </div>
@@ -1101,6 +1104,12 @@
                                         </td>
                                         <td data-label="Actions">
                                             <div class="action-buttons">
+                                                <% if (production.batchNumber) { %>
+                                                    <a href="/production/blending-guide/<%= production.id %>" target="_blank" class="btn btn-outline-primary">
+                                                        <i class="bi bi-file-earmark-text"></i>
+                                                        Blending Guide
+                                                    </a>
+                                                <% } %>
                                                 <% if (production.batchNumber && !production.isPrinted && production.qcStatus !== 'Pass') { %>
                                                     <form action="/production/print/<%= production.id %>" method="POST">
                                                         <button type="submit" class="btn btn-primary">
@@ -1597,8 +1606,70 @@
     </div>
 
     <!-- Stock Check Modal -->
+    <style>
+        /* ---- Stock Check Result modal (self-contained, id-scoped) ---- */
+        #stockModal .modal-content { border-radius: 16px; overflow: hidden; }
+        #stockModal .modal-body {
+            display: block;
+            padding: 1.25rem 1.5rem;
+            max-height: 70vh;
+            overflow-y: auto;
+        }
+        #stockModal .stock-result { display: block; }
+
+        /* Status banner */
+        #stockModal .stock-banner {
+            display: flex; align-items: flex-start; gap: 0.75rem;
+            padding: 0.9rem 1rem; border-radius: 12px; margin-bottom: 1.15rem;
+        }
+        #stockModal .stock-banner i { font-size: 1.35rem; line-height: 1.5; flex: 0 0 auto; }
+        #stockModal .stock-banner-title { font-weight: 700; font-size: 1rem; }
+        #stockModal .stock-banner-sub { font-size: 0.875rem; opacity: 0.9; margin-top: 0.1rem; }
+        #stockModal .stock-banner--fail { background: #fdecea; color: #b42318; }
+        #stockModal .stock-banner--ok   { background: #e7f4ea; color: #1b5e20; }
+        #stockModal .stock-banner--warn { background: #fff6e6; color: #92610a; }
+
+        /* Sections */
+        #stockModal .stock-section { display: block; margin-bottom: 1.15rem; }
+        #stockModal .stock-section:last-child { margin-bottom: 0; }
+        #stockModal .stock-section-head {
+            display: flex; align-items: center; gap: 0.4rem;
+            font-size: 0.72rem; font-weight: 700; text-transform: uppercase;
+            letter-spacing: 0.04em; margin-bottom: 0.55rem;
+        }
+        #stockModal .stock-section-head.out { color: #b42318; }
+        #stockModal .stock-section-head.in  { color: #1b7a3b; }
+
+        /* Item cards */
+        #stockModal .stock-items { display: grid; grid-template-columns: 1fr; gap: 0.6rem; }
+        #stockModal .stock-item {
+            display: block; padding: 0.8rem 0.9rem;
+            border: 1px solid #eceeec; border-left: 3px solid #d0d5dd;
+            border-radius: 10px; background: #fff;
+        }
+        #stockModal .stock-item.out { border-left-color: #d92d20; background: #fffafa; }
+        #stockModal .stock-item.in  { border-left-color: #2e7d32; background: #fbfdfb; }
+        #stockModal .stock-item-name { font-weight: 700; color: #1f2937; margin-bottom: 0.5rem; }
+
+        #stockModal .stock-item-meta { display: flex; flex-wrap: wrap; gap: 0.4rem; }
+        #stockModal .stock-pill {
+            display: inline-flex; align-items: baseline; gap: 0.3rem;
+            font-size: 0.78rem; padding: 0.2rem 0.6rem; border-radius: 999px;
+            background: #f2f4f7; color: #475467; white-space: nowrap;
+        }
+        #stockModal .stock-pill strong { font-weight: 700; }
+        #stockModal .stock-pill.need  { background: #eef4ff; color: #1849a9; }
+        #stockModal .stock-pill.short { background: #fee4e2; color: #b42318; }
+        #stockModal .stock-pill.have  { background: #e7f4ea; color: #1b7a3b; }
+
+        /* Action row — neutralise the leaked mobile .btn sizing inside the modal */
+        #stockModal .stock-item-action { margin-top: 0.65rem; }
+        #stockModal .stock-item-action .btn { min-width: 0; height: auto; margin: 0; }
+        #stockModal .stock-item-action .input-group { max-width: 320px; }
+        #stockModal .modal-footer { background: #fafbfa; }
+    </style>
     <div class="modal fade" id="stockModal" tabindex="-1">
-        <div class="modal-dialog">
+        <div class="modal-dialog modal-dialog-centered modal-lg">
             <div class="modal-content">
                 <div class="modal-header">
                     <h5 class="modal-title">
@@ -1815,131 +1886,157 @@
                             let modalBody = '';
                             if (response.error || response.message === 'error') {
                             modalBody = `
-                                <div class="alert alert-danger">
-                                    <h6 class="alert-heading mb-2">
-                                        <i class="bi bi-exclamation-triangle me-2"></i>
-                                        Stock Check Failed
-                                    </h6>
-                                    <p class="mb-2">${response.error}</p>
-                            ${response.outOfStockProducts ? `
-                                        <strong class="d-block mb-2">Out of Stock Products:</strong>
-                                        <ul class="mb-3">
-                                            ${response.outOfStockProducts.map(product => `
-                                                <li>
-                                                    <strong>${product.name}</strong><br>
-                                                    Needed: ${product.satuan === 'L' ? (product.needed * product.density).toFixed(2) : product.needed} KG<br>
-                                                    Available: ${product.available} KG<br>
-                                                    <div class="mt-2">
-                                                        <button class="btn btn-primary check-product" 
-                                                            data-product-name="${product.name}"
-                                                            data-product-id="${product.id}">
-                                                            Check
-                                                        </button>
-                                                        <div class="input-group mt-2 quantity-input-group" style="display: none;">
-                                                            <input type="number" class="form-control quantity-input" 
-                                                                data-product-name="${product.name}"
-                                                                data-product-id="${product.id}"
-                                                                placeholder="Enter quantity in KG">
-                                                            <button class="btn btn-primary submit-check" 
+                                <div class="stock-result">
+                                    <div class="stock-banner stock-banner--fail">
+                                        <i class="bi bi-exclamation-triangle-fill"></i>
+                                        <div>
+                                            <div class="stock-banner-title">Stock Check Failed</div>
+                                            <div class="stock-banner-sub">${response.error || 'Some items are out of stock.'}</div>
+                                        </div>
+                                    </div>
+                                    ${response.outOfStockProducts ? `
+                                        <div class="stock-section">
+                                            <div class="stock-section-head out"><i class="bi bi-x-circle"></i> Out of Stock — Products</div>
+                                            <div class="stock-items">
+                                                ${response.outOfStockProducts.map(product => `
+                                                    <div class="stock-item out">
+                                                        <div class="stock-item-name">${product.name}</div>
+                                                        <div class="stock-item-meta">
+                                                            <span class="stock-pill need">Needed <strong>${product.satuan === 'L' ? (product.needed * product.density).toFixed(2) : product.needed} KG</strong></span>
+                                                            <span class="stock-pill short">Available <strong>${product.available} KG</strong></span>
+                                                        </div>
+                                                        <div class="stock-item-action">
+                                                            <button class="btn btn-primary btn-sm check-product"
                                                                 data-product-name="${product.name}"
                                                                 data-product-id="${product.id}">
-                                                                Submit
+                                                                <i class="bi bi-clipboard-check"></i> Check
                                                             </button>
+                                                            <div class="input-group input-group-sm mt-2 quantity-input-group" style="display: none;">
+                                                                <input type="number" class="form-control quantity-input"
+                                                                    data-product-name="${product.name}"
+                                                                    data-product-id="${product.id}"
+                                                                    placeholder="Quantity (KG)">
+                                                                <button class="btn btn-primary submit-check"
+                                                                    data-product-name="${product.name}"
+                                                                    data-product-id="${product.id}">
+                                                                    Submit
+                                                                </button>
+                                                            </div>
                                                         </div>
                                                     </div>
-                                                </li>
-                                            `
-                                            ).join('')}
-                                        </ul>
+                                                `).join('')}
+                                            </div>
+                                        </div>
                                     ` : ''}
                                     ${response.inStockProducts ? `
-                                        <strong class="d-block mb-2">In Stock Products:</strong>
-                                        <ul class="mb-3">
-                                            ${response.inStockProducts.map(product => `
-                                                <li>
-                                                    <strong>${product.name}</strong><br>
-                                                    Available: ${product.available} KG<br>
-                                                    <div class="mt-2">
-                                                        <div class="input-group">
-                                                            <input type="number" class="form-control quantity-input" 
-                                                                data-product-name="${product.name}"
-                                                                data-product-id="${product.id}"
-                                                                placeholder="Enter quantity in KG">
-                                                            <button class="btn btn-primary submit-check" 
-                                                                data-product-name="${product.name}"
-                                                                data-product-id="${product.id}">
-                                                                Submit
-                                                            </button>
+                                        <div class="stock-section">
+                                            <div class="stock-section-head in"><i class="bi bi-check-circle"></i> In Stock — Products</div>
+                                            <div class="stock-items">
+                                                ${response.inStockProducts.map(product => `
+                                                    <div class="stock-item in">
+                                                        <div class="stock-item-name">${product.name}</div>
+                                                        <div class="stock-item-meta">
+                                                            <span class="stock-pill have">Available <strong>${product.available} KG</strong></span>
+                                                        </div>
+                                                        <div class="stock-item-action">
+                                                            <div class="input-group input-group-sm">
+                                                                <input type="number" class="form-control quantity-input"
+                                                                    data-product-name="${product.name}"
+                                                                    data-product-id="${product.id}"
+                                                                    placeholder="Quantity (KG)">
+                                                                <button class="btn btn-primary submit-check"
+                                                                    data-product-name="${product.name}"
+                                                                    data-product-id="${product.id}">
+                                                                    Submit
+                                                                </button>
+                                                            </div>
                                                         </div>
                                                     </div>
-                                                </li>
-                                            `).join('')}
-                                        </ul>
+                                                `).join('')}
+                                            </div>
+                                        </div>
                                     ` : ''}
                                     ${response.outOfStockPackaging ? `
-                                        <strong class="d-block mb-2">Out of Stock Packaging:</strong>
-                                        <ul class="mb-3">
-                                            ${response.outOfStockPackaging.map(pkg => 
-                                                '<li>' +
-                                                    '<strong>' + pkg.name + '</strong><br>' +
-                                                    'Needed: ' + pkg.needed + ' ' + pkg.satuan + '<br>' +
-                                                    'Available: ' + pkg.available + ' ' + pkg.satuan +
-                                                '</li>'
-                                            ).join('')}
-                                        </ul>
+                                        <div class="stock-section">
+                                            <div class="stock-section-head out"><i class="bi bi-x-circle"></i> Out of Stock — Packaging</div>
+                                            <div class="stock-items">
+                                                ${response.outOfStockPackaging.map(pkg => `
+                                                    <div class="stock-item out">
+                                                        <div class="stock-item-name">${pkg.name}</div>
+                                                        <div class="stock-item-meta">
+                                                            <span class="stock-pill need">Needed <strong>${pkg.needed} ${pkg.satuan}</strong></span>
+                                                            <span class="stock-pill short">Available <strong>${pkg.available} ${pkg.satuan}</strong></span>
+                                                        </div>
+                                                    </div>
+                                                `).join('')}
+                                            </div>
+                                        </div>
                                     ` : ''}
                                     ${response.inStockPackaging ? `
-                                        <strong class="d-block mb-2">In Stock Packaging:</strong>
-                                        <ul class="mb-0">
-                                            ${response.inStockPackaging.map(pkg => `
-                                            <li>
-                                                <strong>${pkg.name}</strong><br>
-                                                Available: ${pkg.available} ${pkg.satuan}
-                                            </li>
-                                        `).join('')}
-                                        </ul>
+                                        <div class="stock-section">
+                                            <div class="stock-section-head in"><i class="bi bi-check-circle"></i> In Stock — Packaging</div>
+                                            <div class="stock-items">
+                                                ${response.inStockPackaging.map(pkg => `
+                                                    <div class="stock-item in">
+                                                        <div class="stock-item-name">${pkg.name}</div>
+                                                        <div class="stock-item-meta">
+                                                            <span class="stock-pill have">Available <strong>${pkg.available} ${pkg.satuan}</strong></span>
+                                                        </div>
+                                                    </div>
+                                                `).join('')}
+                                            </div>
+                                        </div>
                                     ` : ''}
                                 </div>
                             `;
                         } else if (response.inStockProducts) {
                             modalBody = `
-                                <div class="alert alert-success">
-                                    <h6 class="alert-heading mb-2">
-                                        <i class="bi bi-check-circle me-2"></i>
-                                        All Products In Stock
-                                    </h6>
-                                    <p class="mb-2">${response.message}</p>
-                                    <ul class="mb-3">
+                                <div class="stock-result">
+                                    <div class="stock-banner stock-banner--ok">
+                                        <i class="bi bi-check-circle-fill"></i>
+                                        <div>
+                                            <div class="stock-banner-title">All Products In Stock</div>
+                                            <div class="stock-banner-sub">${response.message || ''}</div>
+                                        </div>
+                                    </div>
+                                    <div class="stock-section">
+                                        <div class="stock-section-head in"><i class="bi bi-check-circle"></i> In Stock — Products</div>
+                                        <div class="stock-items">
                                             ${response.inStockProducts.map(product => `
-                                            <li>
-                                                <strong>${product.name}</strong><br>
-                                                Available: ${product.available} KG<br>
-                                                <div class="mt-2">
-                                                    <div class="input-group">
-                                                        <input type="number" class="form-control quantity-input" 
-                                                            data-product-id="${product.id}"
-                                                            data-product-name="${product.name}"
-                                                            placeholder="Enter quantity in KG">
-                                                        <button class="btn btn-primary submit-check" 
-                                                            data-product-id="${product.id}"
-                                                            data-product-name="${product.name}">
-                                                            Submit
-                                                        </button>
+                                                <div class="stock-item in">
+                                                    <div class="stock-item-name">${product.name}</div>
+                                                    <div class="stock-item-meta">
+                                                        <span class="stock-pill have">Available <strong>${product.available} KG</strong></span>
+                                                    </div>
+                                                    <div class="stock-item-action">
+                                                        <div class="input-group input-group-sm">
+                                                            <input type="number" class="form-control quantity-input"
+                                                                data-product-id="${product.id}"
+                                                                data-product-name="${product.name}"
+                                                                placeholder="Quantity (KG)">
+                                                            <button class="btn btn-primary submit-check"
+                                                                data-product-id="${product.id}"
+                                                                data-product-name="${product.name}">
+                                                                Submit
+                                                            </button>
+                                                        </div>
                                                     </div>
                                                 </div>
-                                            </li>
-                                        `).join('')}
-                                    </ul>
+                                            `).join('')}
+                                        </div>
+                                    </div>
                                 </div>
                             `;
                         } else {
                             modalBody = `
-                                <div class="alert alert-warning">
-                                    <h6 class="alert-heading mb-2">
-                                        <i class="bi bi-exclamation-circle me-2"></i>
-                                        No Stock Information
-                                    </h6>
-                                    <p class="mb-0">No stock information is available for this order.</p>
+                                <div class="stock-result">
+                                    <div class="stock-banner stock-banner--warn">
+                                        <i class="bi bi-exclamation-circle-fill"></i>
+                                        <div>
+                                            <div class="stock-banner-title">No Stock Information</div>
+                                            <div class="stock-banner-sub">No stock information is available for this order.</div>
+                                        </div>
+                                    </div>
                                 </div>
                             `;
                         }
@@ -1953,12 +2050,14 @@
 
                             console.error('Error checking stock:', error);
                             const modalBody = `
-                                <div class="alert alert-danger">
-                                    <h6 class="alert-heading mb-2">
-                                        <i class="bi bi-exclamation-triangle me-2"></i>
-                                        Error
-                                    </h6>
-                                    <p class="mb-0">An error occurred while checking stock. Please try again later.</p>
+                                <div class="stock-result">
+                                    <div class="stock-banner stock-banner--fail">
+                                        <i class="bi bi-exclamation-triangle-fill"></i>
+                                        <div>
+                                            <div class="stock-banner-title">Error</div>
+                                            <div class="stock-banner-sub">An error occurred while checking stock. Please try again later.</div>
+                                        </div>
+                                    </div>
                                 </div>
                             `;
                             $('#modalBody').html(modalBody);

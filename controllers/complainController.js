@@ -404,6 +404,7 @@ exports.requestRework = async (req, res) => {
 };
 
 exports.produceBatch = async (req, res) => {
+    const wantsJson = req.xhr || (req.headers.accept && req.headers.accept.indexOf('json') > -1);
     const { id } = req.params;
 
     try {
@@ -421,6 +422,7 @@ exports.produceBatch = async (req, res) => {
         });
 
         if (!complainRework) {
+            if (wantsJson) return res.status(404).json({ success: false, message: 'Rework not found' });
             return res.status(404).send('Rework not found');
         }
 
@@ -438,14 +440,17 @@ exports.produceBatch = async (req, res) => {
         complainRework.batchNumber = batchNumber;
         await complainRework.save();
 
+        if (wantsJson) return res.json({ success: true });
         res.redirect('/dashboard/production');
     } catch (error) {
         console.error('Error producing batch:', error);
+        if (wantsJson) return res.status(500).json({ success: false, message: 'Internal Server Error' });
         res.status(500).send('Internal Server Error');
     }
 };
 
 exports.sendToQC = async (req, res) => {
+    const wantsJson = req.xhr || (req.headers.accept && req.headers.accept.indexOf('json') > -1);
     const { id } = req.params;
 
     try {
@@ -457,8 +462,9 @@ exports.sendToQC = async (req, res) => {
                 }
             ]
         });
-        
+
         if (!complainRework) {
+            if (wantsJson) return res.status(404).json({ success: false, message: 'Rework not found' });
             return res.status(404).send({ error: 'Rework not found' });
         }
 
@@ -474,9 +480,11 @@ exports.sendToQC = async (req, res) => {
             audio: 'qc.mp3'
         });
 
+        if (wantsJson) return res.json({ success: true });
         res.redirect('/dashboard/production');
     } catch (error) {
         console.error('Error sending to QC:', error);
+        if (wantsJson) return res.status(500).json({ success: false, message: 'Internal Server Error' });
         res.status(500).send('Internal Server Error');
     }
 };
@@ -669,6 +677,7 @@ exports.setRawMaterialChoice = async (req, res) => {
 };
 
 exports.addRawMaterial = async (req, res) => {
+    const wantsJson = req.xhr || (req.headers.accept && req.headers.accept.indexOf('json') > -1);
     const { id } = req.params;
     const { rawMaterialId, quantity } = req.body;
     const transaction = await sequelize.transaction();
@@ -681,6 +690,7 @@ exports.addRawMaterial = async (req, res) => {
 
         if (!rework) {
             await transaction.rollback();
+            if (wantsJson) return res.status(404).json({ success: false, message: 'Rework not found' });
             return res.status(404).send('Rework not found');
         }
 
@@ -690,12 +700,14 @@ exports.addRawMaterial = async (req, res) => {
         });
         if (!rawMaterial) {
             await transaction.rollback();
+            if (wantsJson) return res.status(404).json({ success: false, message: 'Raw material not found' });
             return res.status(404).send('Raw material not found');
         }
 
         // Check if there's enough stock
         if (rawMaterial.stock < quantity) {
             await transaction.rollback();
+            if (wantsJson) return res.status(400).json({ success: false, message: 'Not enough raw material stock' });
             return res.status(400).send('Not enough raw material stock');
         }
 
@@ -716,10 +728,12 @@ exports.addRawMaterial = async (req, res) => {
         await rework.save({ transaction });
 
         await transaction.commit();
+        if (wantsJson) return res.json({ success: true });
         res.redirect('/dashboard/production');
     } catch (error) {
         await transaction.rollback();
         console.error('Error adding raw material:', error);
+        if (wantsJson) return res.status(500).json({ success: false, message: 'Internal Server Error' });
         res.status(500).send('Internal Server Error');
     }
 };
@@ -744,6 +758,7 @@ exports.quarantine = async (req, res) => {
 };
 
 exports.completeComplain = async (req, res) => {
+    const wantsJson = req.xhr || (req.headers.accept && req.headers.accept.indexOf('json') > -1);
     const { complainId } = req.params;
     const transaction = await sequelize.transaction();
 
@@ -758,6 +773,7 @@ exports.completeComplain = async (req, res) => {
         const allDelivered = complainItems.every(item => item.status === 'Delivered');
         if (!allDelivered) {
             await transaction.rollback();
+            if (wantsJson) return res.status(400).json({ success: false, message: 'Cannot complete complain. Not all items are delivered.' });
             return res.status(400).send('Cannot complete complain. Not all items are delivered.');
         }
 
@@ -771,10 +787,12 @@ exports.completeComplain = async (req, res) => {
         );
 
         await transaction.commit();
+        if (wantsJson) return res.json({ success: true });
         res.redirect('/dashboard/ppic');
     } catch (error) {
         await transaction.rollback();
         console.error('Error completing complain:', error);
+        if (wantsJson) return res.status(500).json({ success: false, message: 'Error completing complain' });
         res.status(500).send('Error completing complain');
     }
 };

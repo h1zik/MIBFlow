@@ -25,6 +25,7 @@ const User = require('../models/user'); // Import User model
 const RawMaterialVendor = require('../models/rawMaterialVendor');
 const PackagingVendor = require('../models/packagingVendor');
 const ProductCustomer = require('../models/productCustomer'); // Import ProductCustomer model
+const OrderConsumable = require('../models/orderConsumable');
 const { adjustStock, roundQty } = require('../utils/stock');
 const { ACTIVE_PRODUCTION_ORDER_STATUSES } = require('../utils/statuses');
 
@@ -178,18 +179,22 @@ exports.createOrder = async (req, res) => {
         };
 
         const allConsumables = await Consumable.findAll();
-        const consumableFeeMap = new Map();
+        const consumableMap = new Map();
         allConsumables.forEach(item => {
             const normalizedKey = item.name.toLowerCase().replace(/ /g, '');
-            consumableFeeMap.set(normalizedKey, item.fee);
+            consumableMap.set(normalizedKey, item);
         });
 
+        // Collect the selected consumables (any type) to persist relationally; also keep
+        // the legacy 8 boolean flags in sync for backward compatibility.
+        const selectedConsumables = [];
         if (Array.isArray(consumables)) {
             consumables.forEach(consumable => {
                 const normalizedKey = consumable.toLowerCase().replace(/ /g, '');
-                if (consumableFeeMap.has(normalizedKey)) {
-                    const fee = consumableFeeMap.get(normalizedKey);
-                    totalConsumableFees += fee;
+                const record = consumableMap.get(normalizedKey);
+                if (record) {
+                    totalConsumableFees += record.fee;
+                    selectedConsumables.push({ consumableId: record.id, name: record.name, fee: record.fee });
                     if (consumableFlags.hasOwnProperty(normalizedKey)) {
                         consumableFlags[normalizedKey] = true;
                     }
@@ -326,6 +331,16 @@ exports.createOrder = async (req, res) => {
                 ...itemData,
                 orderId: newOrder.id,
             });
+        }
+
+        // Persist the order's consumables relationally (dynamic — supports any type).
+        if (selectedConsumables.length > 0) {
+            await OrderConsumable.bulkCreate(selectedConsumables.map(c => ({
+                orderId: newOrder.id,
+                consumableId: c.consumableId,
+                name: c.name,
+                fee: c.fee
+            })));
         }
 
         // Create products array for the new order
@@ -1522,7 +1537,7 @@ exports.getApprovedOrders = async (req, res) => {
                 {
                     model: OrderItem,
                     as: 'OrderItems',
-                    attributes: ['quantity', 'sentQuantity', 'unit', 'satuan', 'invoicedQuantity'],
+                    attributes: ['quantity', 'sentQuantity', 'unit', 'satuan', 'invoicedQuantity', 'productId'],
                     include: [
                         {
                             model: Product,
@@ -1547,9 +1562,14 @@ exports.getApprovedOrders = async (req, res) => {
             let newTotal = 0;
             for (const item of order.OrderItems) {
                 const quantityDiff = item.sentQuantity - item.invoicedQuantity;
-                const unitPrice = item.satuan === 'L' ? 
-                    (item.Product.price * item.Product.density) : 
-                    item.Product.price;
+                // Use the customer-specific price (same as createOrder); fall back to base.
+                const customerPricing = await ProductCustomer.findOne({
+                    where: { ProductId: item.productId, CustomerId: order.customerId }
+                });
+                const basePrice = customerPricing ? customerPricing.price : (item.Product.price || 0);
+                const unitPrice = item.satuan === 'L'
+                    ? basePrice * item.Product.density
+                    : basePrice;
                 const itemTotal = unitPrice * quantityDiff;
                 newTotal += itemTotal;
             }
@@ -1704,30 +1724,35 @@ exports.getOrderDetails = async (req, res) => {
 
         // Group the order items by product
         const groupedItems = {};
-        order.OrderItems.forEach(item => {
+        for (const item of order.OrderItems) {
             const key = item.Product.name;
+
+            // Use the customer-specific price for this order's customer (same logic as
+            // createOrder); fall back to the base product price only if none is set.
+            const customerPricing = await ProductCustomer.findOne({
+                where: { ProductId: item.productId, CustomerId: order.customerId }
+            });
+            const basePrice = customerPricing ? customerPricing.price : (item.Product.price || 0);
+            const unitPrice = item.satuan === 'L'
+                ? basePrice * item.Product.density
+                : basePrice;
 
             if (!groupedItems[key]) {
                 groupedItems[key] = {
                     product: item.Product.name,
-                    unitPrice: item.satuan === 'L' ? 
-                        (item.Product.price * item.Product.density) : 
-                        item.Product.price,
+                    unitPrice: unitPrice,
                     satuan: item.satuan,
                     totalQuantity: 0,
                     totalPrice: 0,
+                    packagingTotal: 0,
                     packagingDetails: []
                 };
             }
 
             groupedItems[key].totalQuantity += item.quantity;
-            const unitPrice = item.satuan === 'L' ? 
-                (item.Product.price * item.Product.density) : 
-                item.Product.price;
             const packagingPrice = item.Packaging.price || 0;
-            
+
             groupedItems[key].totalPrice += (unitPrice * item.quantity) + (packagingPrice * item.unit);
-            if (!groupedItems[key].packagingTotal) groupedItems[key].packagingTotal = 0;
             groupedItems[key].packagingTotal += packagingPrice * item.unit;
 
             // Add packaging details
@@ -1736,31 +1761,16 @@ exports.getOrderDetails = async (req, res) => {
                 volume: item.Packaging.volume,
                 unit: item.unit
             });
-        });
+        }
 
-        // Get all consumables with their fees
-        const consumables = await Consumable.findAll({
-            attributes: ['name', 'fee']
-        });
+        // The order's consumables are stored relationally now (dynamic — any type).
+        const orderConsumables = await OrderConsumable.findAll({ where: { orderId: order.id } });
+        const consumablesTotal = orderConsumables.reduce((sum, c) => sum + (c.fee || 0), 0);
 
-        // Create a map of consumable names to fees
-        const consumableFees = {};
-        let consumablesTotal = 0;
-
-        consumables.forEach(consumable => {
-            const key = consumable.name.toLowerCase().replace(/ /g, '');
-            consumableFees[key] = consumable.fee;
-            
-            // Add to total if this consumable is used in the order
-            if (order[key]) {
-                consumablesTotal += consumable.fee;
-            }
-        });
-
-        res.render('orders/orderDetails', { 
-            order, 
+        res.render('orders/orderDetails', {
+            order,
             groupedItems: Object.values(groupedItems),
-            consumableFees,
+            orderConsumables,
             consumablesTotal,
             userRole: req.user.role,
             userId: req.user.id,
@@ -1787,7 +1797,7 @@ exports.printInvoice = async (req, res) => {
                     include: [
                         {
                             model: Product,
-                            attributes: ['name', 'price']
+                            attributes: ['name', 'price', 'density']
                         },
                         {
                             model: Packaging,
@@ -1806,14 +1816,18 @@ exports.printInvoice = async (req, res) => {
         let totalOrderAmount = 0;
 
         // Group items by product and accumulate totals
-        order.OrderItems.forEach(item => {
+        for (const item of order.OrderItems) {
             const key = item.Product.name;
-            
-            // Calculate unit price based on satuan (L or KG)
-            const unitPrice = item.satuan === 'L' ? 
-                (item.Product.price * (item.Product.density || 1)) : 
-                item.Product.price;
-            
+
+            // Use the customer-specific price (same as createOrder); fall back to base.
+            const customerPricing = await ProductCustomer.findOne({
+                where: { ProductId: item.productId, CustomerId: order.customerId }
+            });
+            const basePrice = customerPricing ? customerPricing.price : (item.Product.price || 0);
+            const unitPrice = item.satuan === 'L'
+                ? basePrice * (item.Product.density || 1)
+                : basePrice;
+
             // Calculate line total including packaging
             const lineTotal = item.total; // Use the total from orderItem
 
@@ -1833,7 +1847,7 @@ exports.printInvoice = async (req, res) => {
             }
 
             totalOrderAmount += lineTotal;
-        });
+        }
 
         // Generate PDF invoice
         const doc = new PDFDocument({ margin: 50, size: 'A4' });
@@ -1933,31 +1947,17 @@ exports.printInvoice = async (req, res) => {
         // Draw final border line
         doc.moveTo(50, y - 5).lineTo(550, y - 5).stroke();
 
-        // Add consumables section if any are used
-        const consumableFlags = ['pallet', 'sticker', 'wrap', 'handling', 'logistic', 'triplek', 'peti', 'kabelties'];
-        const usedConsumables = consumableFlags.filter(flag => order[flag] === true || order[flag] === '1');
-        
-        if (usedConsumables.length > 0) {
+        // Add consumables section (dynamic — from the order's stored consumables).
+        const orderConsumables = await OrderConsumable.findAll({ where: { orderId: order.id } });
+
+        if (orderConsumables.length > 0) {
             y += 20;
-            
+
             // Section header
             doc.font('Helvetica-Bold')
                .text('Additional Services', 50, y, { underline: true });
             y += 25;
-            
-            // Get consumable fees
-            const consumables = await Consumable.findAll({
-                attributes: ['name', 'fee']
-            });
-            
-            // Create map of normalized names to original names and fees
-            const consumableFeeMap = new Map(
-                consumables.map(c => [
-                    c.name.toLowerCase().replace(/ /g, ''),
-                    { name: c.name, fee: c.fee }
-                ])
-            );
-            
+
             // Draw consumables table
             doc.rect(50, y, 500, 30).fillAndStroke('#E4E4E4', '#000000');
             doc.fillColor('#000000')
@@ -1967,42 +1967,22 @@ exports.printInvoice = async (req, res) => {
                    align: 'right'
                });
             y += 30;
-            
-            // List each consumable
-            for (const consumable of usedConsumables) {
-                const consumableInfo = consumableFeeMap.get(consumable);
-                if (consumableInfo) {
-                    doc.font('Helvetica')
-                       .rect(50, y, 500, 25).stroke()
-                       .text(consumableInfo.name, 60, y + 7)
-                       .text(`Rp${consumableInfo.fee.toLocaleString('id-ID')}`, 460, y + 7, {
-                           width: 80,
-                           align: 'right'
-                       });
-                    y += 25;
-                }
-            }
-            
-            y += 10;
-        }
 
-        // Add consumables total to the order amount
-        const consumableFees = await Consumable.findAll({
-            attributes: ['name', 'fee']
-        });
-        
-        const consumableFeeMap = new Map(
-            consumableFees.map(c => [
-                c.name.toLowerCase().replace(/ /g, ''),
-                { name: c.name, fee: c.fee }
-            ])
-        );
-        
-        for (const consumable of usedConsumables) {
-            const consumableInfo = consumableFeeMap.get(consumable);
-            if (consumableInfo) {
-                totalOrderAmount += consumableInfo.fee;
+            // List each consumable and add its fee to the invoice total
+            for (const consumable of orderConsumables) {
+                const fee = consumable.fee || 0;
+                doc.font('Helvetica')
+                   .rect(50, y, 500, 25).stroke()
+                   .text(consumable.name, 60, y + 7)
+                   .text(`Rp${fee.toLocaleString('id-ID')}`, 460, y + 7, {
+                       width: 80,
+                       align: 'right'
+                   });
+                y += 25;
+                totalOrderAmount += fee;
             }
+
+            y += 10;
         }
 
         // Summary box

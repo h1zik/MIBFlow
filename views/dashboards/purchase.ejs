@@ -20,61 +20,6 @@
             <p class="text-muted mb-0">Manage raw material requests and vendor assignments</p>
         </div>
 
-        <!-- Analytics Section -->
-        <div class="row mb-4">
-            <!-- Raw Material Purchases Chart -->
-            <div class="col-md-6">
-                <div class="dashboard-section h-100">
-                    <div class="section-header">
-                        <h2 class="section-title">
-                            <i class="bi bi-pie-chart"></i>
-                            Raw Material Purchases
-                        </h2>
-                        <div class="btn-group">
-                            <button type="button" class="btn btn-sm btn-outline-primary active" data-chart-type="pie">
-                                <i class="bi bi-pie-chart"></i>
-                            </button>
-                            <button type="button" class="btn btn-sm btn-outline-primary" data-chart-type="bar">
-                                <i class="bi bi-bar-chart"></i>
-                            </button>
-                        </div>
-                    </div>
-                    <div class="section-content show">
-                        <div class="chart-container" style="height: 400px;">
-                            <canvas id="rawMaterialChart"></canvas>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Top 5 Vendors -->
-            <div class="col-md-6">
-                <div class="dashboard-section h-100">
-                    <div class="section-header">
-                        <h2 class="section-title">
-                            <i class="bi bi-trophy"></i>
-                            Top 5 Vendors
-                        </h2>
-                    </div>
-                    <div class="section-content show">
-                        <div class="list-group list-group-flush">
-                            <% topVendors.forEach((vendor, index) => { %>
-                                <div class="list-group-item d-flex justify-content-between align-items-center">
-                                    <div>
-                                        <span class="badge bg-primary rounded-pill me-2"><%= index + 1 %></span>
-                                        <%= vendor.name %>
-                                    </div>
-                                    <div class="text-end">
-                                        <div class="fw-bold">Rp <%= vendor.totalAmount.toLocaleString() %></div>
-                                        <small class="text-muted"><%= vendor.totalOrders %> orders</small>
-                                    </div>
-                                </div>
-                            <% }); %>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
         <%- include('../partials/kanban-toggle') %>
         <div class="dashboard-section">
             <div class="section-header" data-bs-toggle="collapse" data-bs-target="#rawMaterialRequests" aria-expanded="true" aria-controls="rawMaterialRequests">
@@ -601,6 +546,62 @@
                         <% } %>
                     </tbody>
                     </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Analytics Section -->
+        <div class="row mb-4 mt-4">
+            <!-- Raw Material Purchases Chart -->
+            <div class="col-md-6">
+                <div class="dashboard-section h-100">
+                    <div class="section-header">
+                        <h2 class="section-title">
+                            <i class="bi bi-pie-chart"></i>
+                            Raw Material Purchases
+                        </h2>
+                        <div class="btn-group">
+                            <button type="button" class="btn btn-sm btn-outline-primary active" data-chart-type="pie">
+                                <i class="bi bi-pie-chart"></i>
+                            </button>
+                            <button type="button" class="btn btn-sm btn-outline-primary" data-chart-type="bar">
+                                <i class="bi bi-bar-chart"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="section-content show">
+                        <div class="chart-container" style="height: 400px;">
+                            <canvas id="rawMaterialChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Top 5 Vendors -->
+            <div class="col-md-6">
+                <div class="dashboard-section h-100">
+                    <div class="section-header">
+                        <h2 class="section-title">
+                            <i class="bi bi-trophy"></i>
+                            Top 5 Vendors
+                        </h2>
+                    </div>
+                    <div class="section-content show">
+                        <div class="list-group list-group-flush">
+                            <% topVendors.forEach((vendor, index) => { %>
+                                <div class="list-group-item d-flex justify-content-between align-items-center">
+                                    <div>
+                                        <span class="badge bg-primary rounded-pill me-2"><%= index + 1 %></span>
+                                        <%= vendor.name %>
+                                    </div>
+                                    <div class="text-end">
+                                        <div class="fw-bold">Rp <%= vendor.totalAmount.toLocaleString() %></div>
+                                        <small class="text-muted"><%= vendor.totalOrders %> orders</small>
+                                    </div>
+                                </div>
+                            <% }); %>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>

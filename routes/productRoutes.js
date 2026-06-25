@@ -9,8 +9,9 @@ const {
     editProductForm, 
     updateProduct, 
     deleteProduct, 
-    renderEditFormulaPage, 
-    updateFormula, 
+    renderEditFormulaPage,
+    updateFormula,
+    uploadBlendingGuideTemplate,
     addProductCheck,
     completeProductCheck,
     updateProductCheckStock
@@ -44,6 +45,7 @@ router.post('/edit/:id', authenticate, authorize(['Marketing','Product Warehouse
 router.post('/delete/:id', authenticate, authorize(['R&D']), deleteProduct);
 router.get('/:id/editFormula', authenticate, authorize(['R&D']), renderEditFormulaPage);
 router.post('/:id/editFormula', authenticate, authorize(['R&D']), updateFormula);
+router.post('/:id/blendingGuideTemplate', authenticate, authorize(['R&D']), upload.single('bgTemplate'), uploadBlendingGuideTemplate);
 // Product Check routes
 router.post('/productCheck/add', authenticate, authorize(['PPIC']), addProductCheck);
 router.post('/productCheck/:id/updateQC', authenticate, authorize(['QC']), updateProductCheckQCStatus);
