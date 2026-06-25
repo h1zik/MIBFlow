@@ -142,26 +142,27 @@
 
                 <h3 class="form-section-title mt-4"><i class="bi bi-box2 me-1"></i> Consumables Used</h3>
                 <div class="row">
-                    <% const consumables = [
-                        { name: 'Pallet', flag: order.pallet }, { name: 'Sticker', flag: order.sticker },
-                        { name: 'Wrap', flag: order.wrap }, { name: 'Handling', flag: order.handling },
-                        { name: 'Logistic', flag: order.logistic }, { name: 'Triplek', flag: order.triplek },
-                        { name: 'Peti', flag: order.peti }, { name: 'Kabel Ties', flag: order.kabelties }
-                    ] %>
-                    <% consumables.forEach(consumable => { %>
-                        <div class="col-md-3 col-6 mb-2">
-                            <div class="d-flex align-items-center gap-2">
-                                <i class="bi <%= consumable.flag ? 'bi-check-circle-fill text-success' : 'bi-x-circle text-muted-2' %>"></i>
-                                <span><%= consumable.name %></span>
+                    <% if (orderConsumables && orderConsumables.length > 0) { %>
+                        <% orderConsumables.forEach(consumable => { %>
+                            <div class="col-md-4 col-6 mb-2">
+                                <div class="d-flex align-items-center justify-content-between gap-2">
+                                    <span class="d-flex align-items-center gap-2">
+                                        <i class="bi bi-check-circle-fill text-success"></i>
+                                        <%= consumable.name %>
+                                    </span>
+                                    <span class="cell-sub">Rp <%= consumable.fee.toLocaleString() %></span>
+                                </div>
                             </div>
-                        </div>
-                    <% }) %>
+                        <% }) %>
+                    <% } else { %>
+                        <div class="col-12"><span class="cell-sub">No consumables selected.</span></div>
+                    <% } %>
                 </div>
 
                 <div class="form-section mt-4 mb-0">
                     <div class="total-line"><span>Products Subtotal</span><span>Rp <%= Object.values(groupedItems).reduce((sum, item) => sum + item.totalPrice - item.packagingTotal, 0).toLocaleString() %></span></div>
                     <div class="total-line"><span>Packaging Subtotal</span><span>Rp <%= Object.values(groupedItems).reduce((sum, item) => sum + item.packagingTotal, 0).toLocaleString() %></span></div>
-                    <% if (order.pallet || order.sticker || order.wrap || order.handling || order.logistic || order.triplek || order.peti || order.kabelties) { %>
+                    <% if (orderConsumables && orderConsumables.length > 0) { %>
                     <div class="total-line"><span>Consumables</span><span>Rp <%= consumablesTotal.toLocaleString() %></span></div>
                     <% } %>
                     <div class="total-line"><span>Subtotal</span><span>Rp <%= order.total.toLocaleString() %></span></div>

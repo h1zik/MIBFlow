@@ -24,6 +24,10 @@ const storage = multer.diskStorage({
             const dir = 'uploads/BGScan';
             ensureDirectoryExists(dir);
             cb(null, dir);
+        } else if (file.fieldname === 'bgTemplate') {
+            const dir = 'uploads/BGTemplates';
+            ensureDirectoryExists(dir);
+            cb(null, dir);
         } else {
             cb(null, 'uploads/'); // Default directory
         }

@@ -37,8 +37,18 @@
         // (the include may have landed inside a row/col).
         content.insertBefore(viewbar, board);
 
-        // Move sections into the board (DOM move preserves their event handlers).
-        sections.forEach(function (s) { board.appendChild(s); });
+        // Move sections into the board (DOM move preserves their event handlers)
+        // and tag each column with a colour accent derived from its title, so the
+        // board reads as grouped stages: failed = danger, vendor = info, else primary.
+        sections.forEach(function (s) {
+            var titleEl = s.querySelector('.section-title');
+            var title = (titleEl ? titleEl.textContent : '').toLowerCase();
+            var accent = 'primary';
+            if (title.indexOf('failed') > -1 || title.indexOf('reject') > -1) accent = 'danger';
+            else if (title.indexOf('vendor') > -1) accent = 'info';
+            s.setAttribute('data-kbaccent', accent);
+            board.appendChild(s);
+        });
 
         const btns = viewbar.querySelectorAll('[data-kbview]');
         const KEY = 'kbview:' + location.pathname;

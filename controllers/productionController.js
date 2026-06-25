@@ -1,5 +1,6 @@
 const { Production, ProductionRawMaterial } = require('../models/production');
 const Product = require('../models/product');
+const ProductFormula = require('../models/productFormula');
 const RawMaterial = require('../models/rawMaterial');
 const Outbound = require('../models/outbound');
 const Tank = require('../models/tank');
@@ -321,6 +322,7 @@ exports.scheduleProduction = async (req, res) => {
 
 
 exports.updateStock = async (req, res) => {
+    const wantsJson = req.xhr || (req.headers.accept && req.headers.accept.indexOf('json') > -1);
     const { id } = req.params;
     let { realQuantity } = req.body;
 
@@ -328,6 +330,7 @@ exports.updateStock = async (req, res) => {
     realQuantity = parseFloat(realQuantity);
     if (isNaN(realQuantity) || realQuantity < 0) {
         console.error("Error: Invalid real quantity value. Received:", realQuantity);
+        if (wantsJson) return res.status(400).json({ success: false, message: "Invalid quantity value. Please enter a valid positive number." });
         return res.status(400).send("Invalid quantity value. Please enter a valid positive number.");
     }
 
@@ -346,16 +349,19 @@ exports.updateStock = async (req, res) => {
 
         if (!production) {
             await transaction.rollback();
+            if (wantsJson) return res.status(404).json({ success: false, message: "Production not found" });
             return res.status(404).send("Production not found");
         }
 
         if (production.qcStatus !== "Pass") {
             await transaction.rollback();
+            if (wantsJson) return res.status(400).json({ success: false, message: "Production has not passed QC" });
             return res.status(400).send("Production has not passed QC");
         }
 
         if (!production.Product) {
             await transaction.rollback();
+            if (wantsJson) return res.status(400).json({ success: false, message: "Product association not found" });
             return res.status(400).send("Product association not found");
         }
 
@@ -373,15 +379,18 @@ exports.updateStock = async (req, res) => {
         );
 
         await transaction.commit();
+        if (wantsJson) return res.json({ success: true });
         return res.redirect("/dashboard/production");
     } catch (error) {
         await transaction.rollback();
         console.error("Error updating stock:", error);
+        if (wantsJson) return res.status(500).json({ success: false, message: "Error updating stock. Please try again." });
         return res.status(500).send("Error updating stock. Please try again.");
     }
 };
 
 exports.produceBatch = async (req, res) => {
+    const wantsJson = req.xhr || (req.headers.accept && req.headers.accept.indexOf('json') > -1);
     const { id } = req.params;
 
     try {
@@ -395,6 +404,7 @@ exports.produceBatch = async (req, res) => {
         });
 
         if (!production) {
+            if (wantsJson) return res.status(404).json({ success: false, message: 'Production not found' });
             return res.status(404).send('Production not found');
         }
 
@@ -412,9 +422,11 @@ exports.produceBatch = async (req, res) => {
         production.batchNumber = batchNumber;
         await production.save();
 
+        if (wantsJson) return res.json({ success: true });
         res.redirect('/production/production');
     } catch (error) {
         console.error('Error producing batch:', error);
+        if (wantsJson) return res.status(500).json({ success: false, message: 'Internal Server Error' });
         res.status(500).send('Internal Server Error');
     }
 };
@@ -468,25 +480,40 @@ exports.printProduction = async (req, res) => {
     try {
         const { id } = req.params;
         const production = await Production.findByPk(id, {
-            include: [{
-                model: Tank,
-                through: {
-                    attributes: []
-                }
-            }]
+            include: [
+                { model: Product },
+                { model: Tank, through: { attributes: [] } }
+            ]
         });
 
-        if (!production || !production.formula) {
-            return res.status(404).send('Production or associated Excel file not found');
+        if (!production) {
+            return res.status(404).send('Production not found');
         }
 
-        // Load the existing Excel file
+        // Prefer the product-level Blending Guide template (authored once by RnD);
+        // fall back to a legacy per-request formula file if present.
+        let filePath = null;
+        if (production.Product && production.Product.blendingGuideTemplate) {
+            filePath = path.join(__dirname, '../uploads/BGTemplates', production.Product.blendingGuideTemplate);
+        } else if (production.formula) {
+            filePath = path.join(__dirname, '../uploads', production.formula);
+        }
+
+        // No template available → mark issued and use the generated HTML Blending Guide.
+        if (!filePath || !fs.existsSync(filePath)) {
+            await production.update({ isPrinted: true });
+            req.app.locals.sendNotification({
+                type: 'productionPrinted',
+                batchNumber: production.batchNumber,
+                status: 'Printed',
+                audio: 'production.mp3'
+            });
+            return res.redirect(`/production/blending-guide/${production.id}`);
+        }
+
+        // Template available (product template or legacy file) → clone it and stamp the
+        // batch-dynamic fields (quantity, batch number, tank) onto the worksheet.
         const workbook = new ExcelJS.Workbook();
-        const filePath = path.join(__dirname, '../uploads', production.formula);
-
-        if (!fs.existsSync(filePath)) {
-            return res.status(404).send('Excel file not found');
-        }
 
         console.log('Attempting to read Excel file:', filePath);
         try {
@@ -623,6 +650,68 @@ exports.printProduction = async (req, res) => {
     }
 };
 
+// Blending Guide generated from the structured formula (single source of truth).
+// Read-only: computes each raw material's quantity = (percentage / 100) * batch qty,
+// renders a print-ready page. Does NOT mutate state, so it never interferes with the
+// existing upload-based print flow.
+exports.getBlendingGuide = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const production = await Production.findByPk(id, {
+            include: [
+                { model: Product },
+                { model: Tank, through: { attributes: [] } }
+            ]
+        });
+
+        if (!production) {
+            return res.status(404).send('Production not found');
+        }
+
+        const formulaItems = await ProductFormula.findAll({
+            where: { productId: production.productId },
+            include: [RawMaterial]
+        });
+
+        const totalQty = Number(production.quantity) || 0;
+        const rows = formulaItems.map((f, i) => {
+            const rm = f.RawMaterial;
+            const pct = Number(f.percentage) || 0;
+            const qtyKg = (pct / 100) * totalQty;
+            const density = rm && rm.density ? Number(rm.density) : null;
+            const qtyL = (density && density > 0) ? (qtyKg / density) : null;
+            return {
+                no: i + 1,
+                name: rm ? rm.name : '(bahan baku tidak ditemukan)',
+                form: rm ? rm.form : '',
+                percentage: pct,
+                qtyKg,
+                qtyL
+            };
+        });
+
+        const totalPct = rows.reduce((s, r) => s + r.percentage, 0);
+        const totalKg = rows.reduce((s, r) => s + r.qtyKg, 0);
+        const tankNames = (production.Tanks || []).map(t => t.name).join(', ') || '-';
+
+        res.render('production/blendingGuide', {
+            production,
+            product: production.Product,
+            rows,
+            totalPct,
+            totalKg,
+            totalQty,
+            tankNames,
+            generatedAt: new Date(),
+            userRole: req.user.role,
+            path: '/production/blending-guide'
+        });
+    } catch (error) {
+        console.error('Error generating blending guide:', error);
+        res.status(500).send('Error generating blending guide');
+    }
+};
+
 exports.getProductionSchedule = async (req, res) => {
     try {
         const productions = await Production.findAll({
@@ -739,12 +828,14 @@ exports.addForklift = async (req, res) => {
 };
 
 exports.setBGReceived = async (req, res) => {
+    const wantsJson = req.xhr || (req.headers.accept && req.headers.accept.indexOf('json') > -1);
     const { id } = req.params;
 
     try {
         const production = await Production.findByPk(id);
-        
+
         if (!production) {
+            if (wantsJson) return res.status(404).json({ success: false, message: 'Production not found' });
             return res.status(404).send('Production not found');
         }
 
@@ -752,20 +843,24 @@ exports.setBGReceived = async (req, res) => {
         production.status = 'In Production';
         await production.save();
 
+        if (wantsJson) return res.json({ success: true });
         res.redirect('/dashboard/production');
     } catch (error) {
         console.error('Error updating production status:', error);
+        if (wantsJson) return res.status(500).json({ success: false, message: 'Internal Server Error' });
         res.status(500).send('Internal Server Error');
     }
 };
 
 exports.quarantineProduction = async (req, res) => {
+    const wantsJson = req.xhr || (req.headers.accept && req.headers.accept.indexOf('json') > -1);
     const { id } = req.params;
 
     try {
         const production = await Production.findByPk(id);
-        
+
         if (!production) {
+            if (wantsJson) return res.status(404).json({ success: false, message: 'Production not found' });
             return res.status(404).send('Production not found');
         }
 
@@ -773,9 +868,11 @@ exports.quarantineProduction = async (req, res) => {
         production.status = 'Quarantined';
         await production.save();
 
+        if (wantsJson) return res.json({ success: true });
         res.redirect('/dashboard/production');
     } catch (error) {
         console.error('Error quarantining production:', error);
+        if (wantsJson) return res.status(500).json({ success: false, message: 'Internal Server Error' });
         res.status(500).send('Internal Server Error');
     }
 };

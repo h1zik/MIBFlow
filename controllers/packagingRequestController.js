@@ -308,6 +308,9 @@ exports.submitSplitQuantities = async (req, res) => {
             quantity: packagingRequest.realQuantity,
             audio: 'finance.mp3'
         });
+        if (wantsJson) {
+            return res.json({ success: true, status: 'Vendor Assigned', message: 'Vendor splits submitted successfully.' });
+        }
         res.redirect('/dashboard/purchase');
     } catch (error) {
         await transaction.rollback();
@@ -413,11 +416,11 @@ exports.updatePackagingStock = async (req, res) => {
         }, { transaction });
 
         await transaction.commit();
-        res.redirect('/dashboard/raw-material-warehouse');
+        res.json({ success: true, status: 'Completed' });
     } catch (error) {
         await transaction.rollback();
         console.error('Error updating packaging stock:', error);
-        res.status(400).send(error);
+        res.status(400).json({ success: false, message: error.message });
     }
 };
 
@@ -451,10 +454,10 @@ exports.testToQC = async (req, res) => {
             audio: 'qc.mp3'
         });
 
-        res.redirect('/dashboard/raw-material-warehouse');
+        res.json({ success: true, status: 'QC Testing' });
     } catch (error) {
         console.error('Error updating QC status:', error);
-        res.status(500).send('Internal Server Error');
+        res.status(500).json({ success: false, message: 'Internal Server Error' });
     }
 };
 
@@ -470,10 +473,10 @@ exports.markAsReceived = async (req, res) => {
         requestVendor.status = 'Received';
         await requestVendor.save();
 
-        res.redirect('/dashboard/raw-material-warehouse');
+        res.json({ success: true, status: 'Received' });
     } catch (error) {
         console.error('Error marking as received:', error);
-        res.status(500).send('Internal Server Error');
+        res.status(500).json({ success: false, message: 'Internal Server Error' });
     }
 };
 
@@ -660,10 +663,10 @@ exports.receivedFailedPackaging = async (req, res) => {
         requestVendor.status = 'Quarantined';
         await requestVendor.save();
 
-        res.redirect('/dashboard/raw-material-warehouse');
+        res.json({ success: true, status: 'Quarantined' });
     } catch (error) {
         console.error('Error marking packaging as quarantined:', error);
-        res.status(500).send('Internal Server Error');
+        res.status(500).json({ success: false, message: 'Internal Server Error' });
     }
 };
 
@@ -689,19 +692,23 @@ exports.updatePoNumber = async (req, res) => {
 
 exports.completePackagingRequest = async (req, res) => {
     const { id } = req.params;
+    const wantsJson = req.xhr || (req.headers.accept && req.headers.accept.indexOf('json') > -1);
 
     try {
         const request = await PackagingRequest.findByPk(id);
         if (!request) {
+            if (wantsJson) return res.status(404).json({ success: false, message: 'Packaging request not found' });
             return res.status(404).send('Packaging request not found');
         }
 
         request.status = 'Completed';
         await request.save();
 
+        if (wantsJson) { return res.json({ success: true }); }
         res.redirect('/dashboard/ppic');
     } catch (error) {
         console.error('Error completing packaging request:', error);
+        if (wantsJson) return res.status(500).json({ success: false, message: 'Internal Server Error' });
         res.status(500).send('Internal Server Error');
     }
 };

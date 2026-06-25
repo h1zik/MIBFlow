@@ -22,6 +22,7 @@ const ProductionRequestPackaging = require('./productionRequestPackaging');
 const Outbound = require('./outbound');
 const PackagingVendor = require('./packagingVendor');
 const ProductCustomer = require('./productCustomer');
+const OrderConsumable = require('./orderConsumable');
 
 // Production associations
 Production.hasMany(ProductionRawMaterial, { foreignKey: 'ProductionId' });
@@ -53,6 +54,8 @@ PackagingRequestVendor.belongsTo(Vendor, { foreignKey: 'vendorId' });
 // Order associations
 Order.hasMany(PackagingRequest, { foreignKey: 'orderId', onDelete: 'CASCADE' });
 Order.hasMany(OrderItem, { foreignKey: 'orderId', onDelete: 'CASCADE' });
+Order.hasMany(OrderConsumable, { foreignKey: 'orderId', onDelete: 'CASCADE' });
+OrderConsumable.belongsTo(Order, { foreignKey: 'orderId', onDelete: 'CASCADE' });
 Order.hasMany(ProductionRequest, { foreignKey: 'orderId' });
 Order.belongsTo(Customer, { foreignKey: 'customerId', onDelete: 'CASCADE' });
 

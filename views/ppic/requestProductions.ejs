@@ -376,47 +376,22 @@
                     </div>
 
                     <div class="form-group">
-                        <label class="form-label" for="formula-<%= product.productId %>">Formula (Excel)</label>
-                        <div class="mb-2">
-                            <div class="form-check">
-                                <input class="form-check-input formula-source" type="radio" name="formulaSource-<%= product.productId %>" id="useExisting-<%= product.productId %>" value="existing" checked>
-                                <label class="form-check-label" for="useExisting-<%= product.productId %>">
-                                    Use existing formula from product
-                                </label>
-                            </div>
-                            <div class="form-check">
-                                <input class="form-check-input formula-source" type="radio" name="formulaSource-<%= product.productId %>" id="uploadNew-<%= product.productId %>" value="upload">
-                                <label class="form-check-label" for="uploadNew-<%= product.productId %>">
-                                    Upload new formula
-                                </label>
-                            </div>
-                        </div>
-                        <!-- Using a single hidden input to store the existing formula path -->
-                        <input type="hidden" name="existingFormula-<%= product.productId %>" id="existingFormula-<%= product.productId %>" value="<%= product.formula || '' %>">
-                        <div id="formulaUploadContainer-<%= product.productId %>" style="display: none;">
-                            <input type="file" class="form-control" id="formula-<%= product.productId %>" name="formula-<%= product.productId %>" accept=".xlsx">
-                        </div>
-                        <% if (product.formula) { %>
-                            <div id="existingFormulaInfo-<%= product.productId %>" class="mt-2">
-                                <div class="alert alert-info">
-                                    <i class="bi bi-file-earmark-excel me-2"></i>
-                                    Using existing formula: <strong><%= product.formula.split('/').pop() %></strong>
-                                </div>
+                        <label class="form-label">Formula / Blending Guide</label>
+                        <% if (product.rawMaterials && product.rawMaterials.length > 0) { %>
+                            <div class="alert alert-success mb-0">
+                                <i class="bi bi-check-circle me-2"></i>
+                                Formula tersedia otomatis dari sistem (<%= product.rawMaterials.length %> bahan baku).
+                                Blending Guide akan di-generate dari formula ini saat produksi — tidak perlu upload file.
                             </div>
                         <% } else { %>
-                            <div id="existingFormulaInfo-<%= product.productId %>" class="mt-2">
-                                <div class="alert alert-warning">
-                                    <i class="bi bi-exclamation-triangle me-2"></i>
-                                    No existing formula found. Please upload a formula file.
-                                </div>
+                            <div class="alert alert-warning mb-0">
+                                <i class="bi bi-exclamation-triangle me-2"></i>
+                                Formula produk ini belum diisi oleh RnD. Mohon lengkapi formula produk terlebih dahulu
+                                agar kebutuhan bahan baku &amp; Blending Guide bisa dihitung otomatis.
                             </div>
-                            <script>
-                                // Auto-select upload option if no existing formula
-                                document.getElementById('uploadNew-<%= product.productId %>').checked = true;
-                                document.getElementById('useExisting-<%= product.productId %>').disabled = true;
-                                document.getElementById('formulaUploadContainer-<%= product.productId %>').style.display = 'block';
-                            </script>
                         <% } %>
+                        <!-- Backward-compat: carry any legacy formula file reference (optional, not required) -->
+                        <input type="hidden" name="existingFormula-<%= product.productId %>" value="<%= product.formula || '' %>">
                     </div>
 
                     <div class="form-group">
@@ -1029,26 +1004,8 @@
                     });
                 }
             });
-            
-            // Handle formula source selection
-            document.querySelectorAll('.formula-source').forEach(radio => {
-                radio.addEventListener('change', function() {
-                    const productId = this.id.split('-')[1];
-                    const uploadContainer = document.getElementById(`formulaUploadContainer-${productId}`);
-                    const fileInput = document.getElementById(`formula-${productId}`);
-                    const existingFormulaInfo = document.getElementById(`existingFormulaInfo-${productId}`);
-                    
-                    if (this.value === 'upload') {
-                        uploadContainer.style.display = 'block';
-                        fileInput.required = true;
-                        existingFormulaInfo.style.display = 'none';
-                    } else {
-                        uploadContainer.style.display = 'none';
-                        fileInput.required = false;
-                        existingFormulaInfo.style.display = 'block';
-                    }
-                });
-            });
+            // Formula upload removed — the formula now comes from the structured DB
+            // formula (ProductFormula) and the Blending Guide is generated from it.
         });
     </script>
 </body>

@@ -2,7 +2,7 @@ const express = require('express');
 const { requestProductionForm, requestProduction, getProductionRequests, approveProductionRequest, declineProductionRequest, sendToQC, updateStock, renderRequestProductionPage, createProductionRequest, viewProductionRequest, clearProductionRequest, getCompletedProductionRequests, getRawMaterials, addRawMaterial, setRawMaterialChoice} = require('../controllers/productionRequestController');
 const { authenticate, authorize } = require('../middleware/authMiddleware');
 const upload = require('../middleware/fileUpload');
-const { getScheduleProductionForm, scheduleProduction, produceBatch, printProduction, quarantineProduction, setBGReceived} = require('../controllers/productionController');
+const { getScheduleProductionForm, scheduleProduction, produceBatch, printProduction, quarantineProduction, setBGReceived, getBlendingGuide} = require('../controllers/productionController');
 const { retainSample} = require('../controllers/qcController');
 const { createAutoRawMaterialRequest} = require('../controllers/rawMaterialRequestController');
 const { deleteKanbanCard } = require('../controllers/ppicKanbanController');
@@ -40,6 +40,7 @@ router.post('/:id/clear', authenticate, authorize(['PPIC']), clearProductionRequ
 router.get('/productionRequest/history', authenticate, authorize(['PPIC']), getCompletedProductionRequests);
 
 router.post('/print/:id', authenticate, authorize(['Production','PPIC']), printProduction);
+router.get('/blending-guide/:id', authenticate, authorize(['Production','PPIC']), getBlendingGuide);
 router.post('/quarantine/:id', authenticate, authorize(['Production']), quarantineProduction);
 router.post('/setRawMaterialChoice/:id', authenticate, authorize(['Production']), setRawMaterialChoice);
 router.post('/addRawMaterial/:id', authenticate, authorize(['Production']), addRawMaterial);
