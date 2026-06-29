@@ -36,7 +36,8 @@ const Order = sequelize.define('Order', {
     },
     sonumber: {
         type: DataTypes.STRING, // Sales Order number
-        allowNull: false
+        allowNull: false,
+        unique: true
     },
     total: {
         type: DataTypes.FLOAT,

@@ -1,65 +1,125 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <%- include('../partials/head', { pageTitle: 'Login' }) %>
+    <%- include('../partials/head', { pageTitle: 'Login', extraStylesheets: ['/css/auth.css'] }) %>
 </head>
 <body class="auth-page">
-    <div class="auth-card">
-        <div class="auth-header">
-            <img src="/images/logomib.svg" alt="MIB Flow" class="auth-logo">
-            <h1>Welcome Back</h1>
-            <p>Sign in to MIB Flow</p>
-        </div>
+    <!-- ambient depth orbs -->
+    <span class="auth-page__orb o1" aria-hidden="true"></span>
+    <span class="auth-page__orb o2" aria-hidden="true"></span>
 
-        <% 
-        const errorMessages = {
-            session_expired: 'Your session has expired. Please sign in again.',
-            invalid_credentials: 'Invalid username or password.',
-            user_not_found: 'User not found.'
-        };
-        const displayError = typeof error === 'string' ? (errorMessages[error] || error) : null;
-        %>
-        <% if (displayError) { %>
-            <div class="mib-flash mib-flash-error mb-3" role="alert">
-                <i class="bi bi-exclamation-triangle-fill"></i>
-                <span><%= displayError %></span>
-            </div>
-        <% } %>
+    <main class="auth-shell">
+        <!-- Brand / hero panel (desktop) -->
+        <aside class="auth-aside" aria-hidden="true">
+            <span class="aurora a"></span>
+            <span class="aurora b"></span>
+            <span class="aurora c"></span>
 
-        <form action="/auth/login" method="POST" novalidate>
-            <div class="mb-3">
-                <label for="username" class="form-label">Username</label>
-                <div class="input-group">
-                    <span class="input-group-text"><i class="bi bi-person"></i></span>
-                    <input type="text" class="form-control" id="username" name="username" placeholder="Enter username" required autofocus>
+            <div class="auth-aside__inner">
+                <div class="brand-lockup">
+                    <img src="/images/logomib.svg" alt="" class="brand-logo">
+                    <span class="brand-name">MIB&nbsp;Flow</span>
                 </div>
-            </div>
 
-            <div class="mb-4">
-                <label for="password" class="form-label">Password</label>
-                <div class="input-group">
-                    <span class="input-group-text"><i class="bi bi-lock"></i></span>
-                    <input type="password" class="form-control" id="password" name="password" placeholder="Enter password" required>
-                    <button type="button" class="btn btn-outline-secondary" id="togglePassword" aria-label="Show password">
-                        <i class="bi bi-eye-slash"></i>
+                <h2 class="auth-aside__title">Production &amp; orders, end to end.</h2>
+                <p class="auth-aside__subtitle">From sales orders to blending, QC and delivery — one connected workflow for the whole MIB team.</p>
+
+                <ul class="auth-points">
+                    <li><i class="bi bi-check2-circle"></i> Real-time order &amp; stock visibility</li>
+                    <li><i class="bi bi-check2-circle"></i> Role-based dashboards</li>
+                    <li><i class="bi bi-check2-circle"></i> Traceable from PO to invoice</li>
+                </ul>
+
+                <div class="auth-aside__foot">© <span id="year"></span> MIB Chemicals</div>
+            </div>
+        </aside>
+
+        <!-- Form panel -->
+        <section class="auth-main">
+            <div class="auth-card">
+                <div class="auth-card__head">
+                    <img src="/images/logomib.svg" alt="MIB Flow" class="auth-logo">
+                    <h1>Welcome back</h1>
+                    <p>Sign in to continue to your dashboard.</p>
+                </div>
+
+                <%
+                const errorMessages = {
+                    session_expired: 'Your session has expired. Please sign in again.',
+                    invalid_credentials: 'Invalid username or password.',
+                    user_not_found: 'User not found.'
+                };
+                const displayError = typeof error === 'string' ? (errorMessages[error] || error) : null;
+                %>
+                <% if (displayError) { %>
+                    <div class="auth-flash" role="alert">
+                        <i class="bi bi-exclamation-triangle-fill"></i>
+                        <span><%= displayError %></span>
+                    </div>
+                <% } %>
+
+                <form class="auth-form" action="/auth/login" method="POST" novalidate>
+                    <div class="field">
+                        <input type="text" id="username" name="username" placeholder=" " required autofocus autocomplete="username">
+                        <label for="username">Username</label>
+                        <i class="bi bi-person field__icon"></i>
+                    </div>
+
+                    <div class="field">
+                        <input type="password" id="password" name="password" placeholder=" " required autocomplete="current-password">
+                        <label for="password">Password</label>
+                        <i class="bi bi-lock field__icon"></i>
+                        <button type="button" class="field__toggle" id="togglePassword" aria-label="Show password" aria-pressed="false">
+                            <i class="bi bi-eye-slash"></i>
+                        </button>
+                    </div>
+
+                    <p class="caps-hint" id="capsHint" hidden>
+                        <i class="bi bi-capslock-fill"></i> Caps Lock is on
+                    </p>
+
+                    <button type="submit" class="btn-auth" id="loginBtn">
+                        <span class="label">Sign In</span>
+                        <i class="bi bi-arrow-right arrow"></i>
+                        <span class="spinner" aria-hidden="true"></span>
                     </button>
-                </div>
+                </form>
             </div>
-
-            <button type="submit" class="btn btn-auth">
-                Sign In <i class="bi bi-arrow-right ms-2"></i>
-            </button>
-        </form>
-    </div>
+        </section>
+    </main>
 
     <script>
+        // current year in the brand footer
+        document.getElementById('year').textContent = new Date().getFullYear();
+
+        // password visibility toggle
+        const pwd = document.getElementById('password');
         document.getElementById('togglePassword')?.addEventListener('click', function () {
-            const input = document.getElementById('password');
             const icon = this.querySelector('i');
-            const isHidden = input.type === 'password';
-            input.type = isHidden ? 'text' : 'password';
-            icon.classList.toggle('bi-eye-slash', !isHidden);
-            icon.classList.toggle('bi-eye', isHidden);
+            const show = pwd.type === 'password';
+            pwd.type = show ? 'text' : 'password';
+            icon.classList.toggle('bi-eye-slash', !show);
+            icon.classList.toggle('bi-eye', show);
+            this.setAttribute('aria-pressed', String(show));
+            this.setAttribute('aria-label', show ? 'Hide password' : 'Show password');
+            pwd.focus();
+        });
+
+        // Caps Lock awareness on the password field
+        const capsHint = document.getElementById('capsHint');
+        function updateCaps(e) {
+            if (typeof e.getModifierState !== 'function') return;
+            capsHint.hidden = !e.getModifierState('CapsLock');
+        }
+        pwd?.addEventListener('keydown', updateCaps);
+        pwd?.addEventListener('keyup', updateCaps);
+        pwd?.addEventListener('blur', () => { capsHint.hidden = true; });
+
+        // Loading state on submit (the POST triggers a full navigation/redirect)
+        const form = document.querySelector('.auth-form');
+        const btn = document.getElementById('loginBtn');
+        form?.addEventListener('submit', function () {
+            if (form.checkValidity()) btn.classList.add('is-loading');
         });
     </script>
 </body>

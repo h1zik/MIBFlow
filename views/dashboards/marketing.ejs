@@ -2,62 +2,160 @@
 <html lang="en">
 <head>
     <%- include('../partials/head', { pageTitle: 'Marketing Dashboard', extraScripts: ['https://cdn.jsdelivr.net/npm/chart.js'] }) %>
+    <style>
+        /* ----- Dashboard-only flourishes (built on the shared system) ----- */
+        .dash-hero {
+            position: relative;
+            overflow: hidden;
+            border-radius: var(--mib-radius-lg);
+            padding: 1.9rem 2rem;
+            margin-bottom: 1.75rem;
+            color: #eaf6ef;
+            background: var(--mib-sidebar-bg);
+            box-shadow: var(--mib-shadow-md);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 1.25rem;
+            flex-wrap: wrap;
+        }
+        .dash-hero::after {
+            content: "";
+            position: absolute;
+            inset: 0;
+            background:
+                radial-gradient(460px 220px at 88% -30%, rgba(110, 231, 183, 0.30), transparent 60%),
+                radial-gradient(360px 200px at 10% 130%, rgba(110, 231, 183, 0.16), transparent 60%);
+            pointer-events: none;
+        }
+        .dash-hero__text { position: relative; z-index: 1; min-width: 0; }
+        .dash-hello { margin: 0 0 0.35rem; font-size: 0.82rem; font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase; color: rgba(255, 255, 255, 0.66); }
+        .dash-hero h1 { margin: 0; font-size: 1.85rem; font-weight: 750; letter-spacing: -0.025em; color: #fff; display: flex; align-items: center; gap: 0.6rem; }
+        .dash-hero p.sub { margin: 0.5rem 0 0; color: rgba(255, 255, 255, 0.78); font-size: 0.92rem; max-width: 52ch; }
+        .dash-hero__actions { position: relative; z-index: 1; display: flex; gap: 0.6rem; flex-wrap: wrap; }
+        .dash-hero .btn-light { background: rgba(255, 255, 255, 0.14); border-color: rgba(255, 255, 255, 0.22); color: #fff; backdrop-filter: blur(4px); }
+        .dash-hero .btn-light:hover { background: rgba(255, 255, 255, 0.24); color: #fff; }
+        .dash-hero .btn-white { background: #fff; color: var(--mib-primary-dark); border: none; box-shadow: 0 8px 18px -6px rgba(0,0,0,0.3); }
+        .dash-hero .btn-white:hover { background: #f3faf6; color: var(--mib-primary-dark); transform: translateY(-1px); }
+
+        /* staggered entrance */
+        .stagger > * { opacity: 0; animation: fadeIn 0.5s ease forwards; }
+        .stagger > *:nth-child(1) { animation-delay: 0.05s; }
+        .stagger > *:nth-child(2) { animation-delay: 0.12s; }
+        .stagger > *:nth-child(3) { animation-delay: 0.19s; }
+        .stagger > *:nth-child(4) { animation-delay: 0.26s; }
+
+        /* top-customers list */
+        .rank-list { display: flex; flex-direction: column; }
+        .rank-row {
+            display: flex; align-items: center; gap: 0.85rem;
+            padding: 0.7rem 0; border-top: 1px solid var(--mib-border);
+        }
+        .rank-row:first-child { border-top: none; }
+        .rank-badge {
+            flex-shrink: 0; width: 30px; height: 30px; border-radius: 9px;
+            display: grid; place-items: center; font-weight: 700; font-size: 0.82rem;
+            background: var(--mib-surface-2); color: var(--mib-text-muted); border: 1px solid var(--mib-border);
+        }
+        .rank-row:nth-child(1) .rank-badge { background: linear-gradient(135deg, #fde68a, #f59e0b); color: #fff; border: none; }
+        .rank-row:nth-child(2) .rank-badge { background: linear-gradient(135deg, #e5e7eb, #9ca3af); color: #fff; border: none; }
+        .rank-row:nth-child(3) .rank-badge { background: linear-gradient(135deg, #fcd9b6, #d97706); color: #fff; border: none; }
+        .rank-name { font-weight: 600; color: var(--mib-text); min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .rank-meta { margin-left: auto; text-align: right; flex-shrink: 0; }
+        .rank-amount { font-weight: 700; color: var(--mib-text); font-variant-numeric: tabular-nums; }
+        .rank-sub { font-size: 0.74rem; color: var(--mib-text-muted); }
+
+        .seg { display: inline-flex; background: var(--mib-surface-2); border: 1px solid var(--mib-border); border-radius: var(--mib-radius-pill); padding: 0.2rem; }
+        .seg .btn { border: none; border-radius: var(--mib-radius-pill); padding: 0.3rem 0.6rem; color: var(--mib-text-muted); background: transparent; box-shadow: none; }
+        .seg .btn.active { background: var(--mib-surface); color: var(--mib-primary-dark); box-shadow: var(--mib-shadow-xs); }
+
+        .stat-sub { display: block; font-size: 0.76rem; color: var(--mib-text-muted); margin-top: 0.45rem; }
+        .stat-trend { white-space: nowrap; }
+
+        /* keep the Recent Orders header on one row on wide screens */
+        @media (min-width: 992px) {
+            .table-card > .card-header { flex-wrap: nowrap; }
+            .table-card > .card-header .toolbar { margin-left: auto; flex-wrap: nowrap; }
+            .table-card > .card-header .toolbar .search { flex-basis: 220px; }
+        }
+    </style>
 </head>
 <body class="app-shell">
     <%- include('../partials/sidebar', { userRole: userRole, path: '/dashboard/marketing' }) %>
     <%- include('../partials/chat', { userId: userId, users: users }) %>
 
+    <%
+    const all = Array.isArray(allOrders) ? allOrders : [];
+    const totalOrders = all.length;
+    const pendingCount = all.filter(o => o.status === 'Pending').length;
+    const deliveredCount = all.filter(o => o.status === 'Delivered').length;
+    const revenue = all.reduce((s, o) => s + (Number(o.total) || 0), 0);
+    const fmtShort = (n) => {
+        if (n >= 1e9) return (n / 1e9).toFixed(1).replace(/\.0$/, '') + 'B';
+        if (n >= 1e6) return (n / 1e6).toFixed(1).replace(/\.0$/, '') + 'M';
+        if (n >= 1e3) return (n / 1e3).toFixed(1).replace(/\.0$/, '') + 'K';
+        return n.toLocaleString('id-ID');
+    };
+    %>
+
     <div class="content content-wide">
-        <div class="page-header fade-in">
-            <div class="page-header__main">
-                <h1 class="page-title"><i class="bi bi-speedometer2"></i> Marketing Dashboard</h1>
-                <p class="page-subtitle">Overview of your orders, customers and sales activity.</p>
+        <!-- Hero header -->
+        <div class="dash-hero fade-in">
+            <div class="dash-hero__text">
+                <p class="dash-hello">Marketing Workspace</p>
+                <h1><i class="bi bi-speedometer2"></i> Dashboard</h1>
+                <p class="sub">Track orders, customers and sales performance — all in one place.</p>
             </div>
-            <div class="page-actions">
-                <a href="/orders/create" class="btn btn-primary"><i class="bi bi-plus-lg"></i> New Order</a>
+            <div class="dash-hero__actions">
+                <a href="/orders/addCustomer" class="btn btn-light"><i class="bi bi-person-plus"></i> Add Customer</a>
+                <a href="/orders/create" class="btn btn-white"><i class="bi bi-plus-lg"></i> New Order</a>
             </div>
         </div>
 
         <!-- Quick stats -->
-        <div class="quick-stats fade-in">
+        <div class="quick-stats stagger">
             <div class="stat-card">
-                <div class="stat-icon"><i class="bi bi-receipt"></i></div>
+                <div class="stat-icon"><i class="bi bi-cash-stack"></i></div>
+                <div class="stat-body">
+                    <div class="stat-label">Total Sales Value</div>
+                    <div class="stat-value" title="Rp <%= revenue.toLocaleString('id-ID') %>">Rp <%= fmtShort(revenue) %></div>
+                    <span class="stat-sub">Across all active orders</span>
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon is-info"><i class="bi bi-receipt-cutoff"></i></div>
                 <div class="stat-body">
                     <div class="stat-label">Total Orders</div>
-                    <div class="stat-value"><%= orders.length %></div>
+                    <div class="stat-value"><%= totalOrders %></div>
+                    <span class="stat-sub">All time</span>
                 </div>
             </div>
             <div class="stat-card">
                 <div class="stat-icon is-warning"><i class="bi bi-hourglass-split"></i></div>
                 <div class="stat-body">
                     <div class="stat-label">Pending</div>
-                    <div class="stat-value"><%= orders.filter(o => o.status === 'Pending').length %></div>
-                </div>
-            </div>
-            <div class="stat-card">
-                <div class="stat-icon is-info"><i class="bi bi-arrow-repeat"></i></div>
-                <div class="stat-body">
-                    <div class="stat-label">Processing</div>
-                    <div class="stat-value"><%= orders.filter(o => o.status === 'Processing').length %></div>
+                    <div class="stat-value"><%= pendingCount %></div>
+                    <span class="stat-trend <%= pendingCount > 0 ? 'is-down' : 'is-up' %>"><%= pendingCount > 0 ? 'Awaiting approval' : 'All clear' %></span>
                 </div>
             </div>
             <div class="stat-card">
                 <div class="stat-icon is-success"><i class="bi bi-truck"></i></div>
                 <div class="stat-body">
                     <div class="stat-label">Delivered</div>
-                    <div class="stat-value"><%= orders.filter(o => o.status === 'Delivered').length %></div>
+                    <div class="stat-value"><%= deliveredCount %></div>
+                    <span class="stat-trend is-up">Completed</span>
                 </div>
             </div>
         </div>
 
         <!-- Charts -->
         <div class="chart-grid">
-            <div class="chart-card">
-                <div class="d-flex align-items-center justify-content-between mb-2">
-                    <h3 class="mb-0"><i class="bi bi-pie-chart me-1"></i> Top Products Distribution</h3>
-                    <div class="btn-group">
-                        <button type="button" class="btn btn-sm btn-outline-primary active" data-chart-type="pie" aria-label="Pie chart"><i class="bi bi-pie-chart"></i></button>
-                        <button type="button" class="btn btn-sm btn-outline-primary" data-chart-type="bar" aria-label="Bar chart"><i class="bi bi-bar-chart"></i></button>
+            <div class="chart-card card-hover">
+                <div class="d-flex align-items-center justify-content-between mb-3">
+                    <h3 class="mb-0"><i class="bi bi-pie-chart me-1"></i> Top Products</h3>
+                    <div class="seg" role="group" aria-label="Chart type">
+                        <button type="button" class="btn btn-sm active" data-chart-type="pie" aria-label="Pie chart"><i class="bi bi-pie-chart"></i></button>
+                        <button type="button" class="btn btn-sm" data-chart-type="bar" aria-label="Bar chart"><i class="bi bi-bar-chart"></i></button>
                     </div>
                 </div>
                 <div class="chart-container">
@@ -65,19 +163,17 @@
                 </div>
             </div>
 
-            <div class="chart-card">
-                <h3><i class="bi bi-people me-1"></i> Top 5 Customers</h3>
+            <div class="chart-card card-hover">
+                <h3><i class="bi bi-trophy me-1"></i> Top 5 Customers</h3>
                 <% if (topCustomers && topCustomers.length) { %>
-                <div class="list-group list-group-flush">
+                <div class="rank-list">
                     <% topCustomers.forEach((customer, index) => { %>
-                    <div class="list-group-item d-flex justify-content-between align-items-center px-0">
-                        <div class="d-flex align-items-center gap-2">
-                            <span class="pill"><%= index + 1 %></span>
-                            <span class="cell-strong"><%= customer.name %></span>
-                        </div>
-                        <div class="text-end">
-                            <div class="fw-bold">Rp <%= customer.totalAmount.toLocaleString() %></div>
-                            <small class="cell-sub"><%= customer.totalOrders %> orders</small>
+                    <div class="rank-row">
+                        <span class="rank-badge"><%= index + 1 %></span>
+                        <span class="rank-name"><%= customer.name %></span>
+                        <div class="rank-meta">
+                            <div class="rank-amount">Rp <%= customer.totalAmount.toLocaleString('id-ID') %></div>
+                            <div class="rank-sub"><%= customer.totalOrders %> order<%= customer.totalOrders === 1 ? '' : 's' %></div>
                         </div>
                     </div>
                     <% }); %>
@@ -146,7 +242,7 @@
                                     <button class="btn btn-icon btn-sm btn-ghost" onclick="openEditDateModal('<%= order.id %>', '<%= order.createdAt %>')" aria-label="Edit date"><i class="bi bi-pencil"></i></button>
                                 </div>
                             </td>
-                            <td data-label="Customer"><%= order.customerName %></td>
+                            <td data-label="Customer"><span class="cell-strong"><%= order.customerName %></span></td>
                             <td data-label="Products">
                                 <span class="cell-sub">
                                 <% order.products.forEach((product, index) => { %><%= product.name %> (<%= product.quantity %> <%= product.satuan %>)<%= index < order.products.length - 1 ? ', ' : '' %><% }) %>
@@ -267,6 +363,7 @@
                             borderColor: type === 'pie' ? '#ffffff' : colors,
                             borderWidth: type === 'pie' ? 2 : 1,
                             maxBarThickness: 50,
+                            borderRadius: type === 'bar' ? 6 : 0,
                             label: 'Quantity'
                         }]
                     },
@@ -282,7 +379,7 @@
                             tooltip: { callbacks: { label: (c) => `${c.label || ''}: ${c.raw || 0}` } }
                         },
                         ...(type === 'pie'
-                            ? { cutout: '60%', radius: '90%' }
+                            ? { cutout: '62%', radius: '90%' }
                             : { scales: {
                                     y: { beginAtZero: true, grid: { color: 'rgba(0,0,0,0.06)' } },
                                     x: { grid: { display: false }, ticks: { maxRotation: 45, minRotation: 45 } }
@@ -295,7 +392,7 @@
             document.querySelectorAll('[data-chart-type]').forEach(button => {
                 button.addEventListener('click', function () {
                     if (this.classList.contains('active')) return;
-                    this.closest('.btn-group').querySelectorAll('[data-chart-type]').forEach(b => b.classList.remove('active'));
+                    this.closest('.seg').querySelectorAll('[data-chart-type]').forEach(b => b.classList.remove('active'));
                     this.classList.add('active');
                     createProductChart(this.dataset.chartType);
                 });
