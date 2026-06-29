@@ -59,32 +59,34 @@ exports.checkStockForm = (req, res) => {
 };
 
 exports.createOrder = async (req, res) => {
+    // Build the next SO number from the highest existing sequence for the current
+    // month/year. The sequence is parsed from the sonumber itself (which encodes the
+    // month + year) rather than from the most recent createdAt — otherwise editing an
+    // order's date (or its SO number) could make the counter repeat a number already
+    // in use and produce duplicate SO numbers.
     const generateSoNumber = async () => {
-        const currentMonth = new Date().getMonth() + 1;
-        const currentYear = new Date().getFullYear().toString().slice(-2);
+        const romanMonths = ['I', 'II', 'III', 'IV', 'V', 'VI', 'VII', 'VIII', 'IX', 'X', 'XI', 'XII'];
+        const now = new Date();
+        const romanMonth = romanMonths[now.getMonth()];
+        const year2 = now.getFullYear().toString().slice(-2);
+        const suffix = `/SO/MIB/${romanMonth}/${year2}`;
 
-        const lastOrder = await Order.findOne({
-            where: sequelize.where(
-                sequelize.fn('MONTH', sequelize.col('createdAt')),
-                currentMonth
-            ),
-            order: [['createdAt', 'DESC']],
+        const existing = await Order.findAll({
+            where: { sonumber: { [Op.like]: `%${suffix}` } },
+            attributes: ['sonumber'],
         });
 
-        let orderNumber = 1;
-        if (lastOrder) {
-            const lastSoNumber = lastOrder.sonumber.split('/')[0];
-            orderNumber = parseInt(lastSoNumber, 10) + 1;
+        let maxSeq = 0;
+        for (const { sonumber } of existing) {
+            // LIKE is only a coarse pre-filter; require an exact suffix + numeric prefix.
+            if (!sonumber.endsWith(suffix)) continue;
+            const match = /^(\d+)\//.exec(sonumber);
+            if (match) maxSeq = Math.max(maxSeq, parseInt(match[1], 10));
         }
-
-        const romanMonths = ['I', 'II', 'III', 'IV', 'V', 'VI', 'VII', 'VIII', 'IX', 'X', 'XI', 'XII'];
-        const romanMonth = romanMonths[currentMonth - 1];
-        return `${orderNumber.toString().padStart(3, '0')}/SO/MIB/${romanMonth}/${currentYear}`;
+        return `${(maxSeq + 1).toString().padStart(3, '0')}${suffix}`;
     };
 
     try {
-        const soNumber = await generateSoNumber();
-
         // Log the request body to see what's being received
         console.log('Request body:', JSON.stringify(req.body, null, 2));
 
@@ -303,27 +305,39 @@ exports.createOrder = async (req, res) => {
         // Add any consumable fees
         totalOrderAmount += totalConsumableFees;
 
-        // Create the order
-        const newOrder = await Order.create({
-            sonumber: soNumber,
-            customerName: customer.perusahaan,
-            customerId,
-            status: 'Pending',
-            po,
-            total: totalOrderAmount,
-            pallet: consumableFlags.pallet,
-            sticker: consumableFlags.sticker,
-            wrap: consumableFlags.wrap,
-            handling: consumableFlags.handling,
-            logistic: consumableFlags.logistic,
-            triplek: consumableFlags.triplek,
-            peti: consumableFlags.peti,
-            kabelties: consumableFlags.kabelties,
-            notes,
-            deadline: deadlineDate ? new Date(deadlineDate) : null,
-            paymentType,
-            tax,
-        });
+        // Create the order. Generate the SO number at the last moment and retry if a
+        // concurrent order grabbed the same number first (the unique index on
+        // sonumber makes that collision a hard error rather than a silent duplicate).
+        let newOrder;
+        for (let attempt = 0; ; attempt++) {
+            const soNumber = await generateSoNumber();
+            try {
+                newOrder = await Order.create({
+                    sonumber: soNumber,
+                    customerName: customer.perusahaan,
+                    customerId,
+                    status: 'Pending',
+                    po,
+                    total: totalOrderAmount,
+                    pallet: consumableFlags.pallet,
+                    sticker: consumableFlags.sticker,
+                    wrap: consumableFlags.wrap,
+                    handling: consumableFlags.handling,
+                    logistic: consumableFlags.logistic,
+                    triplek: consumableFlags.triplek,
+                    peti: consumableFlags.peti,
+                    kabelties: consumableFlags.kabelties,
+                    notes,
+                    deadline: deadlineDate ? new Date(deadlineDate) : null,
+                    paymentType,
+                    tax,
+                });
+                break;
+            } catch (err) {
+                if (err.name === 'SequelizeUniqueConstraintError' && attempt < 4) continue;
+                throw err;
+            }
+        }
 
         // Link each order item to the new order
         for (const itemData of createdOrderItems) {
