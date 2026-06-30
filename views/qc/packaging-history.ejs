@@ -1,231 +1,151 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Packaging QC History</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.2/font/bootstrap-icons.css" rel="stylesheet">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <style>
-        :root {
-            --primary-color: #1b5e20;
-            --primary-light: #388E3C;
-            --background-light: #f4f6f8;
-            --text-color: #333;
-            --shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-            --transition: all 0.3s ease;
-        }
-
-        body {
-            font-family: 'Inter', sans-serif;
-            background-color: var(--background-light);
-            margin: 0;
-            padding: 0;
-            min-height: 100vh;
-        }
-
-        .main-content {
-            margin-left: 0;
-            padding: 1rem;
-            width: 100%;
-            transition: var(--transition);
-        }
-
-        .page-header {
-            background: white;
-            padding: 1rem;
-            border-radius: 15px;
-            box-shadow: var(--shadow);
-            margin-bottom: 1rem;
-        }
-
-        .page-title {
-            margin: 0;
-            color: var(--primary-color);
-            font-weight: 600;
-            font-size: 1.25rem;
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-        }
-
-        .page-subtitle {
-            color: #6c757d;
-            font-size: 0.875rem;
-            margin-top: 0.5rem;
-        }
-
-        .card {
-            background: white;
-            border-radius: 15px;
-            box-shadow: var(--shadow);
-            margin-bottom: 1rem;
-            border: none;
-            overflow: hidden;
-        }
-
-        .card-header {
-            background-color: var(--background-light);
-            padding: 1rem;
-            border-bottom: 1px solid rgba(0, 0, 0, 0.1);
-        }
-
-        .card-title {
-            color: var(--primary-color);
-            font-weight: 600;
-            font-size: 1rem;
-            margin: 0;
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-        }
-
-        .table {
-            margin: 0;
-        }
-
-        .table thead th {
-            background-color: var(--primary-color);
-            color: white;
-            font-weight: 600;
-            text-transform: uppercase;
-            font-size: 0.75rem;
-            letter-spacing: 0.5px;
-            padding: 1rem;
-            border: none;
-            white-space: nowrap;
-        }
-
-        .table tbody td {
-            padding: 1rem;
-            vertical-align: middle;
-            border-color: rgba(0, 0, 0, 0.05);
-            font-size: 0.875rem;
-        }
-
-        .table tbody tr:hover {
-            background-color: var(--background-light);
-        }
-
-        .badge {
-            padding: 0.35rem 0.65rem;
-            font-size: 0.75rem;
-            font-weight: 500;
-            border-radius: 2rem;
-            display: inline-flex;
-            align-items: center;
-            gap: 0.25rem;
-            margin: 0.125rem;
-        }
-
-        .badge-pass {
-            background-color: #d1e7dd;
-            color: #0f5132;
-        }
-
-        .badge-fail {
-            background-color: #f8d7da;
-            color: #721c24;
-        }
-
-        .badge-pending {
-            background-color: #fff3cd;
-            color: #856404;
-        }
-
-        @media (min-width: 769px) {
-            .main-content {
-                margin-left: 280px;
-                padding: 2rem;
-                width: calc(100% - 280px);
-            }
-
-            body:has(.sidebar.collapsed) .main-content {
-                margin-left: 70px;
-                width: calc(100% - 70px);
-            }
-        }
-    </style>
+    <%- include('../partials/head', { pageTitle: 'Packaging QC History' }) %>
 </head>
-<body>
-    <%- include('../partials/sidebar', { userRole: userRole }) %>
+<body class="app-shell">
+    <%- include('../partials/sidebar', { userRole: userRole, path: '/qc/packaging-history' }) %>
 
-    <div class="main-content">
-        <div class="page-header fade-in">
-            <h1 class="page-title">
-                <i class="bi bi-box"></i>
-                Packaging QC History
-            </h1>
-            <p class="page-subtitle">View quality control history for packaging materials</p>
-        </div>
+    <%
+        /* ---- Defensive normalisation (guard optional / null locals) ---- */
+        const pkgList = (typeof packagingRequests !== 'undefined' && packagingRequests) ? packagingRequests : [];
 
-        <div class="card fade-in">
-            <div class="card-header">
-                <h2 class="card-title">
-                    <i class="bi bi-list-check"></i>
-                    QC History List
-                </h2>
+        /* status badge helpers (mirror PPIC) */
+        const qb = (s) => s === 'Pass' ? 'status-completed'
+                        : (s === 'Fail' ? 'status-declined' : 'status-pending');
+        const qcLabel = (s) => s || 'Pending';
+        const fmtDate = (d) => {
+            if (!d) return '—';
+            const dt = new Date(d);
+            return isNaN(dt) ? '—' : dt.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
+        };
+
+        /* counts for quick-stats */
+        const passCount = pkgList.filter(r => r.qcStatus === 'Pass').length;
+        const failCount = pkgList.filter(r => r.qcStatus === 'Fail').length;
+        const pendingCount = pkgList.filter(r => r.qcStatus !== 'Pass' && r.qcStatus !== 'Fail').length;
+    %>
+
+    <div class="content content-wide">
+
+        <%- include('../partials/page-header', {
+              pageTitle: 'Packaging QC History',
+              pageIcon: 'bi-box',
+              pageSubtitle: 'Quality control outcomes for inbound packaging materials',
+              actionsHtml: '<a href="/dashboard/qc" class="btn btn-soft"><i class="bi bi-arrow-left"></i> Back to Dashboard</a>'
+        }) %>
+
+        <!-- ===================== Quick stats ===================== -->
+        <div class="quick-stats stagger">
+            <div class="stat-card">
+                <div class="stat-icon is-info"><i class="bi bi-clipboard-data"></i></div>
+                <div class="stat-body">
+                    <div class="stat-label">Total Records</div>
+                    <div class="stat-value"><%= pkgList.length %></div>
+                    <span class="stat-sub">QC entries on file</span>
+                </div>
             </div>
-            <div class="card-body">
-                <div class="table-responsive">
-                    <table class="table">
-                        <thead>
-                            <tr>
-                                <th>ID</th>
-                                <th>Packaging Name</th>
-                                <th>Vendor</th>
-                                <th>Quantity</th>
-                                <th>QC Status</th>
-                                <th>QC Comment</th>
-                                <th>Date</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <% if (packagingRequests && packagingRequests.length > 0) { %>
-                                <% packagingRequests.forEach(function(request) { %>
-                                    <tr>
-                                        <td>#<%= request.id %></td>
-                                        <td><%= request.PackagingRequest.Packaging.name %></td>
-                                        <td><%= request.Vendor.name %></td>
-                                        <td><%= request.PackagingRequest.quantity %> pcs</td>
-                                        <td>
-                                            <% if (request.qcStatus === 'Pass') { %>
-                                                <span class="badge badge-pass">
-                                                    <i class="bi bi-check-circle"></i>
-                                                    Pass
-                                                </span>
-                                            <% } else if (request.qcStatus === 'Fail') { %>
-                                                <span class="badge badge-fail">
-                                                    <i class="bi bi-x-circle"></i>
-                                                    Fail
-                                                </span>
-                                            <% } else { %>
-                                                <span class="badge badge-pending">
-                                                    <i class="bi bi-clock"></i>
-                                                    Pending
-                                                </span>
-                                            <% } %>
-                                        </td>
-                                        <td><%= request.qcComment || '-' %></td>
-                                        <td><%= request.updatedAt.toLocaleDateString() %></td>
-                                    </tr>
-                                <% }); %>
-                            <% } else { %>
-                                <tr>
-                                    <td colspan="8" class="text-center text-muted">
-                                        <i class="bi bi-inbox fs-4 d-block mb-2"></i>
-                                        No QC history found
-                                    </td>
-                                </tr>
-                            <% } %>
-                        </tbody>
-                    </table>
+            <div class="stat-card">
+                <div class="stat-icon is-success"><i class="bi bi-check-circle"></i></div>
+                <div class="stat-body">
+                    <div class="stat-label">Passed</div>
+                    <div class="stat-value"><%= passCount %></div>
+                    <span class="stat-sub">Approved packaging</span>
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon is-danger"><i class="bi bi-x-circle"></i></div>
+                <div class="stat-body">
+                    <div class="stat-label">Failed</div>
+                    <div class="stat-value"><%= failCount %></div>
+                    <span class="stat-sub">Rejected packaging</span>
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon is-warning"><i class="bi bi-clock"></i></div>
+                <div class="stat-body">
+                    <div class="stat-label">Pending</div>
+                    <div class="stat-value"><%= pendingCount %></div>
+                    <span class="stat-sub">Awaiting QC</span>
                 </div>
             </div>
         </div>
+
+        <!-- ===================== Toolbar ===================== -->
+        <div class="toolbar">
+            <div class="search">
+                <i class="bi bi-search"></i>
+                <input type="text" id="qcSearch" class="form-control" placeholder="Search packaging, vendor…" autocomplete="off">
+            </div>
+        </div>
+
+        <!-- ===================== QC History ===================== -->
+        <div class="table-card">
+            <div class="card-header">
+                <h2 class="card-title"><i class="bi bi-list-check"></i> QC History List</h2>
+                <span class="pill"><i class="bi bi-hash"></i> <%= pkgList.length %> records</span>
+            </div>
+            <div class="table-responsive">
+                <table class="table table-cards align-middle" id="qcTable">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Packaging Name</th>
+                            <th>Vendor</th>
+                            <th>Quantity</th>
+                            <th>QC Status</th>
+                            <th>QC Comment</th>
+                            <th>Date</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <% if (pkgList.length > 0) { %>
+                            <% pkgList.forEach(function(request) { %>
+                                <tr>
+                                    <td data-label="ID"><span class="cell-strong">#<%= request.id %></span></td>
+                                    <td data-label="Packaging Name">
+                                        <span class="cell-strong"><%= (request.PackagingRequest && request.PackagingRequest.Packaging) ? request.PackagingRequest.Packaging.name : '—' %></span>
+                                    </td>
+                                    <td data-label="Vendor"><%= request.Vendor ? request.Vendor.name : '—' %></td>
+                                    <td data-label="Quantity" class="num"><%= request.PackagingRequest ? request.PackagingRequest.quantity : '—' %> pcs</td>
+                                    <td data-label="QC Status">
+                                        <span class="status-badge <%= qb(request.qcStatus) %>"><%= qcLabel(request.qcStatus) %></span>
+                                    </td>
+                                    <td data-label="QC Comment"><span class="cell-sub"><%= request.qcComment || '—' %></span></td>
+                                    <td data-label="Date"><span class="cell-sub"><%= fmtDate(request.updatedAt) %></span></td>
+                                </tr>
+                            <% }); %>
+                        <% } else { %>
+                            <tr class="is-empty-row">
+                                <td colspan="7">
+                                    <div class="empty-state">
+                                        <i class="bi bi-inbox"></i>
+                                        <h4>No QC history found</h4>
+                                        <p>Packaging quality control results will appear here.</p>
+                                    </div>
+                                </td>
+                            </tr>
+                        <% } %>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
     </div>
 
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Live search across the QC history table
+        document.addEventListener('DOMContentLoaded', function () {
+            const search = document.getElementById('qcSearch');
+            if (!search) return;
+            search.addEventListener('input', function () {
+                const q = this.value.trim().toLowerCase();
+                document.querySelectorAll('#qcTable tbody tr').forEach(function (row) {
+                    if (row.classList.contains('is-empty-row')) return;
+                    row.style.display = (!q || row.textContent.toLowerCase().includes(q)) ? '' : 'none';
+                });
+            });
+        });
+    </script>
 </body>
 </html>

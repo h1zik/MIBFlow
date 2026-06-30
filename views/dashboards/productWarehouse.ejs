@@ -1,107 +1,246 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Product Warehouse - MIB Flow</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.7.2/font/bootstrap-icons.css" rel="stylesheet">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="/css/stylepurchase.css">
+    <%- include('../partials/head', { pageTitle: 'Product Warehouse' }) %>
     <style>
+        /* ============================================================
+           Product Warehouse — page-specific flourishes
+           Built on the shared mibflow.css design system.
+           ============================================================ */
+
+        /* Legacy-var bridge so shared partials (chat) stay on-brand */
+        :root {
+            --primary-color: var(--mib-primary);
+            --primary-light: var(--mib-primary-light);
+            --primary-dark: var(--mib-primary-dark);
+            --background-light: var(--mib-surface-2);
+            --text-color: var(--mib-text);
+        }
+
+        /* ---------- Hero ---------- */
+        .pw-hero {
+            position: relative;
+            overflow: hidden;
+            border-radius: var(--mib-radius-lg);
+            padding: 1.85rem 2rem;
+            margin-bottom: 1.6rem;
+            color: #eaf6ef;
+            background: var(--mib-sidebar-bg);
+            box-shadow: var(--mib-shadow-md);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 1.25rem;
+            flex-wrap: wrap;
+        }
+        .pw-hero::after {
+            content: "";
+            position: absolute;
+            inset: 0;
+            pointer-events: none;
+            background:
+                radial-gradient(460px 220px at 86% -30%, rgba(110, 231, 183, 0.30), transparent 60%),
+                radial-gradient(360px 200px at 8% 130%, rgba(110, 231, 183, 0.15), transparent 60%);
+        }
+        .pw-hero__text { position: relative; z-index: 1; min-width: 0; }
+        .pw-eyebrow {
+            margin: 0 0 0.4rem; font-size: 0.78rem; font-weight: 600;
+            letter-spacing: 0.06em; text-transform: uppercase; color: rgba(255, 255, 255, 0.66);
+            display: inline-flex; align-items: center; gap: 0.5rem;
+        }
+        .live-dot {
+            width: 8px; height: 8px; border-radius: 50%;
+            background: #6ee7b7; box-shadow: 0 0 0 0 rgba(110, 231, 183, 0.7);
+            animation: livePulse 1.8s ease-out infinite;
+        }
+        @keyframes livePulse {
+            0%   { box-shadow: 0 0 0 0 rgba(110, 231, 183, 0.55); }
+            70%  { box-shadow: 0 0 0 9px rgba(110, 231, 183, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(110, 231, 183, 0); }
+        }
+        .pw-hero h1 {
+            margin: 0; font-size: 1.85rem; font-weight: 750; letter-spacing: -0.025em; color: #fff;
+            display: flex; align-items: center; gap: 0.6rem;
+        }
+        .pw-hero .sub { margin: 0.5rem 0 0; color: rgba(255, 255, 255, 0.78); font-size: 0.92rem; max-width: 56ch; }
+        .pw-hero__aside { position: relative; z-index: 1; display: flex; flex-direction: column; align-items: flex-end; gap: 0.85rem; }
+        .pw-clock {
+            font-variant-numeric: tabular-nums; font-weight: 750; font-size: 1.7rem; line-height: 1;
+            color: #fff; letter-spacing: -0.01em; text-align: right;
+        }
+        .pw-clock small { display: block; font-size: 0.74rem; font-weight: 500; color: rgba(255,255,255,0.66); letter-spacing: 0.02em; margin-top: 0.3rem; }
+
+        /* ---------- Staggered entrance ---------- */
+        .stagger > * { opacity: 0; animation: fadeIn 0.5s ease forwards; }
+        .stagger > *:nth-child(1) { animation-delay: 0.04s; }
+        .stagger > *:nth-child(2) { animation-delay: 0.10s; }
+        .stagger > *:nth-child(3) { animation-delay: 0.16s; }
+        .stagger > *:nth-child(4) { animation-delay: 0.22s; }
+
+        .quick-stats { margin-bottom: 1.4rem; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); }
+
+        /* ---------- Queue panels (list view) ---------- */
+        .dashboard-section {
+            --accent: var(--mib-primary);
+            --accent-soft: var(--mib-primary-soft);
+            background: var(--mib-grad-surface);
+            border: 1px solid var(--mib-border);
+            border-radius: var(--mib-radius);
+            box-shadow: var(--mib-shadow);
+            margin-bottom: 1rem;
+            overflow: hidden;
+            transition: box-shadow var(--mib-transition), border-color var(--mib-transition);
+        }
+        .dashboard-section:hover { box-shadow: var(--mib-shadow-md); }
+        .section-header {
+            position: relative; display: flex; align-items: center; gap: 0.85rem;
+            padding: 1rem 1.25rem 1rem 1.4rem; cursor: pointer; transition: background var(--mib-transition);
+        }
+        .section-header:hover { background: var(--mib-surface-2); }
+        .section-header::before { content: ""; position: absolute; left: 0; top: 0; bottom: 0; width: 4px; background: var(--accent); }
+        .section-title {
+            margin: 0; font-weight: 650; font-size: 1rem; color: var(--mib-text);
+            display: flex; align-items: center; gap: 0.6rem; min-width: 0;
+        }
+        .section-title > i:first-child {
+            flex-shrink: 0; width: 38px; height: 38px; border-radius: 11px; display: grid; place-items: center;
+            font-size: 1.05rem; color: var(--accent); background: var(--accent-soft);
+        }
+        .section-title .badge {
+            font-size: 0.74rem; font-weight: 700;
+        }
+        .section-header > .bi-chevron-down { margin-left: auto; color: var(--mib-text-faint); font-size: 1.1rem; transition: transform 0.28s ease; }
+        .section-content { border-top: 1px solid var(--mib-border); }
+        .section-content > .table-responsive { box-shadow: none; border: none; border-radius: 0; margin: 0; }
+        .section-content .table thead th { background: var(--mib-surface-2); }
+        .section-content .time-interval-form { margin: 1rem 1.25rem; }
+
+        /* ---------- Inline time-interval filter ---------- */
         .time-interval-form {
-            background: var(--background-light);
-            padding: 1rem;
-            border-radius: 8px;
-            margin-bottom: 1rem;
+            background: var(--mib-surface-2);
+            border: 1px solid var(--mib-border);
+            padding: 1rem 1.15rem;
+            border-radius: var(--mib-radius-sm);
         }
+        .time-interval-form .form-group { margin-bottom: 0; }
+        .time-interval-form label { font-weight: 600; font-size: 0.8rem; color: var(--mib-text-muted); margin-bottom: 0.35rem; display: block; }
 
-        .time-interval-form .form-group {
-            margin-bottom: 1rem;
+        .quantity-positive { color: var(--mib-primary-dark); font-weight: 650; white-space: nowrap; }
+        .quantity-negative { color: var(--mib-danger); font-weight: 650; white-space: nowrap; }
+
+        .action-buttons { display: flex; gap: 0.4rem; flex-wrap: wrap; align-items: center; }
+        .deliver-lines { font-size: 0.82rem; color: var(--mib-text-muted); margin-bottom: 0.5rem; }
+        .deliver-lines .cell-strong { display: inline; }
+
+        /* ---------- Button loading spinner ---------- */
+        .btn.loading { pointer-events: none; color: transparent !important; position: relative; }
+        .btn.loading::after {
+            content: ""; position: absolute; width: 16px; height: 16px; top: 50%; left: 50%; margin: -8px 0 0 -8px;
+            border: 2px solid rgba(255, 255, 255, 0.55); border-top-color: #fff; border-radius: 50%; animation: spin 0.7s linear infinite;
         }
+        @keyframes spin { to { transform: rotate(360deg); } }
 
-        .time-interval-form label {
-            font-weight: 500;
-            color: var(--text-color);
-            margin-bottom: 0.5rem;
-        }
-
-        .quantity-positive {
-            color: var(--primary-color);
-            font-weight: 500;
-        }
-
-        .quantity-negative {
-            color: #dc3545;
-            font-weight: 500;
-        }
-
-        /* Enhanced Mobile Styles */
         @media (max-width: 768px) {
-            /* Time Interval Form */
-            .time-interval-form {
-                padding: 0.75rem;
-                margin: 0.5rem 0;
-                border-radius: 8px;
-            }
-
-            .time-interval-form .form-group {
-                margin-bottom: 0.75rem;
-            }
-
-            .time-interval-form .btn {
-                width: 100%;
-                margin-top: 0.5rem;
-            }
-
-            /* Modal Improvements */
-            .modal-content {
-                border-radius: 12px;
-            }
-
-            .modal-header {
-                padding: 1rem;
-            }
-
-            .modal-body {
-                padding: 1rem;
-            }
-
-            .modal-footer {
-                padding: 0.75rem;
-                gap: 0.5rem;
-            }
+            .pw-hero { padding: 1.4rem 1.25rem; }
+            .pw-hero__aside { align-items: flex-start; width: 100%; }
+            .pw-clock { text-align: left; }
+            .time-interval-form .form-group { margin-bottom: 0.75rem; }
         }
     </style>
 </head>
-<body>
-    <%- include('../partials/sidebar', { userRole: userRole }) %>
-    <%- include('../partials/chat', { users: users, userId: userId }) %>
-    <div class="main-content">
-        <div class="page-header">
-            <h1 class="page-title">
-                <i class="bi bi-box-seam"></i>
-                Product Warehouse
-            </h1>
-            <p class="text-muted mb-0">Manage product inventory, inbound and outbound orders</p>
+<body class="app-shell">
+    <%- include('../partials/sidebar', { userRole: userRole, path: '/dashboard/productWarehouse' }) %>
+    <%- include('../partials/chat', { users: (typeof users !== 'undefined' ? users : []), userRole: userRole, userId: userId }) %>
+
+    <%
+        /* ---- Defensive normalisation ---- */
+        const approvedList = (typeof approvedOrders !== 'undefined' && approvedOrders) ? approvedOrders : [];
+        const inboundList  = (typeof completedProductions !== 'undefined' && completedProductions) ? completedProductions : [];
+        const outboundList = (typeof outboundProductDetails !== 'undefined' && outboundProductDetails) ? outboundProductDetails : [];
+        const reworkList   = (typeof complainItems !== 'undefined' && complainItems) ? complainItems : [];
+
+        const inStart  = (typeof inboundStartDate !== 'undefined' && inboundStartDate) ? inboundStartDate : (typeof defaultInboundStartDate !== 'undefined' ? defaultInboundStartDate : '');
+        const inEnd    = (typeof inboundEndDate !== 'undefined' && inboundEndDate) ? inboundEndDate : (typeof defaultInboundEndDate !== 'undefined' ? defaultInboundEndDate : '');
+        const outStart = (typeof outboundStartDate !== 'undefined' && outboundStartDate) ? outboundStartDate : (typeof defaultOutboundStartDate !== 'undefined' ? defaultOutboundStartDate : '');
+        const outEnd   = (typeof outboundEndDate !== 'undefined' && outboundEndDate) ? outboundEndDate : (typeof defaultOutboundEndDate !== 'undefined' ? defaultOutboundEndDate : '');
+
+        /* status badge helper */
+        const KNOWN_STATUS = new Set(['pending','processing','onprod','on-production','production-completed','completed','approved','paid','delivered','on-delivery','ready-to-deliver','partially-delivered','open','printed','scheduled','cancelled','declined','rejected','neutral']);
+        const sb = (s) => { const k = String(s || '').toLowerCase().replace(/\s+/g, '-'); return 'status-' + (KNOWN_STATUS.has(k) ? k : 'neutral'); };
+        const fmtDate = (d) => { if (!d) return '-'; const dt = new Date(d); return isNaN(dt) ? '-' : dt.toISOString().split('T')[0]; };
+    %>
+
+    <div class="content content-wide">
+
+        <!-- ===================== Hero ===================== -->
+        <div class="pw-hero fade-in">
+            <div class="pw-hero__text">
+                <p class="pw-eyebrow"><span class="live-dot"></span> Product Warehouse</p>
+                <h1><i class="bi bi-box-seam"></i> Inventory Control</h1>
+                <p class="sub">Manage product inventory, deliveries, inbound &amp; outbound movement and rework — all in one place.</p>
+            </div>
+            <div class="pw-hero__aside">
+                <div class="pw-clock">
+                    <span id="pwClock">--:--</span>
+                    <small id="pwDate"></small>
+                </div>
+            </div>
         </div>
 
-        <!-- Approved Orders Section -->
+        <!-- ===================== Quick stats ===================== -->
+        <div class="quick-stats stagger">
+            <div class="stat-card">
+                <div class="stat-icon"><i class="bi bi-check-circle"></i></div>
+                <div class="stat-body">
+                    <div class="stat-label">Ready to Deliver</div>
+                    <div class="stat-value" data-count="<%= approvedList.length %>">0</div>
+                    <span class="stat-sub">Approved orders awaiting delivery</span>
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon is-info"><i class="bi bi-box-arrow-in-down"></i></div>
+                <div class="stat-body">
+                    <div class="stat-label">Inbound Products</div>
+                    <div class="stat-value" data-count="<%= inboundList.length %>">0</div>
+                    <span class="stat-sub">Completed productions received</span>
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon is-warning"><i class="bi bi-box-arrow-right"></i></div>
+                <div class="stat-body">
+                    <div class="stat-label">Outbound Products</div>
+                    <div class="stat-value" data-count="<%= outboundList.length %>">0</div>
+                    <span class="stat-sub">Shipped in selected range</span>
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon <%= reworkList.length > 0 ? 'is-danger' : 'is-success' %>"><i class="bi bi-tools"></i></div>
+                <div class="stat-body">
+                    <div class="stat-label">Rework Items</div>
+                    <div class="stat-value" data-count="<%= reworkList.length %>">0</div>
+                    <span class="stat-sub">Complaint-driven rework</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- ===================== List / Board toggle ===================== -->
         <%- include('../partials/kanban-toggle') %>
-        <div class="dashboard-section">
-            <div class="section-header" data-bs-toggle="collapse" data-bs-target="#approvedOrders">
+
+        <!-- ===================== Approved Orders ===================== -->
+        <div class="dashboard-section" style="--accent:#2f6f4e;--accent-soft:#e7f1ec">
+            <div class="section-header" data-bs-toggle="collapse" data-bs-target="#approvedOrders" aria-expanded="false" aria-controls="approvedOrders">
                 <h2 class="section-title">
                     <i class="bi bi-check-circle"></i>
                     Approved Orders
-                    <% if (approvedOrders && approvedOrders.length > 0) { %>
-                        <span class="badge rounded-pill bg-danger ms-2"><%= approvedOrders.length %></span>
+                    <% if (approvedList.length > 0) { %>
+                        <span class="badge rounded-pill bg-danger ms-2"><%= approvedList.length %></span>
                     <% } %>
                 </h2>
                 <i class="bi bi-chevron-down"></i>
             </div>
             <div id="approvedOrders" class="section-content collapse">
                 <div class="table-responsive">
-                    <table class="table">
+                    <table class="table table-cards align-middle">
                         <thead>
                             <tr>
                                 <th>Order ID</th>
@@ -109,22 +248,23 @@
                                 <th>Date</th>
                                 <th>Customer Name</th>
                                 <th>Products</th>
-                                <th>Action</th>
+                                <th class="text-end">Action</th>
                             </tr>
                         </thead>
                         <tbody>
-                            <% if (approvedOrders && approvedOrders.length > 0) { %>
-                                <% approvedOrders.forEach(function(order) { %>
+                            <% if (approvedList.length > 0) { %>
+                                <% approvedList.forEach(function(order) { %>
                                     <tr>
-                                        <td data-label="Order ID">#<%= order.id %></td>
-                                        <td data-label="SO Number"><%= order.sonumber %></td>
+                                        <td data-label="Order ID"><span class="cell-strong">#<%= order.id %></span></td>
+                                        <td data-label="SO Number"><span class="cell-strong"><%= order.sonumber %></span></td>
                                         <td data-label="Date"><%= order.deadline ? new Date(order.deadline).toLocaleDateString() : 'No deadline' %></td>
                                         <td data-label="Customer Name"><%= order.customerName %></td>
                                         <td data-label="Products">
-                                            <% order.OrderItems.forEach(function(item) { %>
+                                            <div class="cell-sub">
+                                            <% (order.OrderItems || []).forEach(function(item) { %>
                                                 <% if (item.invoicedQuantity !== item.shippedQuantity) { %>
                                                     <div>
-                                                        <%= item.Product.name %> - <%= item.Packaging.name %>:
+                                                        <%= item.Product ? item.Product.name : '—' %> - <%= item.Packaging ? item.Packaging.name : '—' %>:
                                                         <% if (item.shippedQuantity !== 0 && item.invoicedQuantity > item.shippedQuantity) { %>
                                                             <%= item.invoicedQuantity - item.shippedQuantity %> PCS
                                                         <% } else { %>
@@ -133,78 +273,19 @@
                                                     </div>
                                                 <% } %>
                                             <% }); %>
-                                        </td>
-                                        <td data-label="Action">
-                                            <% order.OrderItems.forEach(function(item) { %>
-                                              <% if (item.invoicedQuantity !== item.shippedQuantity) { %>
-                                                <div class="mt-2">
-                                                  • <%= item.Product.name %> - <%= item.Packaging.name %><br>
-                                                  &nbsp;&nbsp;Quantity: 
-                                                  <% if (item.shippedQuantity !== 0 && item.invoicedQuantity > item.shippedQuantity) { %>
-                                                    <%= item.invoicedQuantity - item.shippedQuantity %> PCS
-                                                  <% } else { %>
-                                                    <%= item.invoicedQuantity %> PCS
-                                                  <% } %>
-                                                </div>
-                                              <% } %>
-                                            <% }); %>
-                                            <div class="d-flex gap-2">
-                                                <button type="button" class="btn btn-success" data-bs-toggle="modal" data-bs-target="#deliveryModal<%= order.id %>">
-                                                    <i class="bi bi-truck"></i>
-                                                    Deliver
-                                                </button>
                                             </div>
-
-                                            <!-- Delivery Modal -->
-                                            <div class="modal fade" id="deliveryModal<%= order.id %>" tabindex="-1" aria-labelledby="deliveryModalLabel<%= order.id %>" aria-hidden="true">
-                                                <div class="modal-dialog">
-                                                    <div class="modal-content">
-                                                        <div class="modal-header">
-                                                            <h5 class="modal-title" id="deliveryModalLabel<%= order.id %>">Confirm Delivery - SO#<%= order.sonumber %></h5>
-                                                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                                                        </div>
-                                                        <form action="/productWarehouse/deliver" method="POST">
-                                                            <div class="modal-body">
-                                                                <input type="hidden" name="orderId" value="<%= order.id %>">
-                                                                <p>Are you sure you want to change the order status to "On Delivery"?</p>
-                                                                <div class="mb-3">
-                                                                    <strong>Order Details:</strong><br>
-                                                                    <% order.OrderItems.forEach(function(item) { %>
-                                                                        <% if (item.invoicedQuantity !== item.shippedQuantity) { %>
-                                                                          <div class="mt-2">
-                                                                            • <%= item.Product.name %> - <%= item.Packaging.name %><br>
-                                                                            &nbsp;&nbsp;Quantity: 
-                                                                            <% if (item.shippedQuantity !== 0 && item.invoicedQuantity > item.shippedQuantity) { %>
-                                                                              <%= item.invoicedQuantity - item.shippedQuantity %> PCS
-                                                                            <% } else { %>
-                                                                              <%= item.invoicedQuantity %> PCS
-                                                                            <% } %>
-                                                                          </div>
-                                                                        <% } %>
-                                                                      <% }); %>
-                                                                </div>
-                                                            </div>
-                                                            <div class="modal-footer">
-                                                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                                                                <button type="submit" class="btn btn-success">
-                                                                    <i class="bi bi-truck"></i>
-                                                                    Confirm Delivery
-                                                                </button>
-                                                            </div>
-                                                        </form>
-                                                    </div>
-                                                </div>
+                                        </td>
+                                        <td data-label="Action" class="text-end">
+                                            <div class="action-buttons justify-content-end">
+                                                <button type="button" class="btn btn-sm btn-success" data-bs-toggle="modal" data-bs-target="#deliveryModal<%= order.id %>">
+                                                    <i class="bi bi-truck"></i> Deliver
+                                                </button>
                                             </div>
                                         </td>
                                     </tr>
                                 <% }); %>
                             <% } else { %>
-                                <tr>
-                                    <td colspan="5" class="text-center py-4 text-muted">
-                                        <i class="bi bi-inbox fs-4 d-block mb-2"></i>
-                                        No approved orders found
-                                    </td>
-                                </tr>
+                                <tr class="is-empty-row"><td colspan="6"><div class="empty-state"><i class="bi bi-inbox"></i><h4>No approved orders</h4><p>Orders ready to deliver will appear here.</p></div></td></tr>
                             <% } %>
                         </tbody>
                     </table>
@@ -212,73 +293,66 @@
             </div>
         </div>
 
-        <!-- Inbound Products Section -->
-        <div class="dashboard-section">
-            <div class="section-header" data-bs-toggle="collapse" data-bs-target="#inboundProducts">
+        <!-- ===================== Inbound Products ===================== -->
+        <div class="dashboard-section" style="--accent:#2563eb;--accent-soft:#dbeafe">
+            <div class="section-header" data-bs-toggle="collapse" data-bs-target="#inboundProducts" aria-expanded="false" aria-controls="inboundProducts">
                 <h2 class="section-title">
                     <i class="bi bi-box-arrow-in-down"></i>
                     Inbound Products
-                    <% if (completedProductions && completedProductions.length > 0) { %>
-                        <span class="badge rounded-pill bg-danger ms-2"><%= completedProductions.length %></span>
+                    <% if (inboundList.length > 0) { %>
+                        <span class="badge rounded-pill bg-danger ms-2"><%= inboundList.length %></span>
                     <% } %>
                 </h2>
                 <i class="bi bi-chevron-down"></i>
             </div>
             <div id="inboundProducts" class="section-content collapse">
                 <form action="/dashboard/productWarehouse" method="GET" class="time-interval-form">
-                    <div class="row">
+                    <div class="row g-3 align-items-end">
                         <div class="col-md-4">
                             <div class="form-group">
                                 <label for="inboundStartDate">Start Date</label>
-                                <input type="date" class="form-control" id="inboundStartDate" name="inboundStartDate" value="<%= inboundStartDate || defaultInboundStartDate %>">
+                                <input type="date" class="form-control" id="inboundStartDate" name="inboundStartDate" value="<%= inStart %>">
                             </div>
                         </div>
                         <div class="col-md-4">
                             <div class="form-group">
                                 <label for="inboundEndDate">End Date</label>
-                                <input type="date" class="form-control" id="inboundEndDate" name="inboundEndDate" value="<%= inboundEndDate || defaultInboundEndDate %>">
+                                <input type="date" class="form-control" id="inboundEndDate" name="inboundEndDate" value="<%= inEnd %>">
                             </div>
                         </div>
-                        <div class="col-md-4 d-flex align-items-end">
-                            <button type="submit" class="btn btn-primary">
-                                <i class="bi bi-calendar-check"></i>
-                                Set Time Interval
+                        <div class="col-md-4">
+                            <button type="submit" class="btn btn-primary w-100">
+                                <i class="bi bi-calendar-check"></i> Set Time Interval
                             </button>
                         </div>
                     </div>
                 </form>
                 <div class="table-responsive">
-                    <table class="table">
+                    <table class="table table-cards align-middle">
                         <thead>
                             <tr>
                                 <th>Receive Date</th>
                                 <th>Batch Number</th>
                                 <th>SO Number</th>
                                 <th>Product Name</th>
-                                <th>Quantity</th>
+                                <th class="text-end">Quantity</th>
                             </tr>
                         </thead>
                         <tbody>
-                            <% if (completedProductions && completedProductions.length > 0) { %>
-                                <% completedProductions.forEach(function(production) { %>
+                            <% if (inboundList.length > 0) { %>
+                                <% inboundList.forEach(function(production) { %>
                                     <tr>
-                                        <td data-label="Receive Date"><%= new Date(production.date).toISOString().split('T')[0] %></td>
+                                        <td data-label="Receive Date"><%= fmtDate(production.date) %></td>
                                         <td data-label="Batch Number"><%= production.batchNumber || '-' %></td>
                                         <td data-label="SO Number"><%= production.poSoNumber || '-' %></td>
-                                        <td data-label="Product Name"><%= production.item%></td>
-                                        <td data-label="Quantity" class="quantity-positive">
-                                            <i class="bi bi-plus-circle"></i>
-                                            <%= production.quantity %> KG
+                                        <td data-label="Product Name"><span class="cell-strong"><%= production.item %></span></td>
+                                        <td data-label="Quantity" class="text-end">
+                                            <span class="quantity-positive"><i class="bi bi-plus-circle"></i> <%= production.quantity %> KG</span>
                                         </td>
                                     </tr>
                                 <% }); %>
                             <% } else { %>
-                                <tr>
-                                    <td colspan="5" class="text-center py-4 text-muted">
-                                        <i class="bi bi-inbox fs-4 d-block mb-2"></i>
-                                        No completed productions found
-                                    </td>
-                                </tr>
+                                <tr class="is-empty-row"><td colspan="5"><div class="empty-state"><i class="bi bi-inbox"></i><h4>No completed productions</h4><p>Inbound products for the selected range appear here.</p></div></td></tr>
                             <% } %>
                         </tbody>
                     </table>
@@ -286,43 +360,42 @@
             </div>
         </div>
 
-        <!-- Outbound Products Section -->
-        <div class="dashboard-section">
-            <div class="section-header" data-bs-toggle="collapse" data-bs-target="#outboundProducts">
+        <!-- ===================== Outbound Products ===================== -->
+        <div class="dashboard-section" style="--accent:#d97706;--accent-soft:#fef3c7">
+            <div class="section-header" data-bs-toggle="collapse" data-bs-target="#outboundProducts" aria-expanded="false" aria-controls="outboundProducts">
                 <h2 class="section-title">
                     <i class="bi bi-box-arrow-right"></i>
                     Outbound Products
-                    <% if (outboundProductDetails && outboundProductDetails.length > 0) { %>
-                        <span class="badge rounded-pill bg-danger ms-2"><%= outboundProductDetails.length %></span>
+                    <% if (outboundList.length > 0) { %>
+                        <span class="badge rounded-pill bg-danger ms-2"><%= outboundList.length %></span>
                     <% } %>
                 </h2>
                 <i class="bi bi-chevron-down"></i>
             </div>
             <div id="outboundProducts" class="section-content collapse">
                 <form action="/dashboard/productWarehouse" method="GET" class="time-interval-form">
-                    <div class="row">
+                    <div class="row g-3 align-items-end">
                         <div class="col-md-4">
                             <div class="form-group">
                                 <label for="outboundStartDate">Start Date</label>
-                                <input type="date" class="form-control" id="outboundStartDate" name="outboundStartDate" value="<%= outboundStartDate || defaultOutboundStartDate %>">
+                                <input type="date" class="form-control" id="outboundStartDate" name="outboundStartDate" value="<%= outStart %>">
                             </div>
                         </div>
                         <div class="col-md-4">
                             <div class="form-group">
                                 <label for="outboundEndDate">End Date</label>
-                                <input type="date" class="form-control" id="outboundEndDate" name="outboundEndDate" value="<%= outboundEndDate || defaultOutboundEndDate %>">
+                                <input type="date" class="form-control" id="outboundEndDate" name="outboundEndDate" value="<%= outEnd %>">
                             </div>
                         </div>
-                        <div class="col-md-4 d-flex align-items-end">
-                            <button type="submit" class="btn btn-primary">
-                                <i class="bi bi-calendar-check"></i>
-                                Set Time Interval
+                        <div class="col-md-4">
+                            <button type="submit" class="btn btn-primary w-100">
+                                <i class="bi bi-calendar-check"></i> Set Time Interval
                             </button>
                         </div>
                     </div>
                 </form>
                 <div class="table-responsive">
-                    <table class="table">
+                    <table class="table table-cards align-middle">
                         <thead>
                             <tr>
                                 <th>Delivery Date</th>
@@ -330,53 +403,47 @@
                                 <th>Customer</th>
                                 <th>Product Name</th>
                                 <th>Packaging</th>
-                                <th>Quantity</th>
+                                <th class="text-end">Quantity</th>
                             </tr>
                         </thead>
                         <tbody>
-                            <% if (outboundProductDetails && outboundProductDetails.length > 0) { %>
-                                <% outboundProductDetails.forEach(function(product) { %>
+                            <% if (outboundList.length > 0) { %>
+                                <% outboundList.forEach(function(product) { %>
                                     <tr>
-                                        <td data-label="Delivery Date"><%= new Date(product.date).toISOString().split('T')[0] %></td>
+                                        <td data-label="Delivery Date"><%= fmtDate(product.date) %></td>
                                         <td data-label="SO Number"><%= product.sonumber %></td>
                                         <td data-label="Customer"><%= product.customer %></td>
-                                        <td data-label="Product Name"><%= product.item %></td>
+                                        <td data-label="Product Name"><span class="cell-strong"><%= product.item %></span></td>
                                         <td data-label="Packaging"><%= product.packagingName %><%= product.packagingVolume %></td>
-                                        <td data-label="Quantity" class="quantity-negative">
-                                            <i class="bi bi-dash-circle"></i>
-                                            <%= product.quantity %> PCS
+                                        <td data-label="Quantity" class="text-end">
+                                            <span class="quantity-negative"><i class="bi bi-dash-circle"></i> <%= product.quantity %> PCS</span>
                                         </td>
                                     </tr>
                                 <% }); %>
                             <% } else { %>
-                                <tr>
-                                    <td colspan="6" class="text-center py-4 text-muted">
-                                        <i class="bi bi-inbox fs-4 d-block mb-2"></i>
-                                        No outbound products found
-                                    </td>
-                                </tr>
+                                <tr class="is-empty-row"><td colspan="6"><div class="empty-state"><i class="bi bi-inbox"></i><h4>No outbound products</h4><p>Shipments for the selected range appear here.</p></div></td></tr>
                             <% } %>
                         </tbody>
                     </table>
                 </div>
             </div>
         </div>
-        
-        <!-- Rework Items Section -->
-        <div class="dashboard-section">
-            <div class="section-header" data-bs-toggle="collapse" data-bs-target="#reworkItems">
+
+        <!-- ===================== Rework Items ===================== -->
+        <div class="dashboard-section" style="--accent:#e11d48;--accent-soft:#ffe4e6">
+            <div class="section-header" data-bs-toggle="collapse" data-bs-target="#reworkItems" aria-expanded="false" aria-controls="reworkItems">
                 <h2 class="section-title">
                     <i class="bi bi-tools"></i>
                     Rework Items
-                    <% if (complainItems && complainItems.length > 0) { %>
-                        <span class="badge rounded-pill bg-danger ms-2"><%= complainItems.length %></span>
+                    <% if (reworkList.length > 0) { %>
+                        <span class="badge rounded-pill bg-danger ms-2"><%= reworkList.length %></span>
                     <% } %>
                 </h2>
                 <i class="bi bi-chevron-down"></i>
             </div>
             <div id="reworkItems" class="section-content collapse">
                 <div class="table-responsive">
-                    <table class="table">
+                    <table class="table table-cards align-middle">
                         <thead>
                             <tr>
                                 <th>SO Number</th>
@@ -385,54 +452,48 @@
                                 <th>Quantity Rejected</th>
                                 <th>Notes</th>
                                 <th>Status</th>
-                                <th>Action</th>
+                                <th class="text-end">Action</th>
                             </tr>
                         </thead>
                         <tbody>
-                            <% if (complainItems && complainItems.length > 0) { %>
-                                <% complainItems.forEach(function(item) { %>
+                            <% if (reworkList.length > 0) { %>
+                                <% reworkList.forEach(function(item) { %>
                                     <tr>
-                                        <td data-label="SO Number"><%= item.Complain.Order.sonumber %></td>
-                                        <td data-label="Customer Name"><%= item.Complain.Order.customerName %></td>
+                                        <td data-label="SO Number"><span class="cell-strong"><%= item.Complain && item.Complain.Order ? item.Complain.Order.sonumber : '—' %></span></td>
+                                        <td data-label="Customer Name"><%= item.Complain && item.Complain.Order ? item.Complain.Order.customerName : '—' %></td>
                                         <td data-label="Product"><%= item.product %></td>
                                         <td data-label="Quantity Rejected"><%= item.quantityRejected %> KG</td>
-                                        <td data-label="Notes"><%= item.notes || '-' %></td>
-                                        <td data-label="Status"><%= item.status %></td>
-                                        <td data-label="Action">
-                                            <% if (item.status === 'Ready to Deliver') { %>
-                                                <form action="/complain/deliver-rework/<%= item.id %>" method="POST" class="d-inline">
-                                                    <button type="submit" class="btn btn-success">
-                                                        <i class="bi bi-truck"></i>
-                                                        Deliver
-                                                    </button>
-                                                </form>
-                                            <% } else if (item.status === 'Rework Approved') { %>
-                                                <form action="/productWarehouse/proceed-to-ppic" method="POST" class="d-inline">
-                                                    <input type="hidden" name="complainItemId" value="<%= item.id %>">
-                                                    <button type="submit" class="btn btn-primary">
-                                                        <i class="bi bi-forward"></i>
-                                                        Forward to PPIC
-                                                    </button>
-                                                </form>
-                                            <% } else { %>
-                                                <form action="/productWarehouse/proceed-to-qc" method="POST" class="d-inline">
-                                                    <input type="hidden" name="complainItemId" value="<%= item.id %>">
-                                                    <button type="submit" class="btn btn-primary">
-                                                        <i class="bi bi-arrow-right-circle"></i>
-                                                        Proceed to QC
-                                                    </button>
-                                                </form>
-                                            <% } %>
+                                        <td data-label="Notes"><span class="cell-sub"><%= item.notes || '—' %></span></td>
+                                        <td data-label="Status"><span class="status-badge <%= sb(item.status) %>"><%= item.status %></span></td>
+                                        <td data-label="Action" class="text-end">
+                                            <div class="action-buttons justify-content-end">
+                                                <% if (item.status === 'Ready to Deliver') { %>
+                                                    <form action="/complain/deliver-rework/<%= item.id %>" method="POST" class="d-inline">
+                                                        <button type="submit" class="btn btn-sm btn-success">
+                                                            <i class="bi bi-truck"></i> Deliver
+                                                        </button>
+                                                    </form>
+                                                <% } else if (item.status === 'Rework Approved') { %>
+                                                    <form action="/productWarehouse/proceed-to-ppic" method="POST" class="d-inline">
+                                                        <input type="hidden" name="complainItemId" value="<%= item.id %>">
+                                                        <button type="submit" class="btn btn-sm btn-primary">
+                                                            <i class="bi bi-forward"></i> Forward to PPIC
+                                                        </button>
+                                                    </form>
+                                                <% } else { %>
+                                                    <form action="/productWarehouse/proceed-to-qc" method="POST" class="d-inline">
+                                                        <input type="hidden" name="complainItemId" value="<%= item.id %>">
+                                                        <button type="submit" class="btn btn-sm btn-primary">
+                                                            <i class="bi bi-arrow-right-circle"></i> Proceed to QC
+                                                        </button>
+                                                    </form>
+                                                <% } %>
+                                            </div>
                                         </td>
                                     </tr>
                                 <% }); %>
                             <% } else { %>
-                                <tr>
-                                    <td colspan="7" class="text-center py-4 text-muted">
-                                        <i class="bi bi-inbox fs-4 d-block mb-2"></i>
-                                        No rework items found
-                                    </td>
-                                </tr>
+                                <tr class="is-empty-row"><td colspan="7"><div class="empty-state"><i class="bi bi-inbox"></i><h4>No rework items</h4><p>Rework requests from complaints appear here.</p></div></td></tr>
                             <% } %>
                         </tbody>
                     </table>
@@ -441,118 +502,126 @@
         </div>
     </div>
 
+    <!-- ===================== Delivery (confirm) modals — page-level so they open from List & Board ===================== -->
+    <% approvedList.forEach(function(order) { %>
+        <div class="modal fade" id="deliveryModal<%= order.id %>" tabindex="-1" aria-labelledby="deliveryModalLabel<%= order.id %>" aria-hidden="true">
+            <div class="modal-dialog modal-dialog-centered">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="deliveryModalLabel<%= order.id %>">Confirm Delivery — SO#<%= order.sonumber %></h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <form action="/productWarehouse/deliver" method="POST">
+                        <div class="modal-body">
+                            <input type="hidden" name="orderId" value="<%= order.id %>">
+                            <p>Are you sure you want to change the order status to "On Delivery"?</p>
+                            <div class="mb-1">
+                                <strong>Order Details:</strong>
+                                <div class="deliver-lines mt-2">
+                                    <% (order.OrderItems || []).forEach(function(item) { %>
+                                        <% if (item.invoicedQuantity !== item.shippedQuantity) { %>
+                                            <div>
+                                                • <%= item.Product ? item.Product.name : '—' %> - <%= item.Packaging ? item.Packaging.name : '—' %> —
+                                                Quantity:
+                                                <% if (item.shippedQuantity !== 0 && item.invoicedQuantity > item.shippedQuantity) { %>
+                                                    <%= item.invoicedQuantity - item.shippedQuantity %> PCS
+                                                <% } else { %>
+                                                    <%= item.invoicedQuantity %> PCS
+                                                <% } %>
+                                            </div>
+                                        <% } %>
+                                    <% }); %>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancel</button>
+                            <button type="submit" class="btn btn-success">
+                                <i class="bi bi-truck"></i> Confirm Delivery
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    <% }); %>
+
+    <!-- ===================== Scripts ===================== -->
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
     <script>
-        // Set up SSE for notifications
+        // ---- Set up SSE for notifications ----
         const evtSource = new EventSource('/notifications');
         const audio = new Audio('/audio/product.mp3');
 
         evtSource.onmessage = function(event) {
-            const data = JSON.parse(event.data);
-            
+            let data;
+            try { data = JSON.parse(event.data); } catch (e) { return; }
+
             if (data.type === 'newDeliveryOrder') {
-                // Show notification for new delivery order
-                const notification = `New order ready for delivery: ${data.sonumber} (${data.customerName})`;
-                showNotification(notification);
-                
-                // Play audio if specified
-                if (data.audio) {
-                    audio.play().catch(e => console.error('Error playing audio:', e));
-                }
-
-                // Refresh the page to show the new order
-                setTimeout(() => {
-                    location.reload();
-                }, 3000);
+                showNotification(`New order ready for delivery: ${data.sonumber} (${data.customerName})`);
+                if (data.audio) audio.play().catch(e => console.error('Error playing audio:', e));
+                setTimeout(() => location.reload(), 3000);
             } else if (data.type === 'newComplain') {
-                // Show notification for new complain
-                const notification = `New complain received: ${data.sonumber} (${data.customerName})`;
-                showNotification(notification);
-                
-                // Play audio if specified
-                if (data.audio) {
-                    audio.play().catch(e => console.error('Error playing audio:', e));
-                }
-
-                // Refresh the page to show the new complain
-                setTimeout(() => {
-                    location.reload();
-                }, 3000);
+                showNotification(`New complain received: ${data.sonumber} (${data.customerName})`);
+                if (data.audio) audio.play().catch(e => console.error('Error playing audio:', e));
+                setTimeout(() => location.reload(), 3000);
             } else if (data.type === 'rework') {
-                // Show notification for rework
-                const notification = `New rework approved: ${data.sonumber} - ${data.product} (${data.customerName})`;
-                showNotification(notification);
-                
-                // Play audio if specified
-                if (data.audio) {
-                    audio.play().catch(e => console.error('Error playing audio:', e));
-                }
-
-                // Refresh the page to show the new rework
-                setTimeout(() => {
-                    location.reload();
-                }, 3000);
+                showNotification(`New rework approved: ${data.sonumber} - ${data.product} (${data.customerName})`);
+                if (data.audio) audio.play().catch(e => console.error('Error playing audio:', e));
+                setTimeout(() => location.reload(), 3000);
             }
         };
 
         function showNotification(message) {
             const notificationDiv = document.createElement('div');
             notificationDiv.className = 'alert alert-info alert-dismissible fade show';
-            notificationDiv.style.position = 'fixed';
-            notificationDiv.style.top = '20px';
-            notificationDiv.style.right = '20px';
-            notificationDiv.style.zIndex = '9999';
-            notificationDiv.innerHTML = `
-                ${message}
-                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-            `;
+            notificationDiv.style.cssText = 'position:fixed;top:20px;right:20px;z-index:9999;max-width:360px';
+            notificationDiv.innerHTML = `${message}<button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>`;
             document.body.appendChild(notificationDiv);
-
-            // Auto-remove after 5 seconds
-            setTimeout(() => {
-                notificationDiv.remove();
-            }, 5000);
+            setTimeout(() => notificationDiv.remove(), 5000);
         }
 
         document.addEventListener('DOMContentLoaded', function() {
-            // Handle sidebar state changes
-            const sidebar = document.querySelector('.sidebar');
-            const observer = new MutationObserver(function(mutations) {
-                mutations.forEach(function(mutation) {
-                    if (mutation.attributeName === 'class') {
-                        if (sidebar.classList.contains('collapsed')) {
-                            document.body.classList.add('sidebar-collapsed');
-                        } else {
-                            document.body.classList.remove('sidebar-collapsed');
-                        }
-                    }
-                });
-            });
-            observer.observe(sidebar, { attributes: true });
-
-            // Initialize collapsible sections
-            const sections = document.querySelectorAll('.dashboard-section');
-            sections.forEach(section => {
+            // Chevron rotation synced to bootstrap collapse
+            document.querySelectorAll('.dashboard-section').forEach(section => {
                 const content = section.querySelector('.section-content');
-                const icon = section.querySelector('.bi-chevron-down');
+                const icon = section.querySelector('.section-header > .bi-chevron-down');
+                if (!content || !icon) return;
+                if (content.classList.contains('show')) icon.style.transform = 'rotate(180deg)';
+                content.addEventListener('show.bs.collapse', () => { icon.style.transform = 'rotate(180deg)'; });
+                content.addEventListener('hide.bs.collapse', () => { icon.style.transform = 'rotate(0)'; });
+            });
 
-                // Set initial state
-                if (content.classList.contains('show')) {
-                    icon.style.transform = 'rotate(180deg)';
-                }
+            // Count-up stat values
+            document.querySelectorAll('.stat-value[data-count]').forEach(el => {
+                const target = parseInt(el.getAttribute('data-count'), 10) || 0;
+                if (!target) { el.textContent = '0'; return; }
+                const dur = 850, start = performance.now();
+                (function tick(now) {
+                    const p = Math.min((now - start) / dur, 1);
+                    el.textContent = Math.round(target * (1 - Math.pow(1 - p, 3))).toLocaleString('id-ID');
+                    if (p < 1) requestAnimationFrame(tick);
+                })(start);
+            });
 
-                // Use Bootstrap's collapse events
-                content.addEventListener('show.bs.collapse', () => {
-                    icon.style.transform = 'rotate(180deg)';
-                });
+            // Hero clock
+            function tickClock() {
+                const c = document.getElementById('pwClock');
+                const d = document.getElementById('pwDate');
+                const now = new Date();
+                if (c) c.textContent = now.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
+                if (d) d.textContent = now.toLocaleDateString('en-US', { weekday: 'long', day: 'numeric', month: 'long' });
+            }
+            tickClock(); setInterval(tickClock, 15000);
 
-                content.addEventListener('hide.bs.collapse', () => {
-                    icon.style.transform = 'rotate(0)';
+            // Form loading state
+            document.querySelectorAll('form').forEach(form => {
+                form.addEventListener('submit', function () {
+                    const submitBtn = this.querySelector('button[type="submit"]');
+                    if (submitBtn) { submitBtn.classList.add('loading'); submitBtn.disabled = true; }
                 });
             });
         });
     </script>
-
 </body>
 </html>

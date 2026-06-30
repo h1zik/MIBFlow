@@ -1,337 +1,115 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sample Retained Productions</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.2/font/bootstrap-icons.css" rel="stylesheet">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <%- include('../partials/head', { pageTitle: 'Retained Sample' }) %>
     <style>
+        /* Retained Sample — page-specific flourishes, built on mibflow.css tokens */
         :root {
-            --primary-color: #1b5e20;
-            --primary-light: #388E3C;
-            --background-light: #f4f6f8;
-            --text-color: #333;
-            --shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-            --transition: all 0.3s ease;
+            --primary-color: var(--mib-primary);
+            --primary-light: var(--mib-primary-light);
+            --primary-dark: var(--mib-primary-dark);
         }
-
-        body {
-            font-family: 'Inter', sans-serif;
-            background-color: var(--background-light);
-            margin: 0;
-            padding: 0;
-            min-height: 100vh;
-        }
-
-        .main-content {
-            margin-left: 0;
-            padding: 1rem;
-            width: 100%;
-            transition: var(--transition);
-        }
-
-        .page-header {
-            background: white;
-            padding: 1rem;
-            border-radius: 15px;
-            box-shadow: var(--shadow);
-            margin-bottom: 1rem;
-        }
-
-        .page-title {
-            margin: 0;
-            color: var(--primary-color);
-            font-weight: 600;
-            font-size: 1.25rem;
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-        }
-
-        .page-subtitle {
-            color: #6c757d;
-            font-size: 0.875rem;
-            margin-top: 0.5rem;
-        }
-
-        .card {
-            background: white;
-            border-radius: 15px;
-            box-shadow: var(--shadow);
-            margin-bottom: 1rem;
-            border: none;
-            overflow: hidden;
-        }
-
-        .card-header {
-            background-color: var(--background-light);
-            padding: 1rem;
-            border-bottom: 1px solid rgba(0, 0, 0, 0.1);
-        }
-
-        .card-title {
-            color: var(--primary-color);
-            font-weight: 600;
-            font-size: 1rem;
-            margin: 0;
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-        }
-
-        .card-body {
-            padding: 1rem;
-        }
-
-        .form-group {
-            margin-bottom: 1rem;
-        }
-
-        .form-label {
-            font-weight: 600;
-            color: var(--primary-color);
-            margin-bottom: 0.5rem;
-            font-size: 0.875rem;
-        }
-
-        .form-control {
-            border-radius: 8px;
-            padding: 0.75rem 1rem;
-            border: 1px solid rgba(0, 0, 0, 0.1);
-            font-size: 0.875rem;
-            transition: var(--transition);
-        }
-
-        .form-control:focus {
-            border-color: var(--primary-color);
-            box-shadow: 0 0 0 0.2rem rgba(27, 94, 32, 0.25);
-        }
-
-        .table {
-            margin: 0;
-        }
-
-        .table thead th {
-            background-color: var(--primary-color);
-            color: white;
-            font-weight: 600;
-            text-transform: uppercase;
-            font-size: 0.75rem;
-            letter-spacing: 0.5px;
-            padding: 1rem;
-            border: none;
-            white-space: nowrap;
-        }
-
-        .table tbody td {
-            padding: 1rem;
-            vertical-align: middle;
-            border-color: rgba(0, 0, 0, 0.05);
-            font-size: 0.875rem;
-        }
-
-        .table tbody tr:hover {
-            background-color: var(--background-light);
-        }
-
-        .badge {
-            padding: 0.35rem 0.65rem;
-            font-size: 0.75rem;
-            font-weight: 500;
-            border-radius: 2rem;
-            display: inline-flex;
-            align-items: center;
-            gap: 0.25rem;
-            margin: 0.125rem;
-        }
-
-        .badge-pending {
-            background-color: #fff3cd;
-            color: #856404;
-        }
-
-        .badge-scheduled {
-            background-color: #d4edda;
-            color: #155724;
-        }
-
-        .badge-declined,
-        .badge-fail {
-            background-color: #f8d7da;
-            color: #721c24;
-        }
-
-        .badge-pass {
-            background-color: #d1e7dd;
-            color: #0f5132;
-        }
-
-        .btn {
-            padding: 0.75rem 1rem;
-            border-radius: 8px;
-            font-weight: 500;
-            display: inline-flex;
-            align-items: center;
-            gap: 0.5rem;
-            transition: var(--transition);
-            font-size: 0.875rem;
-            width: 100%;
-            justify-content: center;
-        }
-
-        .btn-primary {
-            background-color: var(--primary-color);
-            border: none;
-            color: white;
-        }
-
-        .btn-primary:hover {
-            background-color: var(--primary-light);
-            transform: translateY(-1px);
-        }
-
-        .btn-secondary {
-            background-color: #6c757d;
-            border: none;
-            color: white;
-        }
-
-        .btn-secondary:hover {
-            background-color: #5a6268;
-            transform: translateY(-1px);
-        }
-
-        .fade-in {
-            animation: fadeIn 0.3s ease-in;
-        }
-
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(10px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-
-        /* Desktop styles */
-        @media (min-width: 769px) {
-            .main-content {
-                margin-left: 280px;
-                padding: 2rem;
-                width: calc(100% - 280px);
-            }
-
-            body:has(.sidebar.collapsed) .main-content {
-                margin-left: 70px;
-                width: calc(100% - 70px);
-            }
-
-            .page-header {
-                padding: 1.5rem;
-                margin-bottom: 2rem;
-            }
-
-            .page-title {
-                font-size: 1.5rem;
-            }
-
-            .card-header {
-                padding: 1.5rem;
-            }
-
-            .card-title {
-                font-size: 1.2rem;
-            }
-
-            .card-body {
-                padding: 1.5rem;
-            }
-
-            .form-label {
-                font-size: 1rem;
-            }
-
-            .form-control {
-                font-size: 1rem;
-            }
-
-            .btn {
-                font-size: 1rem;
-                width: auto;
-            }
-
-            .btn-group {
-                display: flex;
-                gap: 1rem;
-            }
-        }
-
-        /* Mobile styles */
-        @media (max-width: 768px) {
-            .btn-group {
-                display: grid;
-                gap: 0.5rem;
-            }
-
-            .table-responsive {
-                margin: 0 -1rem;
-            }
-
-            .table {
-                margin: 0 1rem;
-            }
-
-            .table td {
-                white-space: normal;
-                min-width: 120px;
-            }
-
-            .table td:first-child {
-                position: sticky;
-                left: 0;
-                background-color: white;
-                z-index: 1;
-            }
-        }
+        .stagger > * { opacity: 0; animation: fadeIn 0.5s ease forwards; }
+        .stagger > *:nth-child(1) { animation-delay: 0.04s; }
+        .stagger > *:nth-child(2) { animation-delay: 0.10s; }
+        .stagger > *:nth-child(3) { animation-delay: 0.16s; }
+        .quick-stats { grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); }
+        .filter-card .card-body { padding-top: 1.1rem; }
+        .tank-chips { display: flex; flex-wrap: wrap; gap: 0.3rem; }
+        .expiry-note { display: block; margin-top: 0.25rem; font-size: 0.72rem; color: var(--mib-text-muted); }
+        .table-card .table { margin: 0; }
+        .table-card .table-responsive { border: 0; box-shadow: none; border-radius: 0; }
     </style>
 </head>
-<body>
-    <%- include('../partials/sidebar', { userRole: userRole }) %>
+<body class="app-shell">
+    <%- include('../partials/sidebar', { userRole: userRole, path: '/qc/sampleRetainedProductions' }) %>
 
-    <div class="main-content">
-        <div class="page-header fade-in">
-            <h1 class="page-title">
-                <i class="bi bi-archive"></i>
-                Sample Retained Productions
-            </h1>
-            <p class="page-subtitle">View and manage retained production samples</p>
+    <%
+        /* ---- Defensive normalisation (rendered from two controllers with slightly different locals) ---- */
+        const activeList   = (typeof productions !== 'undefined' && productions) ? productions : [];
+        const expiredList  = (typeof expiredProductions !== 'undefined' && expiredProductions) ? expiredProductions : [];
+        const startVal     = (typeof startDate !== 'undefined' && startDate) ? startDate : (typeof defaultStartDate !== 'undefined' ? defaultStartDate : '');
+        const endVal       = (typeof endDate !== 'undefined' && endDate) ? endDate : (typeof defaultEndDate !== 'undefined' ? defaultEndDate : '');
+
+        /* helpers */
+        const fmtDate = (d) => {
+            if (!d) return '-';
+            const dt = (d instanceof Date) ? d : new Date(d);
+            return isNaN(dt) ? '-' : dt.toISOString().split('T')[0];
+        };
+        const soNumber = (p) => {
+            const pr = p.ProductionRequest;
+            if (pr && pr.orderId && pr.Order) return pr.Order.sonumber;
+            if (pr && pr.prodreqnumber) return pr.prodreqnumber;
+            return '-';
+        };
+
+        /* stat counts */
+        const today = new Date();
+        let expiringSoon = 0;
+        activeList.forEach(p => {
+            if (p.expiredDate) {
+                const months = (new Date(p.expiredDate) - today) / (1000 * 60 * 60 * 24 * 30);
+                if (months <= 6) expiringSoon++;
+            }
+        });
+    %>
+
+    <div class="content content-wide">
+        <%- include('../partials/page-header', {
+              pageTitle: 'Retained Sample',
+              pageIcon: 'bi-archive-fill',
+              pageSubtitle: 'View and manage retained production samples',
+              actionsHtml: '<a href="/dashboard/qc" class="btn btn-soft"><i class="bi bi-arrow-left"></i> Back to Dashboard</a>'
+        }) %>
+
+        <!-- ===================== Quick stats ===================== -->
+        <div class="quick-stats stagger">
+            <div class="stat-card">
+                <div class="stat-icon"><i class="bi bi-archive"></i></div>
+                <div class="stat-body">
+                    <div class="stat-label">Active Samples</div>
+                    <div class="stat-value"><%= activeList.length %></div>
+                    <span class="stat-sub">Retained &amp; in storage</span>
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon <%= expiringSoon > 0 ? 'is-warning' : 'is-success' %>"><i class="bi bi-exclamation-triangle"></i></div>
+                <div class="stat-body">
+                    <div class="stat-label">Expiring Soon</div>
+                    <div class="stat-value"><%= expiringSoon %></div>
+                    <span class="stat-sub">Within 6 months</span>
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon <%= expiredList.length > 0 ? 'is-danger' : 'is-success' %>"><i class="bi bi-calendar-x"></i></div>
+                <div class="stat-body">
+                    <div class="stat-label">Expired Samples</div>
+                    <div class="stat-value"><%= expiredList.length %></div>
+                    <span class="stat-sub">Past expiry date</span>
+                </div>
+            </div>
         </div>
 
-        <div class="card fade-in">
+        <!-- ===================== Date filter ===================== -->
+        <div class="card filter-card fade-in">
             <div class="card-header">
-                <h2 class="card-title">
-                    <i class="bi bi-calendar-range"></i>
-                    Filter by Date Range
-                </h2>
+                <h2 class="card-title"><i class="bi bi-calendar-range"></i> Filter by Date Range</h2>
             </div>
             <div class="card-body">
                 <form action="/qc/sampleRetainedProductions" method="GET">
-                    <div class="row g-3">
+                    <div class="row g-3 align-items-end">
                         <div class="col-md-4">
-                            <div class="form-group">
-                                <label class="form-label" for="startDate">Start Date</label>
-                                <input type="date" class="form-control" id="startDate" name="startDate" value="<%= startDate || defaultStartDate %>">
-                            </div>
+                            <label class="form-label" for="startDate">Start Date</label>
+                            <input type="date" class="form-control" id="startDate" name="startDate" value="<%= startVal %>">
                         </div>
                         <div class="col-md-4">
-                            <div class="form-group">
-                                <label class="form-label" for="endDate">End Date</label>
-                                <input type="date" class="form-control" id="endDate" name="endDate" value="<%= endDate || defaultEndDate %>">
-                            </div>
+                            <label class="form-label" for="endDate">End Date</label>
+                            <input type="date" class="form-control" id="endDate" name="endDate" value="<%= endVal %>">
                         </div>
-                        <div class="col-md-4 d-flex align-items-end">
+                        <div class="col-md-4">
                             <button type="submit" class="btn btn-primary">
-                                <i class="bi bi-funnel"></i>
-                                Apply Filter
+                                <i class="bi bi-funnel"></i> Apply Filter
                             </button>
                         </div>
                     </div>
@@ -339,246 +117,163 @@
             </div>
         </div>
 
-        <div class="card fade-in">
+        <!-- ===================== Active production samples ===================== -->
+        <div class="table-card fade-in">
             <div class="card-header">
-                <h2 class="card-title">
-                    <i class="bi bi-table"></i>
-                    Active Production Samples
-                </h2>
+                <h2 class="card-title"><i class="bi bi-table"></i> Active Production Samples</h2>
+                <span class="pill"><i class="bi bi-archive"></i> <%= activeList.length %></span>
             </div>
-            <div class="card-body">
-                <div class="table-responsive">
-                    <table class="table">
-                        <thead>
-                            <tr>
-                                <th>ID</th>
-                                <th>Production Date</th>
-                                <th>Batch Number</th>
-                                <th>SO Number</th>
-                                <th>Product</th>
-                                <th>Quantity</th>
-                                <th>Tanks</th>
-                                <th>No Rack</th>
-                                <th>Expired Date</th>
-                                <th>BG Scan</th>
-                                <th>Retained Volume</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <% if (productions && productions.length > 0) { %>
-                                <% productions.forEach(function(production) { %>
-                                    <tr>
-                                        <td>#<%= production.id %></td>
-                                        <td><%= production.startDate.toISOString().split('T')[0] %></td>
-                                        <td><%= production.batchNumber %></td>
-                                        <td>
-                                            <% if (production.ProductionRequest?.orderId && production.ProductionRequest.Order) { %>
-                                                <%= production.ProductionRequest.Order.sonumber %>
-                                            <% } else if (production.ProductionRequest?.prodreqnumber) { %>
-                                                <%= production.ProductionRequest.prodreqnumber %>
-                                            <% } else { %>
-                                                -
-                                            <% } %>
-                                        </td>
-                                        <td><%= production.Product.name %></td>
-                                        <td><%= production.quantity %> Kg</td>
-                                        <td>
-                                            <% production.Tanks.forEach(tank => { %>
-                                                <span class="badge badge-pending">
-                                                    <i class="bi bi-water"></i>
-                                                    <%= tank.name %> (<%= tank.volume %> L)
-                                                </span>
-                                            <% }) %>
-                                        </td>
-                                        <td><%= production.noRack || '-' %></td>
-                                        <td>
-                                            <% 
-                                            if (production.expiredDate) {
-                                                const expiryDate = new Date(production.expiredDate);
-                                                const today = new Date();
-                                                const monthsUntilExpiry = (expiryDate - today) / (1000 * 60 * 60 * 24 * 30);
-                                                
-                                                if (monthsUntilExpiry <= 1) {
-                                                    const daysUntilExpiry = (expiryDate - today) / (1000 * 60 * 60 * 24); %>
-                                                    <span class="badge badge-pending">
-                                                        <i class="bi bi-exclamation-triangle"></i>
-                                                        <%= production.expiredDate.toISOString().split('T')[0] %>
-                                                        <br>
-                                                        Expires in <%= Math.ceil(daysUntilExpiry) %> days
-                                                    </span>
-                                                <% } else if (monthsUntilExpiry <= 6) { %>
-                                                    <span class="badge badge-pending">
-                                                        <i class="bi bi-exclamation-triangle"></i>
-                                                        <%= production.expiredDate.toISOString().split('T')[0] %>
-                                                        <br>
-                                                        Expires in <%= Math.ceil(monthsUntilExpiry) %> months
-                                                    </span>
-                                                <% } else { %>
-                                                    <%= production.expiredDate.toISOString().split('T')[0] %>
-                                                <% }
-                                            } else { %>
-                                                -
-                                            <% } %>
-                                        </td>
-                                        <td>
-                                            <% if (production.bgscan) { %>
-                                                <a href="/uploads/BGScan/<%= production.bgscan %>" target="_blank" class="badge badge-pass">
-                                                    <i class="bi bi-file-earmark-text"></i>
-                                                    View Scan
-                                                </a>
-                                            <% } else { %>
-                                                -
-                                            <% } %>
-                                        </td>
-                                        <td><%= production.retainedSampleVolume %> ml</td>
-                                    </tr>
-                                <% }); %>
-                            <% } else { %>
+            <div class="table-responsive">
+                <table class="table table-cards align-middle">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Production Date</th>
+                            <th>Batch Number</th>
+                            <th>SO Number</th>
+                            <th>Product</th>
+                            <th>Quantity</th>
+                            <th>Tanks</th>
+                            <th>No Rack</th>
+                            <th>Expired Date</th>
+                            <th>BG Scan</th>
+                            <th class="text-end">Retained Volume</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <% if (activeList.length > 0) { %>
+                            <% activeList.forEach(function(production) { %>
                                 <tr>
-                                    <td colspan="10" class="text-center text-muted">
-                                        <i class="bi bi-inbox fs-4 d-block mb-2"></i>
-                                        No productions with sample retained found
+                                    <td data-label="ID"><span class="cell-strong">#<%= production.id %></span></td>
+                                    <td data-label="Production Date"><%= fmtDate(production.startDate) %></td>
+                                    <td data-label="Batch Number"><%= production.batchNumber || '-' %></td>
+                                    <td data-label="SO Number"><%= soNumber(production) %></td>
+                                    <td data-label="Product"><span class="cell-strong"><%= production.Product ? production.Product.name : '-' %></span></td>
+                                    <td data-label="Quantity"><%= production.quantity %> Kg</td>
+                                    <td data-label="Tanks">
+                                        <div class="tank-chips">
+                                            <% (production.Tanks || []).forEach(function(tank) { %>
+                                                <span class="chip"><i class="bi bi-water"></i> <%= tank.name %> (<%= tank.volume %> L)</span>
+                                            <% }) %>
+                                            <% if (!production.Tanks || production.Tanks.length === 0) { %>-<% } %>
+                                        </div>
                                     </td>
+                                    <td data-label="No Rack"><%= production.noRack || '-' %></td>
+                                    <td data-label="Expired Date">
+                                        <%
+                                        if (production.expiredDate) {
+                                            const expiryDate = new Date(production.expiredDate);
+                                            const monthsUntilExpiry = (expiryDate - today) / (1000 * 60 * 60 * 24 * 30);
+                                            if (monthsUntilExpiry <= 1) {
+                                                const daysUntilExpiry = (expiryDate - today) / (1000 * 60 * 60 * 24);
+                                        %>
+                                            <span class="status-badge status-pending"><i class="bi bi-exclamation-triangle"></i> <%= fmtDate(production.expiredDate) %></span>
+                                            <span class="expiry-note">Expires in <%= Math.ceil(daysUntilExpiry) %> days</span>
+                                        <% } else if (monthsUntilExpiry <= 6) { %>
+                                            <span class="status-badge status-pending"><i class="bi bi-exclamation-triangle"></i> <%= fmtDate(production.expiredDate) %></span>
+                                            <span class="expiry-note">Expires in <%= Math.ceil(monthsUntilExpiry) %> months</span>
+                                        <% } else { %>
+                                            <%= fmtDate(production.expiredDate) %>
+                                        <% } } else { %>
+                                            -
+                                        <% } %>
+                                    </td>
+                                    <td data-label="BG Scan">
+                                        <% if (production.bgscan) { %>
+                                            <a href="/uploads/BGScan/<%= production.bgscan %>" target="_blank" class="btn btn-sm btn-soft"><i class="bi bi-file-earmark-text"></i> View Scan</a>
+                                        <% } else { %>
+                                            <span class="text-muted-2">-</span>
+                                        <% } %>
+                                    </td>
+                                    <td data-label="Retained Volume" class="text-end"><span class="num"><%= production.retainedSampleVolume %> ml</span></td>
                                 </tr>
-                            <% } %>
-                        </tbody>
-                    </table>
-                </div>
+                            <% }); %>
+                        <% } else { %>
+                            <tr class="is-empty-row">
+                                <td colspan="11">
+                                    <div class="empty-state">
+                                        <i class="bi bi-inbox"></i>
+                                        <h4>No retained samples</h4>
+                                        <p>Productions with a retained sample will appear here.</p>
+                                    </div>
+                                </td>
+                            </tr>
+                        <% } %>
+                    </tbody>
+                </table>
             </div>
         </div>
 
-        <div class="card fade-in mt-4">
-            <div class="card-header bg-warning bg-opacity-10">
-                <h2 class="card-title">
-                    <i class="bi bi-exclamation-triangle"></i>
-                    Expired Production Samples
-                </h2>
+        <!-- ===================== Expired production samples ===================== -->
+        <div class="table-card fade-in">
+            <div class="card-header">
+                <h2 class="card-title"><i class="bi bi-exclamation-triangle"></i> Expired Production Samples</h2>
+                <span class="pill"><i class="bi bi-calendar-x"></i> <%= expiredList.length %></span>
             </div>
-            <div class="card-body">
-                <div class="table-responsive">
-                    <table class="table">
-                        <thead>
-                            <tr>
-                                <th>ID</th>
-                                <th>Production Date</th>
-                                <th>Batch Number</th>
-                                <th>SO Number</th>
-                                <th>Product</th>
-                                <th>Quantity</th>
-                                <th>Tanks</th>
-                                <th>No Rack</th>
-                                <th>Expired Date</th>
-                                <th>BG Scan</th>
-                                <th>Retained Volume</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <% if (expiredProductions && expiredProductions.length > 0) { %>
-                                <% expiredProductions.forEach(function(production) { %>
-                                    <tr class="text-muted">
-                                        <td>#<%= production.id %></td>
-                                        <td><%= production.startDate.toISOString().split('T')[0] %></td>
-                                        <td><%= production.batchNumber %></td>
-                                        <td>
-                                            <% if (production.ProductionRequest?.orderId && production.ProductionRequest.Order) { %>
-                                                <%= production.ProductionRequest.Order.sonumber %>
-                                            <% } else if (production.ProductionRequest?.prodreqnumber) { %>
-                                                <%= production.ProductionRequest.prodreqnumber %>
-                                            <% } else { %>
-                                                -
-                                            <% } %>
-                                        </td>
-                                        <td><%= production.Product.name %></td>
-                                        <td><%= production.quantity %> Kg</td>
-                                        <td>
-                                            <% production.Tanks.forEach(tank => { %>
-                                                <span class="badge badge-pending">
-                                                    <i class="bi bi-water"></i>
-                                                    <%= tank.name %> (<%= tank.volume %> L)
-                                                </span>
-                                            <% }) %>
-                                        </td>
-                                        <td><%= production.noRack || '-' %></td>
-                                        <td>
-                                            <span class="badge badge-fail">
-                                                <i class="bi bi-exclamation-circle"></i>
-                                                <%= production.expiredDate ? production.expiredDate.toISOString().split('T')[0] : '-' %>
-                                            </span>
-                                        </td>
-                                        <td>
-                                            <% if (production.bgscan) { %>
-                                                <a href="/uploads/BGScan/<%= production.bgscan %>" target="_blank" class="badge badge-pass">
-                                                    <i class="bi bi-file-earmark-text"></i>
-                                                    View Scan
-                                                </a>
-                                            <% } else { %>
-                                                -
-                                            <% } %>
-                                        </td>
-                                        <td><%= production.retainedSampleVolume %> ml</td>
-                                    </tr>
-                                <% }); %>
-                            <% } else { %>
+            <div class="table-responsive">
+                <table class="table table-cards align-middle">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Production Date</th>
+                            <th>Batch Number</th>
+                            <th>SO Number</th>
+                            <th>Product</th>
+                            <th>Quantity</th>
+                            <th>Tanks</th>
+                            <th>No Rack</th>
+                            <th>Expired Date</th>
+                            <th>BG Scan</th>
+                            <th class="text-end">Retained Volume</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <% if (expiredList.length > 0) { %>
+                            <% expiredList.forEach(function(production) { %>
                                 <tr>
-                                    <td colspan="10" class="text-center text-muted">
-                                        <i class="bi bi-inbox fs-4 d-block mb-2"></i>
-                                        No expired production samples found
+                                    <td data-label="ID"><span class="cell-strong">#<%= production.id %></span></td>
+                                    <td data-label="Production Date"><%= fmtDate(production.startDate) %></td>
+                                    <td data-label="Batch Number"><%= production.batchNumber || '-' %></td>
+                                    <td data-label="SO Number"><%= soNumber(production) %></td>
+                                    <td data-label="Product"><span class="cell-strong"><%= production.Product ? production.Product.name : '-' %></span></td>
+                                    <td data-label="Quantity"><%= production.quantity %> Kg</td>
+                                    <td data-label="Tanks">
+                                        <div class="tank-chips">
+                                            <% (production.Tanks || []).forEach(function(tank) { %>
+                                                <span class="chip"><i class="bi bi-water"></i> <%= tank.name %> (<%= tank.volume %> L)</span>
+                                            <% }) %>
+                                            <% if (!production.Tanks || production.Tanks.length === 0) { %>-<% } %>
+                                        </div>
                                     </td>
+                                    <td data-label="No Rack"><%= production.noRack || '-' %></td>
+                                    <td data-label="Expired Date">
+                                        <span class="status-badge status-declined"><i class="bi bi-exclamation-circle"></i> <%= fmtDate(production.expiredDate) %></span>
+                                    </td>
+                                    <td data-label="BG Scan">
+                                        <% if (production.bgscan) { %>
+                                            <a href="/uploads/BGScan/<%= production.bgscan %>" target="_blank" class="btn btn-sm btn-soft"><i class="bi bi-file-earmark-text"></i> View Scan</a>
+                                        <% } else { %>
+                                            <span class="text-muted-2">-</span>
+                                        <% } %>
+                                    </td>
+                                    <td data-label="Retained Volume" class="text-end"><span class="num"><%= production.retainedSampleVolume %> ml</span></td>
                                 </tr>
-                            <% } %>
-                        </tbody>
-                    </table>
-                </div>
+                            <% }); %>
+                        <% } else { %>
+                            <tr class="is-empty-row">
+                                <td colspan="11">
+                                    <div class="empty-state">
+                                        <i class="bi bi-check2-circle"></i>
+                                        <h4>No expired samples</h4>
+                                        <p>Expired retained samples will be listed here.</p>
+                                    </div>
+                                </td>
+                            </tr>
+                        <% } %>
+                    </tbody>
+                </table>
             </div>
-        </div>
-
-        <div class="mt-4">
-            <a href="/dashboard/qc" class="btn btn-secondary">
-                <i class="bi bi-arrow-left"></i>
-                Back to Dashboard
-            </a>
         </div>
     </div>
-
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
-    <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            // Handle sidebar state changes
-            const sidebar = document.querySelector('.sidebar');
-            const mainContent = document.querySelector('.main-content');
-
-            function updateContentWidth() {
-                if (window.innerWidth > 768) {
-                    if (sidebar.classList.contains('collapsed')) {
-                        mainContent.style.marginLeft = '70px';
-                        mainContent.style.width = 'calc(100% - 70px)';
-                    } else {
-                        mainContent.style.marginLeft = '280px';
-                        mainContent.style.width = 'calc(100% - 280px)';
-                    }
-                } else {
-                    mainContent.style.marginLeft = '0';
-                    mainContent.style.width = '100%';
-                }
-            }
-
-            // Initial width update
-            updateContentWidth();
-
-            // Watch for sidebar class changes
-            const observer = new MutationObserver(function(mutations) {
-                mutations.forEach(function(mutation) {
-                    if (mutation.attributeName === 'class') {
-                        updateContentWidth();
-                    }
-                });
-            });
-
-            observer.observe(sidebar, { attributes: true });
-
-            // Handle window resize
-            window.addEventListener('resize', updateContentWidth);
-        });
-    </script>
 </body>
 </html>

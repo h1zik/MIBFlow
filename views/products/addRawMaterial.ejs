@@ -1,353 +1,97 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Add Raw Material</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.7.2/font/bootstrap-icons.css" rel="stylesheet">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <%- include('../partials/head', { pageTitle: 'Add Raw Material' }) %>
     <style>
+        /* Add Raw Material — page-scoped flourishes on the shared design system */
         :root {
-            --primary-color: #1b5e20;
-            --primary-light: #388E3C;
-            --background-light: #f4f6f8;
-            --text-color: #333;
-            --shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-            --transition: all 0.3s ease;
+            --primary-color: var(--mib-primary);
+            --primary-light: var(--mib-primary-light);
+            --primary-dark: var(--mib-primary-dark);
         }
-
-        body {
-            font-family: 'Inter', sans-serif;
-            background-color: var(--background-light);
-            margin: 0;
-            padding: 0;
-            min-height: 100vh;
-        }
-
-        .main-content {
-            margin-left: 0;
-            padding: 1rem;
-            width: 100%;
-            transition: var(--transition);
-        }
-
-        .page-header {
-            background: white;
-            padding: 1rem;
-            border-radius: 15px;
-            box-shadow: var(--shadow);
-            margin-bottom: 1rem;
-        }
-
-        .page-title {
-            margin: 0;
-            color: var(--primary-color);
-            font-weight: 600;
-            font-size: 1.25rem;
+        .calc-card {
+            background: var(--mib-grad-surface, var(--mib-surface-2));
+            border: 1px solid var(--mib-border);
+            border-radius: var(--mib-radius);
+            padding: 1rem 1.15rem;
             display: flex;
             align-items: center;
-            gap: 0.5rem;
+            gap: 0.9rem;
         }
-
-        .page-subtitle {
-            color: #6c757d;
-            font-size: 0.875rem;
-            margin-top: 0.5rem;
+        .calc-card .calc-ico {
+            flex-shrink: 0; width: 40px; height: 40px; border-radius: 12px;
+            display: grid; place-items: center; font-size: 1.15rem;
+            color: var(--mib-primary); background: var(--mib-primary-soft);
         }
-
-        .card {
-            background: white;
-            border-radius: 15px;
-            box-shadow: var(--shadow);
-            margin-bottom: 1rem;
-            border: none;
-            overflow: hidden;
+        .calc-card .calc-label {
+            font-size: 0.72rem; font-weight: 700; text-transform: uppercase;
+            letter-spacing: 0.04em; color: var(--mib-text-muted); margin: 0;
         }
-
-        .card-header {
-            background-color: var(--background-light);
-            padding: 1rem;
-            border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+        .calc-card .calc-number {
+            font-size: 1.4rem; font-weight: 750; color: var(--mib-text);
+            line-height: 1.1; font-variant-numeric: tabular-nums;
         }
-
-        .card-title {
-            color: var(--primary-color);
-            font-weight: 600;
-            font-size: 1rem;
-            margin: 0;
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-        }
-
-        .card-body {
-            padding: 1rem;
-        }
-
-        .form-group {
-            margin-bottom: 1rem;
-        }
-
-        .form-label {
-            font-weight: 600;
-            color: var(--primary-color);
-            margin-bottom: 0.5rem;
-            font-size: 0.875rem;
-        }
-
-        .form-control {
-            border-radius: 8px;
-            padding: 0.75rem 1rem;
-            border: 1px solid rgba(0, 0, 0, 0.1);
-            font-size: 0.875rem;
-            transition: var(--transition);
-        }
-
-        .form-control:focus {
-            border-color: var(--primary-color);
-            box-shadow: 0 0 0 0.2rem rgba(27, 94, 32, 0.25);
-        }
-
-        .form-control:disabled {
-            background-color: var(--background-light);
-            cursor: not-allowed;
-        }
-
-        .form-select {
-            border-radius: 8px;
-            padding: 0.75rem 1rem;
-            border: 1px solid rgba(0, 0, 0, 0.1);
-            font-size: 0.875rem;
-            transition: var(--transition);
-            background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3e%3cpath fill='none' stroke='%23343a40' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='m2 5 6 6 6-6'/%3e%3c/svg%3e");
-            background-repeat: no-repeat;
-            background-position: right 1rem center;
-            background-size: 16px 12px;
-        }
-
-        .form-select:focus {
-            border-color: var(--primary-color);
-            box-shadow: 0 0 0 0.2rem rgba(27, 94, 32, 0.25);
-        }
-
-        .alert {
-            border-radius: 8px;
-            padding: 1rem;
-            margin-bottom: 1rem;
-            font-size: 0.875rem;
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-        }
-
-        .alert-success {
-            background-color: #d1e7dd;
-            border: 1px solid #badbcc;
-            color: #0f5132;
-        }
-
-        .alert-danger {
-            background-color: #f8d7da;
-            border: 1px solid #f5c2c7;
-            color: #842029;
-        }
-
-        .btn {
-            padding: 0.75rem 1rem;
-            border-radius: 8px;
-            font-weight: 500;
-            display: inline-flex;
-            align-items: center;
-            gap: 0.5rem;
-            transition: var(--transition);
-            font-size: 0.875rem;
-            width: 100%;
-            justify-content: center;
-        }
-
-        .btn-primary {
-            background-color: var(--primary-color);
-            border: none;
-            color: white;
-        }
-
-        .btn-primary:hover {
-            background-color: var(--primary-light);
-            transform: translateY(-1px);
-        }
-
-        .btn-secondary {
-            background-color: #6c757d;
-            border: none;
-            color: white;
-        }
-
-        .btn-secondary:hover {
-            background-color: #5a6268;
-            transform: translateY(-1px);
-        }
-
-        .calculated-value {
-            background-color: var(--background-light);
-            padding: 1rem;
-            border-radius: 8px;
-            margin-top: 0.5rem;
-        }
-
-        .calculated-value-label {
-            font-size: 0.75rem;
-            color: #6c757d;
-            margin-bottom: 0.25rem;
-        }
-
-        .calculated-value-number {
-            font-size: 1.25rem;
-            font-weight: 600;
-            color: var(--primary-color);
-        }
-
-        .fade-in {
-            animation: fadeIn 0.3s ease-in;
-        }
-
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(10px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-
-        /* Desktop styles */
-        @media (min-width: 769px) {
-            .main-content {
-                margin-left: 280px;
-                padding: 2rem;
-                width: calc(100% - 280px);
-            }
-
-            body:has(.sidebar.collapsed) .main-content {
-                margin-left: 70px;
-                width: calc(100% - 70px);
-            }
-
-            .page-header {
-                padding: 1.5rem;
-                margin-bottom: 2rem;
-            }
-
-            .page-title {
-                font-size: 1.5rem;
-            }
-
-            .card-header {
-                padding: 1.5rem;
-            }
-
-            .card-title {
-                font-size: 1.2rem;
-            }
-
-            .card-body {
-                padding: 1.5rem;
-            }
-
-            .form-label {
-                font-size: 1rem;
-            }
-
-            .form-control, .form-select {
-                font-size: 1rem;
-            }
-
-            .btn {
-                font-size: 1rem;
-                width: auto;
-            }
-
-            .btn-group {
-                display: flex;
-                gap: 1rem;
-            }
-        }
-
-        /* Mobile styles */
-        @media (max-width: 768px) {
-            .btn-group {
-                display: grid;
-                gap: 0.5rem;
-            }
-        }
+        .form-actions { display: flex; flex-wrap: wrap; gap: 0.6rem; }
+        @media (max-width: 575.98px) { .form-actions { display: grid; } }
     </style>
 </head>
-<body>
-    <%- include('../partials/sidebar', { userRole: userRole }) %>
+<body class="app-shell">
+    <%- include('../partials/sidebar', { userRole: userRole, path: '/products/addRawMaterial' }) %>
 
-    <div class="main-content">
-        <div class="page-header fade-in">
-            <h1 class="page-title">
-                <i class="bi bi-plus-circle"></i>
-                Add Raw Material
-            </h1>
-            <p class="page-subtitle">Create a new raw material in the system</p>
-        </div>
+    <div class="content content-narrow">
+        <%- include('../partials/page-header', {
+              pageTitle: 'Add Raw Material',
+              pageIcon: 'bi-plus-circle',
+              pageSubtitle: 'Create a new raw material in the system',
+              actionsHtml: '<a href="/rawMaterials/rawMaterialStock" class="btn btn-light"><i class="bi bi-boxes"></i> Check Stock</a>'
+            }) %>
 
         <% if (typeof success !== 'undefined' && success === 'true') { %>
-            <div class="alert alert-success fade-in">
-                <i class="bi bi-check-circle"></i>
-                Raw material has been successfully added to the system
+            <div class="mib-flash mib-flash-success fade-in" role="alert">
+                <i class="bi bi-check-circle-fill"></i>
+                <span>Raw material has been successfully added to the system</span>
             </div>
         <% } %>
-        
+
         <% if (typeof error !== 'undefined' && error) { %>
-            <div class="alert alert-danger fade-in">
-                <i class="bi bi-exclamation-circle"></i>
-                <%= error %>
+            <div class="mib-flash mib-flash-error fade-in" role="alert">
+                <i class="bi bi-exclamation-triangle-fill"></i>
+                <span><%= error %></span>
             </div>
         <% } %>
 
-        <form action="/products/addRawMaterial" method="POST">
-            <div class="card fade-in">
-                <div class="card-header">
-                    <h2 class="card-title">
-                        <i class="bi bi-box-seam"></i>
-                        Raw Material Information
-                    </h2>
-                </div>
-                <div class="card-body">
-                    <div class="row g-3">
-                        <div class="col-md-12">
-                            <div class="form-group">
-                                <label class="form-label" for="name">Raw Material Name</label>
-                                <input type="text" class="form-control" id="name" name="name" required>
-                            </div>
-                        </div>
+        <form action="/products/addRawMaterial" method="POST" class="fade-in">
+            <div class="form-section">
+                <h2 class="form-section-title"><i class="bi bi-box-seam"></i> Raw Material Information</h2>
+                <p class="form-section-desc">Provide the material's name, physical form and current stock. Density is required only for liquids.</p>
 
-                        <div class="col-md-6">
-                            <div class="form-group">
-                                <label class="form-label" for="form">Form</label>
-                                <select class="form-select" id="form" name="form" required>
-                                    <option value="" selected disabled>Select form</option>
-                                    <option value="Solid">Solid</option>
-                                    <option value="Liquid">Liquid</option>
-                                </select>
-                            </div>
-                        </div>
+                <div class="row g-3">
+                    <div class="col-12">
+                        <label class="form-label" for="name">Raw Material Name</label>
+                        <input type="text" class="form-control" id="name" name="name" placeholder="e.g. Sodium Lauryl Sulfate" required>
+                    </div>
 
-                        <div class="col-md-6">
-                            <div class="form-group">
-                                <label class="form-label" for="density">Density (gr/ml)</label>
-                                <input type="number" class="form-control" id="density" name="density" step="0.0001" placeholder="Enter density" disabled>
-                            </div>
-                        </div>
+                    <div class="col-md-6">
+                        <label class="form-label" for="form">Form</label>
+                        <select class="form-select" id="form" name="form" required>
+                            <option value="" selected disabled>Select form</option>
+                            <option value="Solid">Solid</option>
+                            <option value="Liquid">Liquid</option>
+                        </select>
+                    </div>
 
-                        <div class="col-md-6">
-                            <div class="form-group">
-                                <label class="form-label" for="stock">Stock</label>
-                                <input type="number" class="form-control" id="stock" name="stock" required>
-                            </div>
-                        </div>
+                    <div class="col-md-6">
+                        <label class="form-label" for="density">Density (gr/ml)</label>
+                        <input type="number" class="form-control" id="density" name="density" step="0.0001" placeholder="Enter density" disabled>
+                        <div class="form-text">Enabled when Form is set to Liquid.</div>
+                    </div>
 
-                <div class="col-md-6">
-                    <div class="form-group">
+                    <div class="col-md-6">
+                        <label class="form-label" for="stock">Stock</label>
+                        <input type="number" class="form-control" id="stock" name="stock" placeholder="Enter stock quantity" required>
+                    </div>
+
+                    <div class="col-md-6">
                         <label class="form-label" for="unit">Unit</label>
                         <select class="form-select" id="unit" name="unit" required>
                             <option value="" selected disabled>Select unit</option>
@@ -355,72 +99,33 @@
                             <option value="L">L</option>
                         </select>
                     </div>
+
+                    <div class="col-12">
+                        <div class="calc-card">
+                            <span class="calc-ico"><i class="bi bi-calculator"></i></span>
+                            <div>
+                                <p class="calc-label">Calculated Quantity (KG)</p>
+                                <div class="calc-number" id="quantityDisplay">0.00</div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
 
-                <div class="col-12">
-                    <div class="calculated-value">
-                        <div class="calculated-value-label">Calculated Quantity (KG)</div>
-                        <div class="calculated-value-number" id="quantityDisplay">0.00</div>
-                        <!-- Remove this since we don't need it anymore - we'll calculate in the controller -->
-                    </div>
-                </div>
-                    </div>
-
-                    <div class="btn-group mt-4">
-                        <button type="submit" class="btn btn-primary">
-                            <i class="bi bi-plus-lg"></i>
-                            Add Raw Material
-                        </button>
-                        <a href="/dashboard/raw-material-warehouse" class="btn btn-secondary">
-                            <i class="bi bi-x-lg"></i>
-                            Cancel
-                        </a>
-                    </div>
+                <div class="form-actions mt-4">
+                    <button type="submit" class="btn btn-primary">
+                        <i class="bi bi-plus-lg"></i> Add Raw Material
+                    </button>
+                    <a href="/dashboard/raw-material-warehouse" class="btn btn-light">
+                        <i class="bi bi-x-lg"></i> Cancel
+                    </a>
                 </div>
             </div>
         </form>
     </div>
 
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
     <script>
         document.addEventListener('DOMContentLoaded', function() {
-            // Handle sidebar state changes
-            const sidebar = document.querySelector('.sidebar');
-            const mainContent = document.querySelector('.main-content');
-
-            function updateContentWidth() {
-                if (window.innerWidth > 768) {
-                    if (sidebar.classList.contains('collapsed')) {
-                        mainContent.style.marginLeft = '70px';
-                        mainContent.style.width = 'calc(100% - 70px)';
-                    } else {
-                        mainContent.style.marginLeft = '280px';
-                        mainContent.style.width = 'calc(100% - 280px)';
-                    }
-                } else {
-                    mainContent.style.marginLeft = '0';
-                    mainContent.style.width = '100%';
-                }
-            }
-
-            // Initial width update
-            updateContentWidth();
-
-            // Watch for sidebar class changes
-            const observer = new MutationObserver(function(mutations) {
-                mutations.forEach(function(mutation) {
-                    if (mutation.attributeName === 'class') {
-                        updateContentWidth();
-                    }
-                });
-            });
-
-            observer.observe(sidebar, { attributes: true });
-
-            // Handle window resize
-            window.addEventListener('resize', updateContentWidth);
-
-            // Form handling
+            // Form handling — calculated quantity preview
             const formSelect = document.getElementById('form');
             const densityInput = document.getElementById('density');
             const stockInput = document.getElementById('stock');
@@ -431,7 +136,7 @@
                 const isLiquid = this.value === 'Liquid';
                 densityInput.disabled = !isLiquid;
                 densityInput.required = isLiquid;
-                
+
                 if (!isLiquid) {
                     densityInput.value = '';
                 }

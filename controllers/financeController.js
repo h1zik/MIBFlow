@@ -170,10 +170,14 @@ exports.getFinanceRawMaterialRequests = async (req, res) => {
             attributes: ['id', 'username', 'role']
         });
 
-        res.render('dashboards/finance', { 
-            orders, 
+        res.render('dashboards/finance', {
+            orders,
             rawMaterialRequestsVendors,
             packagingRequestVendors,
+            // chart datasets (the view reads all* for the buying/selling charts)
+            allOrders: orders,
+            allRawMaterialRequestsVendors: rawMaterialRequestsVendors,
+            allPackagingRequestVendors: packagingRequestVendors,
             userRole,
             userId: req.user.id,
             users, // Add users data

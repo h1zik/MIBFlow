@@ -1,1039 +1,916 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>QC Dashboard - MIB Flow</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.7.2/font/bootstrap-icons.css" rel="stylesheet">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="/css/stylepurchase.css">
-        <style>
-            .btn.loading {
-                position: relative;
-                color: transparent !important;
-            }
+    <%- include('../partials/head', { pageTitle: 'QC Dashboard' }) %>
+    <style>
+        /* ============================================================
+           QC Control Tower — page-specific flourishes
+           Built on the shared mibflow.css design system.
+           ============================================================ */
 
-            .btn.loading::after {
-                content: '';
-                position: absolute;
-                width: 16px;
-                height: 16px;
-                top: 50%;
-                left: 50%;
-                margin-top: -8px;
-                margin-left: -8px;
-                border: 2px solid #fff;
-                border-radius: 50%;
-                border-right-color: transparent;
-                animation: spin 0.75s linear infinite;
-            }
-
-        .badge-pass {
-            background-color: #d1e7dd;
-            color: #0f5132;
+        /* Legacy-var bridge so shared partials (chat) stay on-brand */
+        :root {
+            --primary-color: var(--mib-primary);
+            --primary-light: var(--mib-primary-light);
+            --primary-dark: var(--mib-primary-dark);
         }
 
-        .badge-fail {
-            background-color: #f8d7da;
-            color: #842029;
+        /* ---------- Hero ---------- */
+        .qc-hero {
+            position: relative;
+            overflow: hidden;
+            border-radius: var(--mib-radius-lg);
+            padding: 1.85rem 2rem;
+            margin-bottom: 1.6rem;
+            color: #eaf6ef;
+            background: var(--mib-sidebar-bg);
+            box-shadow: var(--mib-shadow-md);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 1.25rem;
+            flex-wrap: wrap;
+        }
+        .qc-hero::after {
+            content: "";
+            position: absolute;
+            inset: 0;
+            pointer-events: none;
+            background:
+                radial-gradient(460px 220px at 86% -30%, rgba(110, 231, 183, 0.30), transparent 60%),
+                radial-gradient(360px 200px at 8% 130%, rgba(110, 231, 183, 0.15), transparent 60%);
+        }
+        .qc-hero__text { position: relative; z-index: 1; min-width: 0; }
+        .qc-eyebrow {
+            margin: 0 0 0.4rem; font-size: 0.78rem; font-weight: 600;
+            letter-spacing: 0.06em; text-transform: uppercase; color: rgba(255, 255, 255, 0.66);
+            display: inline-flex; align-items: center; gap: 0.5rem;
+        }
+        .live-dot {
+            width: 8px; height: 8px; border-radius: 50%;
+            background: #6ee7b7; box-shadow: 0 0 0 0 rgba(110, 231, 183, 0.7);
+            animation: livePulse 1.8s ease-out infinite;
+        }
+        @keyframes livePulse {
+            0%   { box-shadow: 0 0 0 0 rgba(110, 231, 183, 0.55); }
+            70%  { box-shadow: 0 0 0 9px rgba(110, 231, 183, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(110, 231, 183, 0); }
+        }
+        .qc-hero h1 {
+            margin: 0; font-size: 1.85rem; font-weight: 750; letter-spacing: -0.025em; color: #fff;
+            display: flex; align-items: center; gap: 0.6rem;
+        }
+        .qc-hero .sub { margin: 0.5rem 0 0; color: rgba(255, 255, 255, 0.78); font-size: 0.92rem; max-width: 56ch; }
+        .qc-hero__aside { position: relative; z-index: 1; display: flex; flex-direction: column; align-items: flex-end; gap: 0.85rem; }
+        .qc-clock {
+            font-variant-numeric: tabular-nums; font-weight: 750; font-size: 1.7rem; line-height: 1;
+            color: #fff; letter-spacing: -0.01em;
+        }
+        .qc-clock small { display: block; font-size: 0.74rem; font-weight: 500; color: rgba(255,255,255,0.66); letter-spacing: 0.02em; margin-top: 0.3rem; text-align: right; }
+        .qc-hero__actions { display: flex; gap: 0.55rem; flex-wrap: wrap; justify-content: flex-end; }
+        .qc-hero .btn-glass { background: rgba(255,255,255,0.13); border: 1px solid rgba(255,255,255,0.22); color: #fff; backdrop-filter: blur(4px); }
+        .qc-hero .btn-glass:hover { background: rgba(255,255,255,0.22); color: #fff; }
+
+        /* ---------- Staggered entrance ---------- */
+        .stagger > * { opacity: 0; animation: fadeIn 0.5s ease forwards; }
+        .stagger > *:nth-child(1) { animation-delay: 0.04s; }
+        .stagger > *:nth-child(2) { animation-delay: 0.10s; }
+        .stagger > *:nth-child(3) { animation-delay: 0.16s; }
+        .stagger > *:nth-child(4) { animation-delay: 0.22s; }
+        .stagger > *:nth-child(5) { animation-delay: 0.28s; }
+        .stagger > *:nth-child(6) { animation-delay: 0.34s; }
+        .stagger > *:nth-child(7) { animation-delay: 0.40s; }
+        .stagger > *:nth-child(8) { animation-delay: 0.46s; }
+
+        /* ---------- Clickable stat cards ---------- */
+        .quick-stats { margin-bottom: 1.4rem; grid-template-columns: repeat(auto-fit, minmax(185px, 1fr)); }
+        .stat-card.is-clickable { cursor: pointer; user-select: none; }
+        .stat-card.is-clickable:focus-visible { outline: none; box-shadow: var(--mib-shadow-md), var(--mib-ring); }
+        .stat-card .stat-go {
+            position: absolute; top: 0.95rem; right: 1.05rem; color: var(--mib-text-faint);
+            opacity: 0; transform: translateX(-4px); transition: opacity .18s, transform .18s; z-index: 1;
+        }
+        .stat-card.is-clickable:hover .stat-go { opacity: 1; transform: translateX(0); }
+        .stat-icon.is-violet { background: linear-gradient(135deg, #a78bfa, #7c3aed); box-shadow: 0 8px 18px -4px rgba(124, 58, 237, 0.35); }
+
+        /* ---------- Toolbar ---------- */
+        .qc-toolbar { display: flex; align-items: center; gap: 0.75rem; flex-wrap: wrap; margin-bottom: 1.2rem; }
+        .qc-search { position: relative; flex: 1 1 240px; max-width: 360px; }
+        .qc-search i { position: absolute; left: 0.85rem; top: 50%; transform: translateY(-50%); color: var(--mib-text-faint); font-size: 1rem; pointer-events: none; }
+        .qc-search input { padding-left: 2.4rem; }
+        .qc-toolbar .spacer { flex: 1 1 auto; }
+
+        /* ---------- Queue panels (collapsible sections) ---------- */
+        .dashboard-section {
+            --accent: var(--mib-primary);
+            --accent-soft: var(--mib-primary-soft);
+            background: var(--mib-grad-surface);
+            border: 1px solid var(--mib-border);
+            border-radius: var(--mib-radius);
+            box-shadow: var(--mib-shadow);
+            margin-bottom: 1rem;
+            overflow: hidden;
+            transition: box-shadow var(--mib-transition), border-color var(--mib-transition);
+        }
+        .dashboard-section:hover { box-shadow: var(--mib-shadow-md); }
+        .section-header {
+            position: relative; display: flex; align-items: center; gap: 0.85rem;
+            padding: 1rem 1.25rem 1rem 1.4rem; cursor: pointer; transition: background var(--mib-transition);
+        }
+        .section-header:hover { background: var(--mib-surface-2); }
+        .section-header::before { content: ""; position: absolute; left: 0; top: 0; bottom: 0; width: 4px; background: var(--accent); }
+        .sec-ico {
+            flex-shrink: 0; width: 40px; height: 40px; border-radius: 12px; display: grid; place-items: center;
+            font-size: 1.1rem; color: var(--accent); background: var(--accent-soft);
+        }
+        .sec-titles { min-width: 0; }
+        .sec-title { margin: 0; font-weight: 650; font-size: 1rem; color: var(--mib-text); display: flex; align-items: center; gap: 0.55rem; }
+        .sec-sub { margin: 0.1rem 0 0; font-size: 0.78rem; color: var(--mib-text-muted); }
+        .sec-count {
+            display: inline-flex; align-items: center; justify-content: center; min-width: 1.5rem; height: 1.5rem; padding: 0 0.5rem;
+            border-radius: var(--mib-radius-pill); background: var(--accent-soft); color: var(--accent);
+            font-size: 0.78rem; font-weight: 700;
+        }
+        .sec-count.is-zero { background: var(--mib-surface-2); color: var(--mib-text-faint); }
+        .sec-chevron { margin-left: auto; color: var(--mib-text-faint); font-size: 1.1rem; transition: transform 0.28s ease; }
+        .section-header[aria-expanded="true"] .sec-chevron { transform: rotate(180deg); }
+        .section-content { border-top: 1px solid var(--mib-border); }
+        .section-content .table-responsive { box-shadow: none; border: none; border-radius: 0; margin: 0; }
+
+        .table thead th { background: var(--mib-surface-2); }
+        .chip-list { display: flex; flex-wrap: wrap; gap: 0.3rem; }
+        .chip {
+            display: inline-flex; align-items: center; gap: 0.3rem; background: var(--mib-surface-2);
+            border: 1px solid var(--mib-border); color: var(--mib-text-muted); border-radius: var(--mib-radius-pill);
+            padding: 0.18rem 0.6rem; font-size: 0.76rem; font-weight: 550;
+        }
+        .chip.is-stir { background: var(--mib-info-soft); border-color: transparent; color: #1e40af; }
+
+        .queue-flash { animation: queueFlash 1.1s ease-out; }
+        @keyframes queueFlash {
+            0% { box-shadow: 0 0 0 0 var(--accent-soft); }
+            30% { box-shadow: 0 0 0 4px var(--accent-soft); }
+            100% { box-shadow: var(--mib-shadow); }
         }
 
-        .badge-tank {
-            background-color: #e2e3e5;
-            color: #383d41;
-        }
-
+        /* ---------- QC inline forms (inside table cells) ---------- */
         .qc-form {
-            background: var(--background-light);
-            padding: 1rem;
-            border-radius: 8px;
-            margin-top: 1rem;
+            display: flex; flex-direction: column; gap: 0.55rem;
+            background: var(--mib-surface-2);
+            border: 1px solid var(--mib-border);
+            padding: 0.85rem; border-radius: var(--mib-radius-sm);
+            min-width: 220px;
         }
-
-        .form-select {
-            padding: 0.5rem;
-            border: 2px solid #e0e0e0;
-            border-radius: 8px;
-            margin-bottom: 0.5rem;
-            width: 100%;
-            transition: var(--transition);
-        }
-
-        .form-select:focus {
-            border-color: var(--primary-color);
-            box-shadow: 0 0 0 0.25rem rgba(46, 125, 50, 0.25);
-            outline: none;
-        }
-
+        .qc-form .form-group { display: flex; flex-direction: column; gap: 0.3rem; margin: 0; }
+        .qc-form label { font-size: 0.78rem; font-weight: 600; color: var(--mib-text-muted); }
+        .qc-form textarea.form-control { min-height: 70px; resize: vertical; }
         .retain-sample-form {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 0.5rem;
-            margin-top: 0.5rem;
-            background: var(--background-light);
-            padding: 1rem;
-            border-radius: 8px;
+            display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 0.65rem;
+            background: var(--mib-surface-2);
+            border: 1px solid var(--mib-border);
+            padding: 0.85rem; border-radius: var(--mib-radius-sm);
+            min-width: 240px;
         }
-
-        .retain-sample-form .form-group {
-            margin-bottom: 0.5rem;
-        }
-
-        .retain-sample-form label {
-            display: block;
-            font-size: 0.875rem;
-            color: var(--primary-dark);
-            margin-bottom: 0.25rem;
-            font-weight: 500;
-        }
-
-        .retain-sample-form input {
-            width: 100%;
-            padding: 0.5rem;
-            border: 2px solid #e0e0e0;
-            border-radius: 8px;
-            transition: var(--transition);
-        }
-
-        .retain-sample-form input:focus {
-            border-color: var(--primary-color);
-            box-shadow: 0 0 0 0.25rem rgba(46, 125, 50, 0.25);
-            outline: none;
-        }
-
-        .retain-sample-form button {
-            grid-column: 1 / -1;
-            margin-top: 0.5rem;
-        }
-
-        .print-label-btn {
-            background-color: #6c757d;
-            color: white;
-            border: none;
-            margin-top: 0.5rem;
-            width: 100%;
-        }
-
-        .print-label-btn:hover {
-            background-color: #5a6268;
-            color: white;
-        }
-
+        .retain-sample-form .form-group { display: flex; flex-direction: column; gap: 0.3rem; margin: 0; }
+        .retain-sample-form label { font-size: 0.78rem; font-weight: 600; color: var(--mib-text-muted); }
+        .retain-sample-form > button,
+        .retain-sample-form > .btn { grid-column: 1 / -1; }
         .form-control-plaintext {
-            padding: 0.5rem;
-            background-color: white;
-            border-radius: 8px;
-            font-weight: 500;
+            padding: 0.4rem 0.55rem; background: var(--mib-surface); border: 1px solid var(--mib-border);
+            border-radius: var(--mib-radius-sm); font-weight: 600; color: var(--mib-text);
         }
 
-        /* Enhanced Mobile Styles */
+        /* ---------- Button loading spinner ---------- */
+        .btn.loading { pointer-events: none; color: transparent !important; position: relative; }
+        .btn.loading::after {
+            content: ""; position: absolute; width: 16px; height: 16px; top: 50%; left: 50%; margin: -8px 0 0 -8px;
+            border: 2px solid rgba(255, 255, 255, 0.55); border-top-color: #fff; border-radius: 50%; animation: spin 0.7s linear infinite;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
         @media (max-width: 768px) {
-            textarea.form-control {
-                min-height: 80px;
-                resize: vertical;
-            }
-
-            select.form-control,
-            .form-select {
-                height: 40px;
-                font-size: 16px;
-                padding: 0.5rem;
-                padding-right: 24px;
-                border-radius: 8px;
-                border: 2px solid #e0e0e0;
-                background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3e%3cpath fill='none' stroke='%23343a40' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M2 5l6 6 6-6'/%3e%3c/svg%3e");
-                background-repeat: no-repeat;
-                background-position: right 0.5rem center;
-                background-size: 16px 12px;
-                -webkit-appearance: none;
-                appearance: none;
-            }
-
-            /* QC Form Improvements */
-            .qc-form {
-                padding: 1rem;
-                margin-top: 1rem;
-                background: var(--background-light);
-                border-radius: 8px;
-                box-shadow: 0 2px 4px rgba(0,0,0,0.05);
-            }
-
-            .qc-form .form-control,
-            .qc-form .form-select {
-                margin-bottom: 1rem;
-            }
-
-            /* Retain Sample Form */
-            .retain-sample-form {
-                grid-template-columns: 1fr;
-                gap: 1rem;
-                padding: 1rem;
-                margin-top: 1rem;
-                background: var(--background-light);
-                border-radius: 8px;
-                box-shadow: 0 2px 4px rgba(0,0,0,0.05);
-            }
-
-            .retain-sample-form .form-group {
-                margin-bottom: 0;
-            }
-
-            .retain-sample-form label {
-                display: block;
-                margin-bottom: 0.5rem;
-                font-weight: 500;
-                color: var(--primary-dark);
-            }
-
-            .retain-sample-form input {
-                height: 40px;
-                font-size: 16px;
-                width: 100%;
-                border-radius: 8px;
-                border: 2px solid #e0e0e0;
-                padding: 0.5rem;
-                transition: all 0.3s ease;
-            }
-
-            .retain-sample-form input:focus {
-                border-color: var(--primary-color);
-                box-shadow: 0 0 0 0.2rem rgba(46, 125, 50, 0.25);
-            }
+            .qc-hero { padding: 1.4rem 1.25rem; }
+            .qc-hero__aside { align-items: flex-start; width: 100%; }
+            .qc-hero__actions { justify-content: flex-start; }
+            .qc-form, .retain-sample-form { min-width: 0; }
+            .retain-sample-form { grid-template-columns: 1fr; }
         }
     </style>
 </head>
-<body>
-    <%- include('../partials/sidebar', { userRole: userRole }) %>
+<body class="app-shell">
+    <%- include('../partials/sidebar', { userRole: userRole, path: '/dashboard/qc' }) %>
+    <%- include('../partials/chat', { users: (typeof users !== 'undefined' ? users : []), userRole: userRole, userId: userId }) %>
 
-    <div class="main-content">
-        <div class="page-header">
-            <h1 class="page-title">
-                <i class="bi bi-clipboard2-check"></i>
-                Quality Control Dashboard
-            </h1>
-            <p class="text-muted mb-0">Manage quality control for productions and raw materials</p>
+    <%
+        /* ---- Defensive normalisation (guard every optional local) ---- */
+        const ongoingList   = (typeof ongoingProcesses !== 'undefined' && ongoingProcesses) ? ongoingProcesses : [];
+        const upcomingList  = (typeof upcomingProcesses !== 'undefined' && upcomingProcesses) ? upcomingProcesses : [];
+        const checkList     = (typeof productChecks !== 'undefined' && productChecks) ? productChecks : [];
+        const productionList= (typeof productions !== 'undefined' && productions) ? productions : [];
+        const rawVendorList = (typeof rawMaterialRequestsVendors !== 'undefined' && rawMaterialRequestsVendors) ? rawMaterialRequestsVendors : [];
+        const pkgVendorList = (typeof packagingRequestVendors !== 'undefined' && packagingRequestVendors) ? packagingRequestVendors : [];
+        const reworkItemList= (typeof complainItems !== 'undefined' && complainItems) ? complainItems : [];
+        const reworkProdList= (typeof reworkProductions !== 'undefined' && reworkProductions) ? reworkProductions : [];
+
+        /* status badge helpers (shared with PPIC convention) */
+        const KNOWN_STATUS = new Set(['pending','processing','onprod','on-production','production-completed','completed','approved','paid','delivered','on-delivery','ready-to-deliver','partially-delivered','open','printed','scheduled','cancelled','declined','rejected','neutral']);
+        const sb = (s) => { const k = String(s || '').toLowerCase().replace(/\s+/g, '-'); return 'status-' + (KNOWN_STATUS.has(k) ? k : 'neutral'); };
+        const qb = (s) => s === 'Pass' ? 'status-completed' : (s === 'Fail' ? 'status-declined' : 'status-pending');
+        const fmtD = (d) => d ? new Date(d).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : '—';
+
+        const pendingQcCount = productionList.filter(p => p.qcStatus !== 'Pass' && p.qcStatus !== 'Fail').length;
+        const materialQcCount = rawVendorList.length + pkgVendorList.length;
+    %>
+
+    <div class="content content-wide">
+
+        <!-- ===================== Hero ===================== -->
+        <div class="qc-hero fade-in">
+            <div class="qc-hero__text">
+                <p class="qc-eyebrow"><span class="live-dot"></span> QC Control Tower</p>
+                <h1><i class="bi bi-clipboard2-check"></i> Quality Control</h1>
+                <p class="sub">Productions, raw materials, packaging and rework — one live command center for every quality checkpoint.</p>
+            </div>
+            <div class="qc-hero__aside">
+                <div class="qc-clock">
+                    <span id="qcClock">--:--</span>
+                    <small id="qcDate"></small>
+                </div>
+                <div class="qc-hero__actions">
+                    <a href="/qc/sampleRetainedProductions" class="btn btn-glass"><i class="bi bi-archive-fill"></i> Retained Samples</a>
+                    <a href="/qc/production-history" class="btn btn-glass"><i class="bi bi-clock-history"></i> QC History</a>
+                </div>
+            </div>
         </div>
 
-        <!-- Ongoing Processes Section -->
+        <!-- ===================== Quick stats ===================== -->
+        <div class="quick-stats stagger">
+            <div class="stat-card is-clickable" role="button" tabindex="0" data-focus="ongoingProcesses">
+                <i class="bi bi-arrow-right-short stat-go fs-5"></i>
+                <div class="stat-icon is-info"><i class="bi bi-play-circle"></i></div>
+                <div class="stat-body">
+                    <div class="stat-label">Ongoing Processes</div>
+                    <div class="stat-value" data-count="<%= ongoingList.length %>">0</div>
+                    <span class="stat-sub">Batches currently in production</span>
+                </div>
+            </div>
+            <div class="stat-card is-clickable" role="button" tabindex="0" data-focus="productChecks">
+                <i class="bi bi-arrow-right-short stat-go fs-5"></i>
+                <div class="stat-icon <%= checkList.length > 0 ? 'is-danger' : 'is-success' %>"><i class="bi bi-check-square"></i></div>
+                <div class="stat-body">
+                    <div class="stat-label">Product Checks</div>
+                    <div class="stat-value" data-count="<%= checkList.length %>">0</div>
+                    <span class="stat-sub">Awaiting QC decision</span>
+                </div>
+            </div>
+            <div class="stat-card is-clickable" role="button" tabindex="0" data-focus="productionList">
+                <i class="bi bi-arrow-right-short stat-go fs-5"></i>
+                <div class="stat-icon is-violet"><i class="bi bi-gear-wide-connected"></i></div>
+                <div class="stat-body">
+                    <div class="stat-label">Production QC</div>
+                    <div class="stat-value" data-count="<%= pendingQcCount %>">0</div>
+                    <span class="stat-sub">Batches pending quality check</span>
+                </div>
+            </div>
+            <div class="stat-card is-clickable" role="button" tabindex="0" data-focus="rawMaterialRequests">
+                <i class="bi bi-arrow-right-short stat-go fs-5"></i>
+                <div class="stat-icon is-warning"><i class="bi bi-box-seam"></i></div>
+                <div class="stat-body">
+                    <div class="stat-label">Material &amp; Packaging</div>
+                    <div class="stat-value" data-count="<%= materialQcCount %>">0</div>
+                    <span class="stat-sub">Incoming goods to inspect</span>
+                </div>
+            </div>
+            <div class="stat-card is-clickable" role="button" tabindex="0" data-focus="reworkItems">
+                <i class="bi bi-arrow-right-short stat-go fs-5"></i>
+                <div class="stat-icon <%= reworkItemList.length > 0 ? 'is-danger' : 'is-success' %>"><i class="bi bi-tools"></i></div>
+                <div class="stat-body">
+                    <div class="stat-label">Rework Items</div>
+                    <div class="stat-value" data-count="<%= reworkItemList.length %>">0</div>
+                    <span class="stat-sub">Complaint-driven rework</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- ===================== Toolbar ===================== -->
+        <div class="qc-toolbar">
+            <div class="qc-search">
+                <i class="bi bi-search"></i>
+                <input type="text" id="qcSearch" class="form-control form-control-sm" placeholder="Search across queues…" autocomplete="off">
+            </div>
+            <div class="spacer"></div>
+            <button type="button" class="btn btn-ghost btn-sm" id="btnExpandAll"><i class="bi bi-arrows-expand"></i> Expand all</button>
+            <button type="button" class="btn btn-ghost btn-sm" id="btnCollapseAll"><i class="bi bi-arrows-collapse"></i> Collapse all</button>
+        </div>
+
+        <!-- List ⇄ Board toggle (shared auto-kanban turns the .dashboard-section queues into a horizontal scrolling board) -->
         <%- include('../partials/kanban-toggle') %>
-        <div class="dashboard-section">
-            <div class="section-header" data-bs-toggle="collapse" data-bs-target="#ongoingProcesses">
-                <h2 class="section-title">
-                    <i class="bi bi-play-circle"></i>
-                    Ongoing Processes
-                    <% if (ongoingProcesses && ongoingProcesses.length > 0) { %>
-                        <span class="badge rounded-pill bg-danger ms-2"><%= ongoingProcesses.length %></span>
-                    <% } %>
-                </h2>
-                <i class="bi bi-chevron-down"></i>
-            </div>
-            <div id="ongoingProcesses" class="section-content collapse">
-                <div class="table-responsive">
-                    <table class="table">
-                        <thead>
-                            <tr>
-                                <th>Batch</th>
-                                <th>Product</th>
-                                <th>Quantity</th>
-                                <th>Tanks</th>
-                                <th>Dates</th>
-                                <th>QC Status</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <% if (ongoingProcesses && ongoingProcesses.length > 0) { %>
-                                <% ongoingProcesses.forEach(function(production) { %>
-                                    <tr>
-                                        <td data-label="Batch">
-                                            <div class="fw-semibold">#<%= production.batchNumber || 'Not Started' %></div>
-                                            <small class="text-muted">ID: <%= production.id %></small>
-                                        </td>
-                                        <td data-label="Product"><%= production.Product.name %></td>
-                                        <td data-label="Quantity"><%= production.quantity %> Kg</td>
-                                        <td data-label="Tanks">
-                                            <div class="d-flex flex-wrap gap-1">
-                                                <% production.Tanks.forEach(tank => { %>
-                                                    <div class="d-flex flex-column align-items-center">
-                                                        <span class="badge badge-tank mb-1">
-                                                            <%= tank.name %> (<%= tank.volume %> L)
-                                                        </span>
-                                                        <small class="badge bg-light text-secondary border d-flex align-items-center gap-1" style="font-size: 0.75rem; padding: 0.25rem 0.5rem;">
-                                                            <i class="bi bi-arrow-repeat"></i>
-                                                            Stir <%= production.stirSequence %>
-                                                        </small>
-                                                    </div>
-                                                <% }) %>
-                                            </div>
-                                        </td>
-                                        <td data-label="Dates">
-                                            <div>Start: <%= new Date(production.startDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) %></div>
-                                            <div>Due: <%= new Date(production.deadlineDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) %></div>
-                                        </td>
-                                        <td data-label="QC Status">
-                                            <% if (production.qcStatus === 'Pass') { %>
-                                                <span class="badge badge-pass">
-                                                    <i class="bi bi-check-circle"></i>
-                                                    Pass
-                                                </span>
-                                            <% } else if (production.qcStatus === 'Fail') { %>
-                                                <span class="badge badge-fail">
-                                                    <i class="bi bi-x-circle"></i>
-                                                    Fail
-                                                </span>
-                                            <% } %>
-                                            <% if (production.qcComment) { %>
-                                                <div class="small text-muted mt-1">
-                                                    <%= production.qcComment %>
+
+        <!-- ===================== Queues ===================== -->
+
+            <!-- Ongoing Processes -->
+            <section class="dashboard-section" id="sec-ongoingProcesses" style="--accent:#2563eb;--accent-soft:#dbeafe">
+                <div class="section-header" data-bs-toggle="collapse" data-bs-target="#ongoingProcesses" aria-expanded="false" aria-controls="ongoingProcesses">
+                    <span class="sec-ico"><i class="bi bi-play-circle"></i></span>
+                    <div class="sec-titles">
+                        <h2 class="sec-title">Ongoing Processes <span class="sec-count <%= ongoingList.length ? '' : 'is-zero' %>"><%= ongoingList.length %></span></h2>
+                        <p class="sec-sub">Batches currently being produced</p>
+                    </div>
+                    <i class="bi bi-chevron-down sec-chevron"></i>
+                </div>
+                <div id="ongoingProcesses" class="section-content collapse">
+                    <div class="table-responsive">
+                        <table class="table table-cards align-middle">
+                            <thead>
+                                <tr><th>Batch</th><th>Product</th><th>Quantity</th><th>Tanks</th><th>Dates</th><th>QC Status</th></tr>
+                            </thead>
+                            <tbody>
+                                <% if (ongoingList.length > 0) { %>
+                                    <% ongoingList.forEach(function(production) { %>
+                                        <tr>
+                                            <td data-label="Batch">
+                                                <span class="cell-strong">#<%= production.batchNumber || 'Not Started' %></span>
+                                                <div class="cell-sub">ID: <%= production.id %></div>
+                                            </td>
+                                            <td data-label="Product"><%= production.Product ? production.Product.name : '—' %></td>
+                                            <td data-label="Quantity"><%= production.quantity %> Kg</td>
+                                            <td data-label="Tanks">
+                                                <div class="chip-list">
+                                                    <% (production.Tanks || []).forEach(tank => { %>
+                                                        <span class="chip"><%= tank.name %> (<%= tank.volume %> L)</span>
+                                                        <span class="chip is-stir"><i class="bi bi-arrow-repeat"></i> Stir <%= production.stirSequence %></span>
+                                                    <% }) %>
                                                 </div>
-                                            <% } %>
-                                        </td>
-                                    </tr>
-                                <% }); %>
-                            <% } else { %>
-                                <tr>
-                                    <td colspan="6" class="text-center py-4 text-muted">
-                                        <i class="bi bi-inbox fs-4 d-block mb-2"></i>
-                                        No ongoing processes found
-                                    </td>
-                                </tr>
-                            <% } %>
-                        </tbody>
-                    </table>
+                                            </td>
+                                            <td data-label="Dates">
+                                                <div class="cell-sub">Start: <%= fmtD(production.startDate) %></div>
+                                                <div class="cell-sub">Due: <%= fmtD(production.deadlineDate) %></div>
+                                            </td>
+                                            <td data-label="QC Status">
+                                                <% if (production.qcStatus === 'Pass') { %>
+                                                    <span class="status-badge status-completed"><i class="bi bi-check-circle"></i> Pass</span>
+                                                <% } else if (production.qcStatus === 'Fail') { %>
+                                                    <span class="status-badge status-declined"><i class="bi bi-x-circle"></i> Fail</span>
+                                                <% } else { %>
+                                                    <span class="status-badge status-pending"><i class="bi bi-clock"></i> Pending</span>
+                                                <% } %>
+                                                <% if (production.qcComment) { %>
+                                                    <div class="cell-sub mt-1"><%= production.qcComment %></div>
+                                                <% } %>
+                                            </td>
+                                        </tr>
+                                    <% }); %>
+                                <% } else { %>
+                                    <tr class="is-empty-row"><td colspan="6"><div class="empty-state"><i class="bi bi-inbox"></i><h4>No ongoing processes</h4><p>Batches in production will appear here.</p></div></td></tr>
+                                <% } %>
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
-            </div>
-        </div>
+            </section>
 
-        <!-- Upcoming Processes Section -->
-        <div class="dashboard-section">
-            <div class="section-header" data-bs-toggle="collapse" data-bs-target="#upcomingProcesses">
-                <h2 class="section-title">
-                    <i class="bi bi-calendar-event"></i>
-                    Upcoming Processes
-                    <% if (upcomingProcesses && upcomingProcesses.length > 0) { %>
-                        <span class="badge rounded-pill bg-danger ms-2"><%= upcomingProcesses.length %></span>
-                    <% } %>
-                </h2>
-                <i class="bi bi-chevron-down"></i>
-            </div>
-            <div id="upcomingProcesses" class="section-content collapse">
-                <div class="table-responsive">
-                    <table class="table">
-                        <thead>
-                            <tr>
-                                <th>ID</th>
-                                <th>Product</th>
-                                <th>Quantity</th>
-                                <th>Tanks</th>
-                                <th>Dates</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <% if (upcomingProcesses && upcomingProcesses.length > 0) { %>
-                                <% upcomingProcesses.forEach(function(production) { %>
-                                    <tr>
-                                        <td data-label="ID">#<%= production.id %></td>
-                                        <td data-label="Product">
-                                            <div class="fw-semibold"><%= production.Product.name %></div>
-                                        </td>
-                                        <td data-label="Quantity"><%= production.quantity %> Kg</td>
-                                        <td data-label="Tanks">
-                                            <div class="d-flex flex-wrap gap-1">
-                                                <% production.Tanks.forEach(tank => { %>
-                                                    <div class="d-flex flex-column align-items-center">
-                                                        <span class="badge badge-tank mb-1">
-                                                            <%= tank.name %> (<%= tank.volume %> L)
-                                                        </span>
-                                                        <small class="badge bg-light text-secondary border d-flex align-items-center gap-1" style="font-size: 0.75rem; padding: 0.25rem 0.5rem;">
-                                                            <i class="bi bi-arrow-repeat"></i>
-                                                            Stir <%= production.stirSequence %>
-                                                        </small>
-                                                    </div>
-                                                <% }) %>
-                                            </div>
-                                        </td>
-                                        <td data-label="Dates">
-                                            <div>Start: <%= new Date(production.startDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) %></div>
-                                            <div>Due: <%= new Date(production.deadlineDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) %></div>
-                                        </td>
-                                    </tr>
-                                <% }); %>
-                            <% } else { %>
-                                <tr>
-                                    <td colspan="5" class="text-center py-4 text-muted">
-                                        <i class="bi bi-inbox fs-4 d-block mb-2"></i>
-                                        No upcoming processes found
-                                    </td>
-                                </tr>
-                            <% } %>
-                        </tbody>
-                    </table>
+            <!-- Upcoming Processes -->
+            <section class="dashboard-section" id="sec-upcomingProcesses" style="--accent:#0d9488;--accent-soft:#ccfbf1">
+                <div class="section-header collapsed" data-bs-toggle="collapse" data-bs-target="#upcomingProcesses" aria-expanded="false" aria-controls="upcomingProcesses">
+                    <span class="sec-ico"><i class="bi bi-calendar-event"></i></span>
+                    <div class="sec-titles">
+                        <h2 class="sec-title">Upcoming Processes <span class="sec-count <%= upcomingList.length ? '' : 'is-zero' %>"><%= upcomingList.length %></span></h2>
+                        <p class="sec-sub">Scheduled batches not yet started</p>
+                    </div>
+                    <i class="bi bi-chevron-down sec-chevron"></i>
                 </div>
-            </div>
-        </div>
+                <div id="upcomingProcesses" class="section-content collapse">
+                    <div class="table-responsive">
+                        <table class="table table-cards align-middle">
+                            <thead>
+                                <tr><th>ID</th><th>Product</th><th>Quantity</th><th>Tanks</th><th>Dates</th></tr>
+                            </thead>
+                            <tbody>
+                                <% if (upcomingList.length > 0) { %>
+                                    <% upcomingList.forEach(function(production) { %>
+                                        <tr>
+                                            <td data-label="ID"><span class="cell-strong">#<%= production.id %></span></td>
+                                            <td data-label="Product"><span class="cell-strong"><%= production.Product ? production.Product.name : '—' %></span></td>
+                                            <td data-label="Quantity"><%= production.quantity %> Kg</td>
+                                            <td data-label="Tanks">
+                                                <div class="chip-list">
+                                                    <% (production.Tanks || []).forEach(tank => { %>
+                                                        <span class="chip"><%= tank.name %> (<%= tank.volume %> L)</span>
+                                                        <span class="chip is-stir"><i class="bi bi-arrow-repeat"></i> Stir <%= production.stirSequence %></span>
+                                                    <% }) %>
+                                                </div>
+                                            </td>
+                                            <td data-label="Dates">
+                                                <div class="cell-sub">Start: <%= fmtD(production.startDate) %></div>
+                                                <div class="cell-sub">Due: <%= fmtD(production.deadlineDate) %></div>
+                                            </td>
+                                        </tr>
+                                    <% }); %>
+                                <% } else { %>
+                                    <tr class="is-empty-row"><td colspan="5"><div class="empty-state"><i class="bi bi-inbox"></i><h4>No upcoming processes</h4><p>Scheduled batches will appear here.</p></div></td></tr>
+                                <% } %>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
 
-        <!-- Product Check Section -->
-        <div class="dashboard-section">
-            <div class="section-header" data-bs-toggle="collapse" data-bs-target="#productChecks">
-                <h2 class="section-title">
-                    <i class="bi bi-check-square"></i>
-                    Product Checks
-                    <% if (productChecks && productChecks.length > 0) { %>
-                        <span class="badge rounded-pill bg-danger ms-2"><%= productChecks.length %></span>
-                    <% } %>
-                </h2>
-                <i class="bi bi-chevron-down"></i>
-            </div>
-            <div id="productChecks" class="section-content collapse">
-                <div class="table-responsive">
-                    <table class="table">
-                        <thead>
-                            <tr>
-                                <th>ID</th>
-                                <th>Product</th>
-                                <th>Quantity</th>
-                                <th>Status</th>
-                                <th>Comment</th>
-                                <th>Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <% if (productChecks && productChecks.length > 0) { %>
-                                <% productChecks.forEach(check => { %>
-                                    <tr>
-                                        <td data-label="ID">#<%= check.id %></td>
-                                        <td data-label="Product"><%= check.productName %></td>
-                                        <td data-label="Quantity"><%= check.quantity %> KG</td>
-                                        <td data-label="Status">
-                                            <span class="badge badge-<%= check.qcStatus === 'Pass' ? 'pass' : (check.qcStatus === 'Fail' ? 'fail' : 'pending') %>">
-                                                <i class="bi bi-<%= check.qcStatus === 'Pass' ? 'check-circle' : (check.qcStatus === 'Fail' ? 'x-circle' : 'clock') %>"></i>
-                                                <%= check.qcStatus %>
-                                            </span>
-                                        </td>
-                                        <td data-label="Comment"><%= check.qcComment || '-' %></td>
-                                        <td data-label="Actions">
-                                            <div id="actions-<%= check.id %>">
-                                                <% if (check.qcStatus === 'Pending') { %>
-                                                    <form class="qc-form" onsubmit="handleProductCheckQCSubmit(event, '<%= check.id %>')">
-                                                        <select class="form-select" name="qcStatus" required>
+            <!-- Product Checks -->
+            <section class="dashboard-section" id="sec-productChecks" style="--accent:#16a34a;--accent-soft:#dcfce7">
+                <div class="section-header" data-bs-toggle="collapse" data-bs-target="#productChecks" aria-expanded="false" aria-controls="productChecks">
+                    <span class="sec-ico"><i class="bi bi-check-square"></i></span>
+                    <div class="sec-titles">
+                        <h2 class="sec-title">Product Checks <span class="sec-count <%= checkList.length ? '' : 'is-zero' %>"><%= checkList.length %></span></h2>
+                        <p class="sec-sub">Sampled products awaiting QC decision</p>
+                    </div>
+                    <i class="bi bi-chevron-down sec-chevron"></i>
+                </div>
+                <div id="productChecks" class="section-content collapse">
+                    <div class="table-responsive">
+                        <table class="table table-cards align-middle">
+                            <thead>
+                                <tr><th>ID</th><th>Product</th><th>Quantity</th><th>Status</th><th>Comment</th><th class="text-end">Actions</th></tr>
+                            </thead>
+                            <tbody>
+                                <% if (checkList.length > 0) { %>
+                                    <% checkList.forEach(check => { %>
+                                        <tr>
+                                            <td data-label="ID"><span class="cell-strong">#<%= check.id %></span></td>
+                                            <td data-label="Product"><span class="cell-strong"><%= check.productName %></span></td>
+                                            <td data-label="Quantity"><%= check.quantity %> KG</td>
+                                            <td data-label="Status"><span class="status-badge <%= qb(check.qcStatus) %>"><%= check.qcStatus %></span></td>
+                                            <td data-label="Comment"><span class="cell-sub"><%= check.qcComment || '—' %></span></td>
+                                            <td data-label="Actions" class="text-end">
+                                                <div id="actions-<%= check.id %>">
+                                                    <% if (check.qcStatus === 'Pending') { %>
+                                                        <form class="qc-form" onsubmit="handleProductCheckQCSubmit(event, '<%= check.id %>')">
+                                                            <select class="form-select" name="qcStatus" required>
+                                                                <option value="">Select Status</option>
+                                                                <option value="Pass">Pass QC</option>
+                                                                <option value="Reject Sebagian">Reject Sebagian</option>
+                                                                <option value="Fail">Fail QC</option>
+                                                            </select>
+                                                            <textarea class="form-control" name="qcComment" placeholder="Add QC comments..." required></textarea>
+                                                            <button type="submit" class="btn btn-primary w-100"><i class="bi bi-check-lg"></i> Submit QC Result</button>
+                                                        </form>
+                                                    <% } %>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    <% }) %>
+                                <% } else { %>
+                                    <tr class="is-empty-row"><td colspan="6"><div class="empty-state"><i class="bi bi-inbox"></i><h4>No product checks</h4><p>Product check requests will appear here.</p></div></td></tr>
+                                <% } %>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Production Quality Control -->
+            <section class="dashboard-section" id="sec-productionList" style="--accent:#7c3aed;--accent-soft:#f3e8ff">
+                <div class="section-header" data-bs-toggle="collapse" data-bs-target="#productionList" aria-expanded="false" aria-controls="productionList">
+                    <span class="sec-ico"><i class="bi bi-gear"></i></span>
+                    <div class="sec-titles">
+                        <h2 class="sec-title">Production Quality Control <span class="sec-count <%= productionList.length ? '' : 'is-zero' %>"><%= productionList.length %></span></h2>
+                        <p class="sec-sub">Submit QC results and retain samples</p>
+                    </div>
+                    <i class="bi bi-chevron-down sec-chevron"></i>
+                </div>
+                <div id="productionList" class="section-content collapse">
+                    <div class="table-responsive">
+                        <table class="table table-cards align-middle">
+                            <thead>
+                                <tr><th>Batch</th><th>SO Number</th><th>Product</th><th>Quantity</th><th>Tanks</th><th>Dates</th><th>QC Status</th><th class="text-end">Actions</th></tr>
+                            </thead>
+                            <tbody>
+                                <% if (productionList.length > 0) { %>
+                                    <% productionList.forEach(function(production) { %>
+                                        <tr>
+                                            <td data-label="Batch">
+                                                <span class="cell-strong">#<%= production.batchNumber %></span>
+                                                <div class="cell-sub">ID: <%= production.id %></div>
+                                            </td>
+                                            <td data-label="SO Number"><%= production.ProductionRequest && production.ProductionRequest.Order ? production.ProductionRequest.Order.sonumber : '—' %></td>
+                                            <td data-label="Product"><%= production.Product ? production.Product.name : '—' %></td>
+                                            <td data-label="Quantity"><%= production.quantity %> Kg</td>
+                                            <td data-label="Tanks">
+                                                <div class="chip-list">
+                                                    <% (production.Tanks || []).forEach(tank => { %>
+                                                        <span class="chip"><%= tank.name %> (<%= tank.volume %> L)</span>
+                                                        <span class="chip is-stir"><i class="bi bi-arrow-repeat"></i> Stir <%= production.stirSequence %></span>
+                                                    <% }) %>
+                                                </div>
+                                            </td>
+                                            <td data-label="Dates">
+                                                <div class="cell-sub">Start: <%= fmtD(production.startDate) %></div>
+                                                <div class="cell-sub">Due: <%= fmtD(production.deadlineDate) %></div>
+                                            </td>
+                                            <td data-label="QC Status">
+                                                <% if (production.qcStatus === 'Pass') { %>
+                                                    <span class="status-badge status-completed"><i class="bi bi-check-circle"></i> Pass</span>
+                                                <% } else if (production.qcStatus === 'Fail') { %>
+                                                    <span class="status-badge status-declined"><i class="bi bi-x-circle"></i> Fail</span>
+                                                <% } else { %>
+                                                    <span class="status-badge status-pending"><i class="bi bi-clock"></i> Pending</span>
+                                                <% } %>
+                                                <% if (production.qcComment) { %>
+                                                    <div class="cell-sub mt-1"><%= production.qcComment %></div>
+                                                <% } %>
+                                            </td>
+                                            <td data-label="Actions" class="text-end">
+                                                <div id="actions-<%= production.id %>">
+                                                    <% if (production.qcStatus !== 'Pass' && production.qcStatus !== 'Fail') { %>
+                                                        <form class="qc-form" onsubmit="handleQCSubmit(event, '<%= production.id %>')">
+                                                            <select class="form-select" name="qcStatus" required>
+                                                                <option value="">Select Status</option>
+                                                                <option value="Pass">Pass QC</option>
+                                                                <option value="Fail">Fail QC</option>
+                                                            </select>
+                                                            <textarea class="form-control" name="qcComment" placeholder="Add QC comments..." required></textarea>
+                                                            <button type="submit" class="btn btn-primary w-100"><i class="bi bi-check-lg"></i> Submit QC Result</button>
+                                                        </form>
+                                                    <% } %>
+                                                    <% if (production.qcStatus === 'Pass' && !production.sampleRetained) { %>
+                                                        <form class="retain-sample-form" onsubmit="handleRetainSample(event, '<%= production.id %>')">
+                                                            <div class="form-group">
+                                                                <label for="retainedSampleVolume-<%= production.id %>">Sample Volume (ml)</label>
+                                                                <input type="number" class="form-control" id="retainedSampleVolume-<%= production.id %>" name="retainedSampleVolume" placeholder="Enter volume" required>
+                                                            </div>
+                                                            <div class="form-group">
+                                                                <label for="expiredDate-<%= production.id %>">Expired Date</label>
+                                                                <input type="date" class="form-control" id="expiredDate-<%= production.id %>" name="expiredDate" required>
+                                                            </div>
+                                                            <div class="form-group">
+                                                                <label for="noRack-<%= production.id %>">No Rack</label>
+                                                                <input type="text" class="form-control" id="noRack-<%= production.id %>" name="noRack" placeholder="Enter rack number" required>
+                                                            </div>
+                                                            <div class="form-group">
+                                                                <label for="bgscan-<%= production.id %>">BG Scan</label>
+                                                                <input type="file" class="form-control" id="bgscan-<%= production.id %>" name="bgscan" accept=".pdf,.jpg,.jpeg,.png" required>
+                                                            </div>
+                                                            <button type="submit" class="btn btn-primary"><i class="bi bi-eyedropper"></i> Retain Sample &amp; Print Label</button>
+                                                        </form>
+                                                    <% } else if (production.sampleRetained) { %>
+                                                        <div class="retain-sample-form">
+                                                            <div class="form-group">
+                                                                <label>Sample Volume</label>
+                                                                <div class="form-control-plaintext"><%= production.retainedSampleVolume %> ml</div>
+                                                            </div>
+                                                            <div class="form-group">
+                                                                <label>Expired Date</label>
+                                                                <div class="form-control-plaintext"><%= production.expiredDate ? new Date(production.expiredDate).toLocaleDateString() : '—' %></div>
+                                                            </div>
+                                                            <div class="form-group">
+                                                                <label>No Rack</label>
+                                                                <div class="form-control-plaintext"><%= production.noRack %></div>
+                                                            </div>
+                                                            <a href="/qc/generatePDF/<%= production.id %>" class="btn btn-soft" target="_blank"><i class="bi bi-printer"></i> Print Label</a>
+                                                        </div>
+                                                    <% } %>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    <% }); %>
+                                <% } else { %>
+                                    <tr class="is-empty-row"><td colspan="8"><div class="empty-state"><i class="bi bi-inbox"></i><h4>No production requests pending QC</h4><p>Batches awaiting quality control appear here.</p></div></td></tr>
+                                <% } %>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Raw Material Quality Control -->
+            <section class="dashboard-section" id="sec-rawMaterialRequests" style="--accent:#d97706;--accent-soft:#fef3c7">
+                <div class="section-header collapsed" data-bs-toggle="collapse" data-bs-target="#rawMaterialRequests" aria-expanded="false" aria-controls="rawMaterialRequests">
+                    <span class="sec-ico"><i class="bi bi-box-seam"></i></span>
+                    <div class="sec-titles">
+                        <h2 class="sec-title">Raw Material Quality Control <span class="sec-count <%= rawVendorList.length ? '' : 'is-zero' %>"><%= rawVendorList.length %></span></h2>
+                        <p class="sec-sub">Inspect incoming raw materials from vendors</p>
+                    </div>
+                    <i class="bi bi-chevron-down sec-chevron"></i>
+                </div>
+                <div id="rawMaterialRequests" class="section-content collapse">
+                    <div class="table-responsive">
+                        <table class="table table-cards align-middle">
+                            <thead>
+                                <tr><th>ID</th><th>PO Number</th><th>Material</th><th>Vendor</th><th>Quantity</th><th>Status</th><th>QC Status</th><th class="text-end">Actions</th></tr>
+                            </thead>
+                            <tbody>
+                                <% if (rawVendorList.length > 0) { %>
+                                    <% rawVendorList.forEach(function(request) { %>
+                                        <tr>
+                                            <td data-label="ID"><span class="cell-strong">#<%= request.id %></span></td>
+                                            <td data-label="PO Number"><%= request.ponumber || 'N/A' %></td>
+                                            <td data-label="Material"><span class="cell-strong"><%= request.RawMaterialRequest ? request.RawMaterialRequest.materialName : '—' %></span></td>
+                                            <td data-label="Vendor"><%= request.Vendor ? request.Vendor.name : '—' %></td>
+                                            <td data-label="Quantity">
+                                                <% if (request.rejectQuantity && request.status === 'QC Testing') { %>
+                                                    <%= request.rejectQuantity %> Kg <span class="cell-sub">(Rejected Quantity)</span>
+                                                <% } else { %>
+                                                    <%= request.splitQuantity %> Kg
+                                                <% } %>
+                                            </td>
+                                            <td data-label="Status"><span class="status-badge <%= sb(request.status) %>"><%= request.status %></span></td>
+                                            <td data-label="QC Status" id="status-<%= request.id %>">
+                                                <% if (request.qcStatus === 'Pass') { %>
+                                                    <span class="status-badge status-completed"><i class="bi bi-check-circle"></i> Pass</span>
+                                                <% } else if (request.qcStatus === 'Fail') { %>
+                                                    <span class="status-badge status-declined"><i class="bi bi-x-circle"></i> Fail</span>
+                                                <% } else { %>
+                                                    <span class="status-badge status-pending"><i class="bi bi-clock"></i> Pending</span>
+                                                <% } %>
+                                                <% if (request.qcComment) { %>
+                                                    <div class="cell-sub mt-1"><%= request.qcComment %></div>
+                                                <% } %>
+                                            </td>
+                                            <td data-label="Actions" class="text-end">
+                                                <div id="actions-<%= request.id %>">
+                                                    <form class="qc-form" onsubmit="handleRawMaterialQCSubmit(event, '<%= request.id %>')">
+                                                        <select class="form-select" name="qcStatus" onchange="toggleQCFields(this)" required>
                                                             <option value="">Select Status</option>
                                                             <option value="Pass">Pass QC</option>
+                                                            <option value="Fail">Fail QC</option>
                                                             <option value="Reject Sebagian">Reject Sebagian</option>
-                                                            <option value="Fail">Fail QC</option>
                                                         </select>
                                                         <textarea class="form-control" name="qcComment" placeholder="Add QC comments..." required></textarea>
-                                                        <button type="submit" class="btn btn-primary w-100">
-                                                            <i class="bi bi-check-lg"></i>
-                                                            Submit QC Result
-                                                        </button>
-                                                    </form>
-                                                <% } %>
-                                            </div>
-                                        </td>
-                                    </tr>
-                                <% }) %>
-                            <% } else { %>
-                                <tr>
-                                    <td colspan="6" class="text-center py-4 text-muted">
-                                        <i class="bi bi-inbox fs-4 d-block mb-2"></i>
-                                        No product checks found
-                                    </td>
-                                </tr>
-                            <% } %>
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-        </div>
 
-        <!-- Production List Section -->
-        <div class="dashboard-section">
-            <div class="section-header" data-bs-toggle="collapse" data-bs-target="#productionList">
-                <h2 class="section-title">
-                    <i class="bi bi-gear"></i>
-                    Production Quality Control
-                    <% if (productions && productions.length > 0) { %>
-                        <span class="badge rounded-pill bg-danger ms-2"><%= productions.length %></span>
-                    <% } %>
-                </h2>
-                <i class="bi bi-chevron-down"></i>
-            </div>
-            <div id="productionList" class="section-content collapse">
-                <div class="table-responsive">
-                    <table class="table">
-                        <thead>
-                            <tr>
-                                <th>Batch</th>
-                                <th>SO Number</th>
-                                <th>Product</th>
-                                <th>Quantity</th>
-                                <th>Tanks</th>
-                                <th>Dates</th>
-                                <th>QC Status</th>
-                                <th>Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <% if (productions && productions.length > 0) { %>
-                                <% productions.forEach(function(production) { %>
-                                    <tr>
-                                        <td data-label="Batch">
-                                            <div class="fw-semibold">#<%= production.batchNumber %></div>
-                                            <small class="text-muted">ID: <%= production.id %></small>
-                                        </td>
-                                        <td data-label="SO Number"><%= production.ProductionRequest && production.ProductionRequest.Order ? production.ProductionRequest.Order.sonumber : '-' %></td>
-                                        <td data-label="Product"><%= production.Product.name %></td>
-                                        <td data-label="Quantity"><%= production.quantity %> Kg</td>
-                                        <td data-label="Tanks">
-                                            <div class="d-flex flex-wrap gap-1">
-                                                <% production.Tanks.forEach(tank => { %>
-                                                    <div class="d-flex flex-column align-items-center">
-                                                        <span class="badge badge-tank mb-1">
-                                                            <%= tank.name %> (<%= tank.volume %> L)
-                                                        </span>
-                                                        <small class="badge bg-light text-secondary border d-flex align-items-center gap-1" style="font-size: 0.75rem; padding: 0.25rem 0.5rem;">
-                                                            <i class="bi bi-arrow-repeat"></i>
-                                                            Stir <%= production.stirSequence %>
-                                                        </small>
-                                                    </div>
-                                                <% }) %>
-                                            </div>
-                                        </td>
-                                        <td data-label="Dates">
-                                            <div>Start: <%= production.startDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) %></div>
-                                            <div>Due: <%= production.deadlineDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) %></div>
-                                        </td>
-                                        <td data-label="QC Status">
-                                            <% if (production.qcStatus === 'Pass') { %>
-                                                <span class="badge badge-pass">
-                                                    <i class="bi bi-check-circle"></i> Pass
-                                                </span>
-                                            <% } else if (production.qcStatus === 'Fail') { %>
-                                                <span class="badge badge-fail">
-                                                    <i class="bi bi-x-circle"></i> Fail
-                                                </span>
-                                            <% } else { %>
-                                                <span class="badge badge-pending">
-                                                    <i class="bi bi-clock"></i> Pending
-                                                </span>
-                                            <% } %>
-                                            <% if (production.qcComment) { %>
-                                                <div class="small text-muted mt-1">
-                                                    <%= production.qcComment %>
+                                                        <!-- Pass QC Fields -->
+                                                        <div class="pass-qc-section" style="display: none;">
+                                                            <div class="form-group">
+                                                                <label for="batchNumber-<%= request.id %>">Batch Number</label>
+                                                                <input type="text" class="form-control" id="batchNumber-<%= request.id %>" name="batchNumber" placeholder="Enter batch number">
+                                                            </div>
+                                                            <div class="form-group">
+                                                                <label for="rawExpiredDate-<%= request.id %>">Expired Date</label>
+                                                                <input type="date" class="form-control" id="rawExpiredDate-<%= request.id %>" name="expiredDate">
+                                                            </div>
+                                                        </div>
+
+                                                        <!-- Reject Fields -->
+                                                        <div class="reject-comment-section" style="display: none;">
+                                                            <textarea class="form-control" name="rejectComment" placeholder="Enter rejection reason..."></textarea>
+                                                        </div>
+
+                                                        <button type="submit" class="btn btn-primary w-100"><i class="bi bi-check-lg"></i> Submit QC Result</button>
+                                                    </form>
                                                 </div>
-                                            <% } %>
-                                        </td>
-                                        <td data-label="Actions">
-                                            <div id="actions-<%= production.id %>">
-                                                <% if (production.qcStatus !== 'Pass' && production.qcStatus !== 'Fail') { %>
-                                                    <form class="qc-form" onsubmit="handleQCSubmit(event, '<%= production.id %>')">
-                                                        <select class="form-select" name="qcStatus" required>
+                                            </td>
+                                        </tr>
+                                    <% }); %>
+                                <% } else { %>
+                                    <tr class="is-empty-row"><td colspan="8"><div class="empty-state"><i class="bi bi-inbox"></i><h4>No raw material requests pending QC</h4><p>Incoming raw materials appear here for inspection.</p></div></td></tr>
+                                <% } %>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Packaging Quality Control -->
+            <section class="dashboard-section" id="sec-packagingRequests" style="--accent:#0891b2;--accent-soft:#cffafe">
+                <div class="section-header collapsed" data-bs-toggle="collapse" data-bs-target="#packagingRequests" aria-expanded="false" aria-controls="packagingRequests">
+                    <span class="sec-ico"><i class="bi bi-box2"></i></span>
+                    <div class="sec-titles">
+                        <h2 class="sec-title">Packaging Quality Control <span class="sec-count <%= pkgVendorList.length ? '' : 'is-zero' %>"><%= pkgVendorList.length %></span></h2>
+                        <p class="sec-sub">Inspect incoming packaging from vendors</p>
+                    </div>
+                    <i class="bi bi-chevron-down sec-chevron"></i>
+                </div>
+                <div id="packagingRequests" class="section-content collapse">
+                    <div class="table-responsive">
+                        <table class="table table-cards align-middle">
+                            <thead>
+                                <tr><th>ID</th><th>PO Number</th><th>Packaging</th><th>Vendor</th><th>Quantity</th><th>Status</th><th>QC Status</th><th class="text-end">Actions</th></tr>
+                            </thead>
+                            <tbody>
+                                <% if (pkgVendorList.length > 0) { %>
+                                    <% pkgVendorList.forEach(function(requestVendor) { %>
+                                        <tr>
+                                            <td data-label="ID"><span class="cell-strong">#<%= requestVendor.id %></span></td>
+                                            <td data-label="PO Number"><%= requestVendor.ponumber %></td>
+                                            <td data-label="Packaging"><span class="cell-strong"><%= requestVendor.PackagingRequest ? requestVendor.PackagingRequest.packagingName : '—' %></span></td>
+                                            <td data-label="Vendor"><%= requestVendor.Vendor ? requestVendor.Vendor.name : '—' %></td>
+                                            <td data-label="Quantity">
+                                                <% if (requestVendor.rejectQuantity && requestVendor.status === 'QC Testing') { %>
+                                                    <%= requestVendor.rejectQuantity %> pcs <span class="cell-sub">(Rejected Quantity)</span>
+                                                <% } else { %>
+                                                    <%= requestVendor.splitQuantity %> pcs
+                                                <% } %>
+                                            </td>
+                                            <td data-label="Status"><span class="status-badge <%= sb(requestVendor.status) %>"><%= requestVendor.status %></span></td>
+                                            <td data-label="QC Status" id="status-<%= requestVendor.id %>">
+                                                <% if (requestVendor.qcStatus === 'Pass') { %>
+                                                    <span class="status-badge status-completed"><i class="bi bi-check-circle"></i> Pass</span>
+                                                <% } else if (requestVendor.qcStatus === 'Fail') { %>
+                                                    <span class="status-badge status-declined"><i class="bi bi-x-circle"></i> Fail</span>
+                                                <% } else { %>
+                                                    <span class="status-badge status-pending"><i class="bi bi-clock"></i> Pending</span>
+                                                <% } %>
+                                                <% if (requestVendor.qcComment) { %>
+                                                    <div class="cell-sub mt-1"><%= requestVendor.qcComment %></div>
+                                                <% } %>
+                                            </td>
+                                            <td data-label="Actions" class="text-end">
+                                                <div id="actions-<%= requestVendor.id %>">
+                                                    <form class="qc-form" onsubmit="handlePackagingQCSubmit(event, '<%= requestVendor.id %>')">
+                                                        <select class="form-select" name="qcStatus" onchange="toggleQCFields(this)" required>
                                                             <option value="">Select Status</option>
                                                             <option value="Pass">Pass QC</option>
                                                             <option value="Fail">Fail QC</option>
+                                                            <option value="Reject Sebagian">Reject Sebagian</option>
                                                         </select>
                                                         <textarea class="form-control" name="qcComment" placeholder="Add QC comments..." required></textarea>
-                                                        <button type="submit" class="btn btn-primary w-100">
-                                                            <i class="bi bi-check-lg"></i>
-                                                            Submit QC Result
-                                                        </button>
-                                                    </form>
-                                                <% } %>
-                                                <% if (production.qcStatus === 'Pass' && !production.sampleRetained) { %>
-                                                    <form class="retain-sample-form" onsubmit="handleRetainSample(event, '<%= production.id %>')">
-                                                        <div class="form-group">
-                                                            <label for="retainedSampleVolume">Sample Volume (ml)</label>
-                                                            <input type="number" id="retainedSampleVolume" name="retainedSampleVolume" placeholder="Enter volume" required>
-                                                        </div>
-                                                        <div class="form-group">
-                                                            <label for="expiredDate">Expired Date</label>
-                                                            <input type="date" id="expiredDate" name="expiredDate" required>
-                                                        </div>
-                                                        <div class="form-group">
-                                                            <label for="noRack">No Rack</label>
-                                                            <input type="text" id="noRack" name="noRack" placeholder="Enter rack number" required>
-                                                        </div>
-                                                        <div class="form-group">
-                                                            <label for="bgscan">BG Scan</label>
-                                                            <input type="file" class="form-control" name="bgscan" accept=".pdf,.jpg,.jpeg,.png" required>
-                                                        </div>
-                                                        <button type="submit" class="btn btn-primary">
-                                                            <i class="bi bi-flask"></i>
-                                                            Retain Sample & Print Label
-                                                        </button>
-                                                    </form>
-                                                <% } else if (production.sampleRetained) { %>
-                                                    <div class="retain-sample-form">
-                                                        <div class="form-group">
-                                                            <label>Sample Volume</label>
-                                                            <div class="form-control-plaintext"><%= production.retainedSampleVolume %> ml</div>
-                                                        </div>
-                                                        <div class="form-group">
-                                                            <label>Expired Date</label>
-                                                            <div class="form-control-plaintext"><%= new Date(production.expiredDate).toLocaleDateString() %></div>
-                                                        </div>
-                                                        <div class="form-group">
-                                                            <label>No Rack</label>
-                                                            <div class="form-control-plaintext"><%= production.noRack %></div>
-                                                        </div>
-                                                        <a href="/qc/generatePDF/<%= production.id %>" class="btn print-label-btn" target="_blank">
-                                                            <i class="bi bi-printer"></i>
-                                                            Print Label
-                                                        </a>
-                                                    </div>
-                                                <% } %>
-                                            </div>
-                                        </td>
-                                    </tr>
-                                <% }); %>
-                            <% } else { %>
-                                <tr>
-                                    <td colspan="7" class="text-center py-4 text-muted">
-                                        <i class="bi bi-inbox fs-4 d-block mb-2"></i>
-                                        No production requests pending QC
-                                    </td>
-                                </tr>
-                            <% } %>
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-        </div>
 
-        <!-- Raw Material Requests Section -->
-        <div class="dashboard-section">
-            <div class="section-header" data-bs-toggle="collapse" data-bs-target="#rawMaterialRequests">
-                <h2 class="section-title">
-                    <i class="bi bi-box-seam"></i>
-                    Raw Material Quality Control
-                    <% if (rawMaterialRequestsVendors && rawMaterialRequestsVendors.length > 0) { %>
-                        <span class="badge rounded-pill bg-danger ms-2"><%= rawMaterialRequestsVendors.length %></span>
-                    <% } %>
-                </h2>
-                <i class="bi bi-chevron-down"></i>
-            </div>
-            <div id="rawMaterialRequests" class="section-content collapse">
-                <div class="table-responsive">
-                    <table class="table">
-                        <thead>
-                            <tr>
-                                <th>ID</th>
-                                <th>PO Number</th>
-                                <th>Material</th>
-                                <th>Vendor</th>
-                                <th>Quantity</th>
-                                <th>Status</th>
-                                <th>QC Status</th>
-                                <th>Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <% if (rawMaterialRequestsVendors && rawMaterialRequestsVendors.length > 0) { %>
-                                <% rawMaterialRequestsVendors.forEach(function(request) { %>
-                                    <tr>
-                                        <td data-label="ID">#<%= request.id %></td>
-                                        <td data-label="PO Number"><%= request.ponumber || 'N/A' %></td>
-                                        <td data-label="Material">
-                                            <div class="fw-semibold"><%= request.RawMaterialRequest.materialName %></div>
-                                        </td>
-                                        <td data-label="Vendor"><%= request.Vendor.name %></td>
-                                        <td data-label="Quantity">
-                                            <% if (request.rejectQuantity && request.status === 'QC Testing') { %>
-                                                <%= request.rejectQuantity %> Kg (Rejected Quantity)
-                                            <% } else { %>
-                                                <%= request.splitQuantity %> Kg
-                                            <% } %>
-                                        </td>
-                                        <td data-label="Status"><%= request.status %></td>
-                                        <td data-label="QC Status" id="status-<%= request.id %>">
-                                            <% if (request.qcStatus === 'Pass') { %>
-                                                <span class="badge badge-pass">
-                                                    <i class="bi bi-check-circle"></i> Pass
-                                                </span>
-                                            <% } else if (request.qcStatus === 'Fail') { %>
-                                                <span class="badge badge-fail">
-                                                    <i class="bi bi-x-circle"></i> Fail
-                                                </span>
-                                            <% } else { %>
-                                                <span class="badge badge-pending">
-                                                    <i class="bi bi-clock"></i> Pending
-                                                </span>
-                                            <% } %>
-                                            <% if (request.qcComment) { %>
-                                                <div class="small text-muted mt-1">
-                                                    <%= request.qcComment %>
+                                                        <!-- Pass QC Fields (kept for toggleQCFields parity; not submitted by packaging handler) -->
+                                                        <div class="pass-qc-section" style="display: none;">
+                                                            <div class="form-group">
+                                                                <label for="pkgBatchNumber-<%= requestVendor.id %>">Batch Number</label>
+                                                                <input type="text" class="form-control" id="pkgBatchNumber-<%= requestVendor.id %>" name="batchNumber" placeholder="Enter batch number">
+                                                            </div>
+                                                            <div class="form-group">
+                                                                <label for="pkgExpiredDate-<%= requestVendor.id %>">Expired Date</label>
+                                                                <input type="date" class="form-control" id="pkgExpiredDate-<%= requestVendor.id %>" name="expiredDate">
+                                                            </div>
+                                                        </div>
+
+                                                        <div class="reject-comment-section" style="display: none;">
+                                                            <textarea class="form-control" name="rejectComment" placeholder="Enter rejection reason..."></textarea>
+                                                        </div>
+                                                        <button type="submit" class="btn btn-primary w-100"><i class="bi bi-check-lg"></i> Submit QC Result</button>
+                                                    </form>
                                                 </div>
-                                            <% } %>
-                                        </td>
-                                        <td data-label="Actions">
-                                            <div id="actions-<%= request.id %>">
-                                                <form class="qc-form" onsubmit="handleRawMaterialQCSubmit(event, '<%= request.id %>')">
-                                                    <select class="form-select" name="qcStatus" onchange="toggleQCFields(this)" required>
-                                                        <option value="">Select Status</option>
-                                                        <option value="Pass">Pass QC</option>
-                                                        <option value="Fail">Fail QC</option>
-                                                        <option value="Reject Sebagian">Reject Sebagian</option>
-                                                    </select>
-                                                    <textarea class="form-control" name="qcComment" placeholder="Add QC comments..." required></textarea>
-                                                    
-                                                    <!-- Pass QC Fields -->
-                                                    <div class="pass-qc-section" style="display: none;">
-                                                        <div class="form-group mt-2">
-                                                            <label for="batchNumber">Batch Number</label>
-                                                            <input type="text" class="form-control" name="batchNumber" placeholder="Enter batch number">
-                                                        </div>
-                                                        <div class="form-group mt-2">
-                                                            <label for="expiredDate">Expired Date</label>
-                                                            <input type="date" class="form-control" name="expiredDate">
-                                                        </div>
-                                                    </div>
-
-                                                    <!-- Reject Fields -->
-                                                    <div class="reject-comment-section" style="display: none;">
-                                                        <textarea class="form-control" name="rejectComment" placeholder="Enter rejection reason..."></textarea>
-                                                    </div>
-
-                                                    <button type="submit" class="btn btn-primary w-100 mt-3">
-                                                        <i class="bi bi-check-lg"></i>
-                                                        Submit QC Result
-                                                    </button>
-                                                </form>
-                                            </div>
-                                        </td>
-                                    </tr>
-                                <% }); %>
-                            <% } else { %>
-                                <tr>
-                                    <td colspan="7" class="text-center py-4 text-muted">
-                                        <i class="bi bi-inbox fs-4 d-block mb-2"></i>
-                                        No raw material requests pending QC
-                                    </td>
-                                </tr>
-                            <% } %>
-                        </tbody>
-                    </table>
+                                            </td>
+                                        </tr>
+                                    <% }); %>
+                                <% } else { %>
+                                    <tr class="is-empty-row"><td colspan="8"><div class="empty-state"><i class="bi bi-inbox"></i><h4>No packaging requests pending QC</h4><p>Incoming packaging appears here for inspection.</p></div></td></tr>
+                                <% } %>
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
-            </div>
-        </div>
+            </section>
 
-        <!-- Packaging Requests Section -->
-        <div class="dashboard-section">
-            <div class="section-header" data-bs-toggle="collapse" data-bs-target="#packagingRequests">
-                <h2 class="section-title">
-                    <i class="bi bi-box2"></i>
-                    Packaging Quality Control
-                    <% if (packagingRequestVendors && packagingRequestVendors.length > 0) { %>
-                        <span class="badge rounded-pill bg-danger ms-2"><%= packagingRequestVendors.length %></span>
-                    <% } %>
-                </h2>
-                <i class="bi bi-chevron-down"></i>
-            </div>
-            <div id="packagingRequests" class="section-content collapse">
-                <div class="table-responsive">
-                    <table class="table">
-                        <thead>
-                            <tr>
-                                <th>ID</th>
-                                <th>PO Number</th>
-                                <th>Packaging</th>
-                                <th>Vendor</th>
-                                <th>Quantity</th>
-                                <th>Status</th>
-                                <th>QC Status</th>
-                                <th>Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <% if (packagingRequestVendors && packagingRequestVendors.length > 0) { %>
-                                <% packagingRequestVendors.forEach(function(requestVendor) { %>
-                                    <tr>
-                                        <td data-label="ID">#<%= requestVendor.id %></td>
-                                        <td data-label="PO Number"><%= requestVendor.ponumber %></td>
-                                        <td data-label="Packaging">
-                                            <div class="fw-semibold"><%= requestVendor.PackagingRequest.packagingName %></div>
-                                        </td>
-                                        <td data-label="Vendor"><%= requestVendor.Vendor.name %></td>
-                                        <td data-label="Quantity">
-                                            <% if (requestVendor.rejectQuantity && requestVendor.status === 'QC Testing') { %>
-                                                <%= requestVendor.rejectQuantity %> pcs (Rejected Quantity)
-                                            <% } else { %>
-                                                <%= requestVendor.splitQuantity %> pcs
-                                            <% } %>
-                                        </td>
-                                        <td data-label="Status"><%= requestVendor.status %></td>
-                                        <td data-label="QC Status" id="status-<%= requestVendor.id %>">
-                                            <% if (requestVendor.qcStatus === 'Pass') { %>
-                                                <span class="badge badge-pass">
-                                                    <i class="bi bi-check-circle"></i> Pass
-                                                </span>
-                                            <% } else if (requestVendor.qcStatus === 'Fail') { %>
-                                                <span class="badge badge-fail">
-                                                    <i class="bi bi-x-circle"></i> Fail
-                                                </span>
-                                            <% } else { %>
-                                                <span class="badge badge-pending">
-                                                    <i class="bi bi-clock"></i> Pending
-                                                </span>
-                                            <% } %>
-                                            <% if (requestVendor.qcComment) { %>
-                                                <div class="small text-muted mt-1">
-                                                    <%= requestVendor.qcComment %>
-                                                </div>
-                                            <% } %>
-                                        </td>
-                                        <td data-label="Actions">
-                                            <div id="actions-<%= requestVendor.id %>">
-                                                <form class="qc-form" onsubmit="handlePackagingQCSubmit(event, '<%= requestVendor.id %>')">
-                                                    <select class="form-select" name="qcStatus" onchange="toggleQCFields(this)" required>
-                                                        <option value="">Select Status</option>
-                                                        <option value="Pass">Pass QC</option>
-                                                        <option value="Fail">Fail QC</option>
-                                                        <option value="Reject Sebagian">Reject Sebagian</option>
-                                                    </select>
-                                                    <textarea class="form-control" name="qcComment" placeholder="Add QC comments..." required></textarea>
-                                                    <div class="reject-comment-section" style="display: none;">
-                                                        <textarea class="form-control" name="rejectComment" placeholder="Enter rejection reason..."></textarea>
-                                                    </div>
-                                                    <button type="submit" class="btn btn-primary w-100">
-                                                        <i class="bi bi-check-lg"></i>
-                                                        Submit QC Result
-                                                    </button>
-                                                </form>
-                                            </div>
-                                        </td>
-                                    </tr>
-                                <% }); %>
-                            <% } else { %>
-                                <tr>
-                                    <td colspan="7" class="text-center py-4 text-muted">
-                                        <i class="bi bi-inbox fs-4 d-block mb-2"></i>
-                                        No packaging requests pending QC
-                                    </td>
-                                </tr>
-                            <% } %>
-                        </tbody>
-                    </table>
+            <!-- Rework Items -->
+            <section class="dashboard-section" id="sec-reworkItems" style="--accent:#e11d48;--accent-soft:#ffe4e6">
+                <div class="section-header collapsed" data-bs-toggle="collapse" data-bs-target="#reworkItems" aria-expanded="false" aria-controls="reworkItems">
+                    <span class="sec-ico"><i class="bi bi-tools"></i></span>
+                    <div class="sec-titles">
+                        <h2 class="sec-title">Rework Items <span class="sec-count <%= reworkItemList.length ? '' : 'is-zero' %>"><%= reworkItemList.length %></span></h2>
+                        <p class="sec-sub">Complaint items sent to QC for a decision</p>
+                    </div>
+                    <i class="bi bi-chevron-down sec-chevron"></i>
                 </div>
-            </div>
-        </div>
-
-        <!-- Rework Items Section -->
-        <div class="dashboard-section">
-            <div class="section-header" data-bs-toggle="collapse" data-bs-target="#reworkItems">
-                <h2 class="section-title">
-                    <i class="bi bi-tools"></i>
-                    Rework Items
-                    <% if (complainItems && complainItems.length > 0) { %>
-                        <span class="badge rounded-pill bg-danger ms-2"><%= complainItems.length %></span>
-                    <% } %>
-                </h2>
-                <i class="bi bi-chevron-down"></i>
-            </div>
-            <div id="reworkItems" class="section-content collapse">
-                <div class="table-responsive">
-                    <table class="table">
-                        <thead>
-                            <tr>
-                                <th>SO Number</th>
-                                <th>Customer Name</th>
-                                <th>Product</th>
-                                <th>Quantity Rejected</th>
-                                <th>Notes</th>
-                                <th>Status</th>
-                                <th>Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <% if (complainItems && complainItems.length > 0) { %>
-                                <% complainItems.forEach(function(item) { %>
-                                    <tr>
-                                        <td data-label="SO Number"><%= item.Complain.Order.sonumber %></td>
-                                        <td data-label="Customer Name"><%= item.Complain.Order.customerName %></td>
-                                        <td data-label="Product"><%= item.product %></td>
-                                        <td data-label="Quantity Rejected"><%= item.quantityRejected %> KG</td>
-                                        <td data-label="Notes"><%= item.notes || '-' %></td>
-                                        <td data-label="Status"><%= item.status %></td>
-                                        <td data-label="Actions">
-                                            <div class="d-flex gap-2">
-                                                <form action="/qc/proceed-to-rework" method="POST" class="d-inline">
-                                                    <input type="hidden" name="complainItemId" value="<%= item.id %>">
-                                                    <button type="submit" class="btn btn-success">
-                                                        <i class="bi bi-arrow-right-circle"></i>
-                                                        Proceed to Rework
-                                                    </button>
-                                                </form>
-                                                <form action="/qc/reject-complain" method="POST" class="d-inline">
-                                                    <input type="hidden" name="complainItemId" value="<%= item.id %>">
-                                                    <button type="submit" class="btn btn-danger">
-                                                        <i class="bi bi-x-circle"></i>
-                                                        Reject
-                                                    </button>
-                                                </form>
-                                            </div>
-                                        </td>
-                                    </tr>
-                                <% }); %>
-                            <% } else { %>
-                                <tr>
-                                    <td colspan="7" class="text-center py-4 text-muted">
-                                        <i class="bi bi-inbox fs-4 d-block mb-2"></i>
-                                        No rework items found
-                                    </td>
-                                </tr>
-                            <% } %>
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-        </div>
-
-        <!-- Rework Production Quality Control Section -->
-        <div class="dashboard-section">
-            <div class="section-header" data-bs-toggle="collapse" data-bs-target="#reworkProductionList">
-                <h2 class="section-title">
-                    <i class="bi bi-arrow-repeat"></i>
-                    Rework Production Quality Control
-                    <% if (reworkProductions && reworkProductions.length > 0) { %>
-                        <span class="badge rounded-pill bg-danger ms-2"><%= reworkProductions.length %></span>
-                    <% } %>
-                </h2>
-                <i class="bi bi-chevron-down"></i>
-            </div>
-            <div id="reworkProductionList" class="section-content collapse">
-                <div class="table-responsive">
-                    <table class="table">
-                        <thead>
-                            <tr>
-                                <th>Batch</th>
-                                <th>Product</th>
-                                <th>Quantity</th>
-                                <th>Tanks</th>
-                                <th>Dates</th>
-                                <th>QC Status</th>
-                                <th>Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <% if (reworkProductions && reworkProductions.length > 0) { %>
-                                <% reworkProductions.forEach(function(rework) { %>
-                                    <tr>
-                                        <td data-label="Batch">
-                                            <div class="fw-semibold">#<%= rework.batchNumber %></div>
-                                            <small class="text-muted">ID: <%= rework.id %></small>
-                                        </td>
-                                        <td data-label="Product"><%= rework.ComplainItem.product %></td>
-                                        <td data-label="Quantity"><%= rework.quantity %> KG</td>
-                                        <td data-label="Tanks">
-                                            <div class="d-flex flex-wrap gap-1">
-                                                <% rework.Tanks.forEach(tank => { %>
-                                                    <div class="d-flex flex-column align-items-center">
-                                                        <span class="badge badge-tank mb-1">
-                                                            <%= tank.name %> (<%= tank.volume %> L)
-                                                        </span>
-                                                        <small class="badge bg-light text-secondary border d-flex align-items-center gap-1" style="font-size: 0.75rem; padding: 0.25rem 0.5rem;">
-                                                            <i class="bi bi-arrow-repeat"></i>
-                                                            Stir <%= rework.stirSequence %>
-                                                        </small>
-                                                    </div>
-                                                <% }) %>
-                                            </div>
-                                        </td>
-                                        <td data-label="Dates">
-                                            <div>Start: <%= rework.startDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) %></div>
-                                            <div>Due: <%= rework.deadlineDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) %></div>
-                                        </td>
-                                        <td data-label="QC Status">
-                                            <% if (rework.qcStatus === 'Pass') { %>
-                                                <span class="badge badge-pass">
-                                                    <i class="bi bi-check-circle"></i> Pass
-                                                </span>
-                                            <% } else if (rework.qcStatus === 'Fail') { %>
-                                                <span class="badge badge-fail">
-                                                    <i class="bi bi-x-circle"></i> Fail
-                                                </span>
-                                            <% } else { %>
-                                                <span class="badge badge-pending">
-                                                    <i class="bi bi-clock"></i> Pending
-                                                </span>
-                                            <% } %>
-                                            <% if (rework.qcComment) { %>
-                                                <div class="small text-muted mt-1">
-                                                    <%= rework.qcComment %>
-                                                </div>
-                                            <% } %>
-                                        </td>
-                                        <td data-label="Actions">
-                                            <div id="actions-<%= rework.id %>">
-                                                <% if (rework.qcStatus !== 'Pass' && rework.qcStatus !== 'Fail') { %>
-                                                    <form class="qc-form" onsubmit="handleReworkQCSubmit(event, '<%= rework.id %>')">
-                                                        <select class="form-select" name="qcStatus" required>
-                                                            <option value="">Select Status</option>
-                                                            <option value="Pass">Pass QC</option>
-                                                            <option value="Fail">Fail QC</option>
-                                                        </select>
-                                                        <textarea class="form-control" name="qcComment" placeholder="Add QC comments..." required></textarea>
-                                                        <button type="submit" class="btn btn-primary w-100">
-                                                            <i class="bi bi-check-lg"></i>
-                                                            Submit QC Result
-                                                        </button>
+                <div id="reworkItems" class="section-content collapse">
+                    <div class="table-responsive">
+                        <table class="table table-cards align-middle">
+                            <thead>
+                                <tr><th>SO Number</th><th>Customer Name</th><th>Product</th><th>Quantity Rejected</th><th>Notes</th><th>Status</th><th class="text-end">Actions</th></tr>
+                            </thead>
+                            <tbody>
+                                <% if (reworkItemList.length > 0) { %>
+                                    <% reworkItemList.forEach(function(item) { %>
+                                        <tr>
+                                            <td data-label="SO Number"><span class="cell-strong"><%= item.Complain && item.Complain.Order ? item.Complain.Order.sonumber : '—' %></span></td>
+                                            <td data-label="Customer Name"><%= item.Complain && item.Complain.Order ? item.Complain.Order.customerName : '—' %></td>
+                                            <td data-label="Product"><%= item.product %></td>
+                                            <td data-label="Quantity Rejected"><%= item.quantityRejected %> KG</td>
+                                            <td data-label="Notes"><span class="cell-sub"><%= item.notes || '—' %></span></td>
+                                            <td data-label="Status"><span class="status-badge <%= sb(item.status) %>"><%= item.status %></span></td>
+                                            <td data-label="Actions" class="text-end">
+                                                <div class="d-flex gap-2 justify-content-end flex-wrap">
+                                                    <form action="/qc/proceed-to-rework" method="POST" class="d-inline">
+                                                        <input type="hidden" name="complainItemId" value="<%= item.id %>">
+                                                        <button type="submit" class="btn btn-sm btn-success"><i class="bi bi-arrow-right-circle"></i> Proceed to Rework</button>
                                                     </form>
-                                                <% } %>
-                                                <% if (rework.qcStatus === 'Pass' && !rework.sampleRetained) { %>
-                                                    <form class="retain-sample-form" onsubmit="handleRetainReworkSample(event, '<%= rework.id %>')">
-                                                        <div class="form-group">
-                                                            <label for="retainedSampleVolume">Sample Volume (ml)</label>
-                                                            <input type="number" id="retainedSampleVolume" name="retainedSampleVolume" placeholder="Enter volume" required>
-                                                        </div>
-                                                        <div class="form-group">
-                                                            <label for="expiredDate">Expired Date</label>
-                                                            <input type="date" id="expiredDate" name="expiredDate" required>
-                                                        </div>
-                                                        <div class="form-group">
-                                                            <label for="rackNumber">No Rack</label>
-                                                            <input type="text" id="rackNumber" name="rackNumber" placeholder="Enter rack number" required>
-                                                        </div>
-                                                        <button type="submit" class="btn btn-primary">
-                                                            <i class="bi bi-flask"></i>
-                                                            Retain Sample & Print Label
-                                                        </button>
+                                                    <form action="/qc/reject-complain" method="POST" class="d-inline">
+                                                        <input type="hidden" name="complainItemId" value="<%= item.id %>">
+                                                        <button type="submit" class="btn btn-sm btn-outline-danger"><i class="bi bi-x-circle"></i> Reject</button>
                                                     </form>
-                                                <% } else if (rework.sampleRetained) { %>
-                                                    <div class="retain-sample-form">
-                                                        <div class="form-group">
-                                                            <label>Sample Volume</label>
-                                                            <div class="form-control-plaintext"><%= rework.retainedSampleVolume %> ml</div>
-                                                        </div>
-                                                        <div class="form-group">
-                                                            <label>Expired Date</label>
-                                                            <div class="form-control-plaintext"><%= new Date(rework.expiryDate).toLocaleDateString() %></div>
-                                                        </div>
-                                                        <div class="form-group">
-                                                            <label>No Rack</label>
-                                                            <div class="form-control-plaintext"><%= rework.rackNumber %></div>
-                                                        </div>
-                                                        <a href="/qc/generateReworkPDF/<%= rework.id %>" class="btn print-label-btn" target="_blank">
-                                                            <i class="bi bi-printer"></i>
-                                                            Print Label
-                                                        </a>
-                                                    </div>
-                                                <% } %>
-                                            </div>
-                                        </td>
-                                    </tr>
-                                <% }); %>
-                            <% } else { %>
-                                <tr>
-                                    <td colspan="7" class="text-center py-4 text-muted">
-                                        <i class="bi bi-inbox fs-4 d-block mb-2"></i>
-                                        No rework productions pending QC
-                                    </td>
-                                </tr>
-                            <% } %>
-                        </tbody>
-                    </table>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    <% }); %>
+                                <% } else { %>
+                                    <tr class="is-empty-row"><td colspan="7"><div class="empty-state"><i class="bi bi-inbox"></i><h4>No rework items</h4><p>Complaint items sent to QC appear here.</p></div></td></tr>
+                                <% } %>
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
-            </div>
-        </div>
+            </section>
+
+            <!-- Rework Production Quality Control -->
+            <section class="dashboard-section" id="sec-reworkProductionList" style="--accent:#9333ea;--accent-soft:#f3e8ff">
+                <div class="section-header collapsed" data-bs-toggle="collapse" data-bs-target="#reworkProductionList" aria-expanded="false" aria-controls="reworkProductionList">
+                    <span class="sec-ico"><i class="bi bi-arrow-repeat"></i></span>
+                    <div class="sec-titles">
+                        <h2 class="sec-title">Rework Production Quality Control <span class="sec-count <%= reworkProdList.length ? '' : 'is-zero' %>"><%= reworkProdList.length %></span></h2>
+                        <p class="sec-sub">QC for reworked production batches</p>
+                    </div>
+                    <i class="bi bi-chevron-down sec-chevron"></i>
+                </div>
+                <div id="reworkProductionList" class="section-content collapse">
+                    <div class="table-responsive">
+                        <table class="table table-cards align-middle">
+                            <thead>
+                                <tr><th>Batch</th><th>Product</th><th>Quantity</th><th>Tanks</th><th>Dates</th><th>QC Status</th><th class="text-end">Actions</th></tr>
+                            </thead>
+                            <tbody>
+                                <% if (reworkProdList.length > 0) { %>
+                                    <% reworkProdList.forEach(function(rework) { %>
+                                        <tr>
+                                            <td data-label="Batch">
+                                                <span class="cell-strong">#<%= rework.batchNumber %></span>
+                                                <div class="cell-sub">ID: <%= rework.id %></div>
+                                            </td>
+                                            <td data-label="Product"><%= rework.ComplainItem ? rework.ComplainItem.product : '—' %></td>
+                                            <td data-label="Quantity"><%= rework.quantity %> KG</td>
+                                            <td data-label="Tanks">
+                                                <div class="chip-list">
+                                                    <% (rework.Tanks || []).forEach(tank => { %>
+                                                        <span class="chip"><%= tank.name %> (<%= tank.volume %> L)</span>
+                                                        <span class="chip is-stir"><i class="bi bi-arrow-repeat"></i> Stir <%= rework.stirSequence %></span>
+                                                    <% }) %>
+                                                </div>
+                                            </td>
+                                            <td data-label="Dates">
+                                                <div class="cell-sub">Start: <%= fmtD(rework.startDate) %></div>
+                                                <div class="cell-sub">Due: <%= fmtD(rework.deadlineDate) %></div>
+                                            </td>
+                                            <td data-label="QC Status">
+                                                <% if (rework.qcStatus === 'Pass') { %>
+                                                    <span class="status-badge status-completed"><i class="bi bi-check-circle"></i> Pass</span>
+                                                <% } else if (rework.qcStatus === 'Fail') { %>
+                                                    <span class="status-badge status-declined"><i class="bi bi-x-circle"></i> Fail</span>
+                                                <% } else { %>
+                                                    <span class="status-badge status-pending"><i class="bi bi-clock"></i> Pending</span>
+                                                <% } %>
+                                                <% if (rework.qcComment) { %>
+                                                    <div class="cell-sub mt-1"><%= rework.qcComment %></div>
+                                                <% } %>
+                                            </td>
+                                            <td data-label="Actions" class="text-end">
+                                                <div id="actions-<%= rework.id %>">
+                                                    <% if (rework.qcStatus !== 'Pass' && rework.qcStatus !== 'Fail') { %>
+                                                        <form class="qc-form" onsubmit="handleReworkQCSubmit(event, '<%= rework.id %>')">
+                                                            <select class="form-select" name="qcStatus" required>
+                                                                <option value="">Select Status</option>
+                                                                <option value="Pass">Pass QC</option>
+                                                                <option value="Fail">Fail QC</option>
+                                                            </select>
+                                                            <textarea class="form-control" name="qcComment" placeholder="Add QC comments..." required></textarea>
+                                                            <button type="submit" class="btn btn-primary w-100"><i class="bi bi-check-lg"></i> Submit QC Result</button>
+                                                        </form>
+                                                    <% } %>
+                                                    <% if (rework.qcStatus === 'Pass' && !rework.sampleRetained) { %>
+                                                        <form class="retain-sample-form" onsubmit="handleRetainReworkSample(event, '<%= rework.id %>')">
+                                                            <div class="form-group">
+                                                                <label for="reworkVolume-<%= rework.id %>">Sample Volume (ml)</label>
+                                                                <input type="number" class="form-control" id="reworkVolume-<%= rework.id %>" name="retainedSampleVolume" placeholder="Enter volume" required>
+                                                            </div>
+                                                            <div class="form-group">
+                                                                <label for="reworkExpired-<%= rework.id %>">Expired Date</label>
+                                                                <input type="date" class="form-control" id="reworkExpired-<%= rework.id %>" name="expiredDate" required>
+                                                            </div>
+                                                            <div class="form-group">
+                                                                <label for="reworkRack-<%= rework.id %>">No Rack</label>
+                                                                <input type="text" class="form-control" id="reworkRack-<%= rework.id %>" name="rackNumber" placeholder="Enter rack number" required>
+                                                            </div>
+                                                            <button type="submit" class="btn btn-primary"><i class="bi bi-eyedropper"></i> Retain Sample &amp; Print Label</button>
+                                                        </form>
+                                                    <% } else if (rework.sampleRetained) { %>
+                                                        <div class="retain-sample-form">
+                                                            <div class="form-group">
+                                                                <label>Sample Volume</label>
+                                                                <div class="form-control-plaintext"><%= rework.retainedSampleVolume %> ml</div>
+                                                            </div>
+                                                            <div class="form-group">
+                                                                <label>Expired Date</label>
+                                                                <div class="form-control-plaintext"><%= rework.expiryDate ? new Date(rework.expiryDate).toLocaleDateString() : '—' %></div>
+                                                            </div>
+                                                            <div class="form-group">
+                                                                <label>No Rack</label>
+                                                                <div class="form-control-plaintext"><%= rework.rackNumber %></div>
+                                                            </div>
+                                                            <a href="/qc/generateReworkPDF/<%= rework.id %>" class="btn btn-soft" target="_blank"><i class="bi bi-printer"></i> Print Label</a>
+                                                        </div>
+                                                    <% } %>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    <% }); %>
+                                <% } else { %>
+                                    <tr class="is-empty-row"><td colspan="7"><div class="empty-state"><i class="bi bi-inbox"></i><h4>No rework productions pending QC</h4><p>Reworked batches awaiting QC appear here.</p></div></td></tr>
+                                <% } %>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
@@ -1072,23 +949,23 @@
                 const actionsCell = document.querySelector(`#actions-${elementId}`);
 
                 if (statusCell) {
-                    let badgeClass = 'badge-pending';
+                    let badgeClass = 'status-pending';
                     let icon = 'clock';
-                    
+
                     if (status === 'Pass') {
-                        badgeClass = 'badge-pass';
+                        badgeClass = 'status-completed';
                         icon = 'check-circle';
                     } else if (status === 'Fail') {
-                        badgeClass = 'badge-fail';
+                        badgeClass = 'status-declined';
                         icon = 'x-circle';
                     }
 
                     statusCell.innerHTML = `
-                        <span class="badge ${badgeClass}">
+                        <span class="status-badge ${badgeClass}">
                             <i class="bi bi-${icon}"></i>
                             ${status}
                         </span>
-                        ${comment ? `<div class="small text-muted mt-1">${comment}</div>` : ''}
+                        ${comment ? `<div class="cell-sub mt-1">${comment}</div>` : ''}
                     `;
                 }
 
@@ -1109,7 +986,7 @@
                 const form = select.closest('form');
                 const bgscanSection = form.querySelector('.bgscan-section');
                 const bgscanInput = form.querySelector('[name="bgscan"]');
-                
+
                 if (select.value === 'Pass') {
                     bgscanSection.style.display = 'block';
                     bgscanInput.required = true;
@@ -1124,7 +1001,7 @@
                 event.preventDefault();
                 const form = event.target;
                 const submitBtn = form.querySelector('button[type="submit"]');
-                
+
                 // Show loading state
                 submitBtn.disabled = true;
                 submitBtn.classList.add('loading');
@@ -1141,7 +1018,7 @@
                     updateQCStatus(id, result.status, result.comment, result.newActions);
                     const actionsCell = document.querySelector(`#actions-${id}`);
                     const alertClass = result.status === 'Fail' ? 'alert-danger' : 'alert-success';
-                    const message = result.status === 'Fail' ? 
+                    const message = result.status === 'Fail' ?
                         'QC result: Failed! This item has been marked as failed.' :
                         'QC status has been updated successfully.';
                     actionsCell.innerHTML = `
@@ -1165,22 +1042,22 @@
                 const passSection = form.querySelector('.pass-qc-section');
                 const batchNumber = form.querySelector('[name="batchNumber"]');
                 const expiredDate = form.querySelector('[name="expiredDate"]');
-                
-                // Hide all sections first
-                rejectSection.style.display = 'none';
-                passSection.style.display = 'none';
-                rejectComment.required = false;
-                batchNumber.required = false;
-                expiredDate.required = false;
+
+                // Hide all sections first (guard optional sections for forms that omit them)
+                if (rejectSection) rejectSection.style.display = 'none';
+                if (passSection) passSection.style.display = 'none';
+                if (rejectComment) rejectComment.required = false;
+                if (batchNumber) batchNumber.required = false;
+                if (expiredDate) expiredDate.required = false;
 
                 // Show relevant section based on selection
                 if (select.value === 'Reject Sebagian') {
-                    rejectSection.style.display = 'block';
-                    rejectComment.required = true;
+                    if (rejectSection) rejectSection.style.display = 'block';
+                    if (rejectComment) rejectComment.required = true;
                 } else if (select.value === 'Pass') {
-                    passSection.style.display = 'block';
-                    batchNumber.required = true;
-                    expiredDate.required = true;
+                    if (passSection) passSection.style.display = 'block';
+                    if (batchNumber) batchNumber.required = true;
+                    if (expiredDate) expiredDate.required = true;
                 }
             };
 
@@ -1189,7 +1066,7 @@
                 event.preventDefault();
                 const form = event.target;
                 const submitBtn = form.querySelector('button[type="submit"]');
-                
+
                 // Show loading state
                 submitBtn.disabled = true;
                 submitBtn.classList.add('loading');
@@ -1232,7 +1109,7 @@
                         const statusCell = document.querySelector(`#status-${id}`);
                         if (statusCell) {
                             const commentDiv = document.createElement('div');
-                            commentDiv.className = 'small text-danger mt-1';
+                            commentDiv.className = 'cell-sub mt-1 text-danger';
                             commentDiv.textContent = `Reject Reason: ${result.rejectComment}`;
                             statusCell.appendChild(commentDiv);
                         }
@@ -1250,7 +1127,7 @@
                 event.preventDefault();
                 const form = event.target;
                 const submitBtn = form.querySelector('button[type="submit"]');
-                
+
                 // Show loading state
                 submitBtn.disabled = true;
                 submitBtn.classList.add('loading');
@@ -1298,7 +1175,7 @@
                 event.preventDefault();
                 const form = event.target;
                 const submitBtn = form.querySelector('button[type="submit"]');
-                
+
                 // Show loading state
                 submitBtn.disabled = true;
                 submitBtn.classList.add('loading');
@@ -1314,9 +1191,9 @@
                 if (result.success) {
                     updateQCStatus(id, result.status, result.comment);
                     const actionsCell = document.querySelector(`#actions-${id}`);
-                    
+
                     let alertClass, message, statusText;
-                    
+
                     if (result.status === 'Fail') {
                         alertClass = 'alert-danger';
                         message = 'Product check QC result: Failed. This item has been marked as failed.';
@@ -1330,7 +1207,7 @@
                         message = 'Product check QC status has been updated successfully.';
                         statusText = 'Success!';
                     }
-                    
+
                     actionsCell.innerHTML = `
                         <div class="alert ${alertClass}">
                             <strong>${statusText}</strong> ${message}
@@ -1349,7 +1226,7 @@
                 event.preventDefault();
                 const form = event.target;
                 const submitBtn = form.querySelector('button[type="submit"]');
-                
+
                 // Show loading state
                 submitBtn.disabled = true;
                 submitBtn.classList.add('loading');
@@ -1366,7 +1243,7 @@
                     updateQCStatus(id, result.status, result.comment, result.newActions);
                     const actionsCell = document.querySelector(`#actions-${id}`);
                     const alertClass = result.status === 'Fail' ? 'alert-danger' : 'alert-success';
-                    const message = result.status === 'Fail' ? 
+                    const message = result.status === 'Fail' ?
                         'Rework QC result: Failed. This item has been marked as failed.' :
                         'Rework QC status has been updated successfully.';
                     actionsCell.innerHTML = `
@@ -1387,7 +1264,7 @@
                 event.preventDefault();
                 const form = event.target;
                 const submitBtn = form.querySelector('button[type="submit"]');
-                
+
                 // Show loading state
                 submitBtn.disabled = true;
                 submitBtn.classList.add('loading');
@@ -1426,7 +1303,7 @@
                 event.preventDefault();
                 const form = event.target;
                 const submitBtn = form.querySelector('button[type="submit"]');
-                
+
                 try {
                     // Show loading state
                     submitBtn.disabled = true;
@@ -1487,41 +1364,89 @@
 
             // Handle sidebar state changes
             const sidebar = document.querySelector('.sidebar');
-            const observer = new MutationObserver(function(mutations) {
-                mutations.forEach(function(mutation) {
-                    if (mutation.attributeName === 'class') {
-                        if (sidebar.classList.contains('collapsed')) {
-                            document.body.classList.add('sidebar-collapsed');
-                        } else {
-                            document.body.classList.remove('sidebar-collapsed');
+            if (sidebar) {
+                const observer = new MutationObserver(function(mutations) {
+                    mutations.forEach(function(mutation) {
+                        if (mutation.attributeName === 'class') {
+                            if (sidebar.classList.contains('collapsed')) {
+                                document.body.classList.add('sidebar-collapsed');
+                            } else {
+                                document.body.classList.remove('sidebar-collapsed');
+                            }
                         }
+                    });
+                });
+                observer.observe(sidebar, { attributes: true });
+            }
+
+            // Initialize collapsible sections — keep chevron rotation in sync with Bootstrap collapse
+            document.querySelectorAll('.dashboard-section').forEach(section => {
+                const content = section.querySelector('.section-content');
+                const header = section.querySelector('.section-header');
+                if (!content || !header) return;
+                if (content.classList.contains('show')) header.setAttribute('aria-expanded', 'true');
+                content.addEventListener('show.bs.collapse', () => header.setAttribute('aria-expanded', 'true'));
+                content.addEventListener('hide.bs.collapse', () => header.setAttribute('aria-expanded', 'false'));
+            });
+
+            // Expand / collapse all
+            const allBodies = () => document.querySelectorAll('.dashboard-section .section-content');
+            const expandBtn = document.getElementById('btnExpandAll');
+            const collapseBtn = document.getElementById('btnCollapseAll');
+            if (expandBtn) expandBtn.addEventListener('click', () => allBodies().forEach(c => window.bootstrap && bootstrap.Collapse.getOrCreateInstance(c, { toggle: false }).show()));
+            if (collapseBtn) collapseBtn.addEventListener('click', () => allBodies().forEach(c => window.bootstrap && bootstrap.Collapse.getOrCreateInstance(c, { toggle: false }).hide()));
+
+            // Stat cards -> focus + expand the matching queue
+            function focusQueue(key) {
+                const sec = document.getElementById('sec-' + key);
+                const body = document.getElementById(key);
+                if (body && window.bootstrap) bootstrap.Collapse.getOrCreateInstance(body, { toggle: false }).show();
+                if (sec) { sec.scrollIntoView({ behavior: 'smooth', block: 'start' }); sec.classList.remove('queue-flash'); void sec.offsetWidth; sec.classList.add('queue-flash'); }
+            }
+            document.querySelectorAll('.stat-card[data-focus]').forEach(card => {
+                const go = () => focusQueue(card.getAttribute('data-focus'));
+                card.addEventListener('click', go);
+                card.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); go(); } });
+            });
+
+            // Live search across queue rows
+            const search = document.getElementById('qcSearch');
+            if (search) {
+                search.addEventListener('input', () => {
+                    const q = (search.value || '').trim().toLowerCase();
+                    document.querySelectorAll('.dashboard-section tbody tr').forEach(row => {
+                        if (row.classList.contains('is-empty-row')) return;
+                        row.style.display = (!q || row.textContent.toLowerCase().includes(q)) ? '' : 'none';
+                    });
+                    if (q && window.bootstrap) {
+                        document.querySelectorAll('.dashboard-section .section-content').forEach(c => bootstrap.Collapse.getOrCreateInstance(c, { toggle: false }).show());
                     }
                 });
-            });
-            observer.observe(sidebar, { attributes: true });
+            }
 
-            // Initialize collapsible sections
-            const sections = document.querySelectorAll('.dashboard-section');
-            sections.forEach(section => {
-                const content = section.querySelector('.section-content');
-                const icon = section.querySelector('.bi-chevron-down');
-
-                // Set initial state
-                if (content.classList.contains('show')) {
-                    icon.style.transform = 'rotate(180deg)';
-                }
-
-                // Use Bootstrap's collapse events
-                content.addEventListener('show.bs.collapse', () => {
-                    icon.style.transform = 'rotate(180deg)';
-                });
-
-                content.addEventListener('hide.bs.collapse', () => {
-                    icon.style.transform = 'rotate(0)';
-                });
+            // Count-up stat values
+            document.querySelectorAll('.stat-value[data-count]').forEach(el => {
+                const target = parseInt(el.getAttribute('data-count'), 10) || 0;
+                if (!target) { el.textContent = '0'; return; }
+                const dur = 850, start = performance.now();
+                (function tick(now) {
+                    const p = Math.min((now - start) / dur, 1);
+                    el.textContent = Math.round(target * (1 - Math.pow(1 - p, 3))).toLocaleString('id-ID');
+                    if (p < 1) requestAnimationFrame(tick);
+                })(start);
             });
 
-            // Form submissions
+            // Hero clock
+            function tickClock() {
+                const c = document.getElementById('qcClock');
+                const d = document.getElementById('qcDate');
+                const now = new Date();
+                if (c) c.textContent = now.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
+                if (d) d.textContent = now.toLocaleDateString('en-US', { weekday: 'long', day: 'numeric', month: 'long' });
+            }
+            tickClock(); setInterval(tickClock, 15000);
+
+            // Form submissions — show loading state
             document.querySelectorAll('form').forEach(form => {
                 form.addEventListener('submit', function(e) {
                     const submitBtn = this.querySelector('button[type="submit"]');
@@ -1538,11 +1463,11 @@
 
             evtSource.onmessage = function(event) {
                 const data = JSON.parse(event.data);
-                
+
                 if (data.type === 'newProductCheck') {
                     const notification = `New product check request: ${data.productName} (${data.quantity} KG)`;
                     showNotification(notification);
-                    
+
                     // Play audio if specified
                     if (data.audio) {
                         audio.play().catch(e => console.error('Error playing audio:', e));
@@ -1564,9 +1489,9 @@
                     } else if (data.source === 'Complain') {
                         notification = `New QC request for rework batch: ${data.batchNumber}`;
                     }
-                    
+
                     showNotification(notification);
-                    
+
                     // Play audio if specified
                     if (data.audio) {
                         audio.play().catch(e => console.error('Error playing audio:', e));
@@ -1580,7 +1505,7 @@
                     // Show notification for new complain QC request
                     const notification = `New complain QC request: ${data.sonumber} (${data.customerName})`;
                     showNotification(notification);
-                    
+
                     // Play audio if specified
                     if (data.audio) {
                         audio.play().catch(e => console.error('Error playing audio:', e));
@@ -1613,6 +1538,5 @@
             }
         });
     </script>
-    <%- include('../partials/chat', { users: users, userRole: userRole, userId: userId }) %>
 </body>
 </html>

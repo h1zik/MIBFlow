@@ -6,18 +6,18 @@
 <body class="app-shell">
     <%- include('../partials/sidebar', { userRole: userRole, path: '/orders/addCustomer' }) %>
 
-    <div class="content">
-        <div class="page-header fade-in">
-            <div class="page-header__main">
-                <ul class="mib-breadcrumb"><li><a href="/customers/list">Customers</a></li><li>Add</li></ul>
-                <h1 class="page-title"><i class="bi bi-person-plus-fill"></i> Add New Customer</h1>
-                <p class="page-subtitle">Fill in the customer details below.</p>
-            </div>
-        </div>
+    <div class="content content-narrow">
+        <%- include('../partials/page-header', {
+              pageTitle: 'Add New Customer',
+              pageIcon: 'bi-person-plus-fill',
+              pageSubtitle: 'Fill in the customer details below.',
+              breadcrumb: [{ label: 'Customers', href: '/customers/list' }, { label: 'Add' }]
+        }) %>
 
         <form action="/orders/addCustomer" method="POST" class="needs-validation" novalidate>
-            <div class="form-section">
+            <div class="form-section fade-in">
                 <h3 class="form-section-title"><i class="bi bi-building me-1"></i> Company Information</h3>
+                <p class="form-section-desc">The company this customer represents.</p>
                 <div class="row g-3">
                     <div class="col-md-6">
                         <label class="form-label" for="perusahaan">Company Name</label>
@@ -32,8 +32,9 @@
                 </div>
             </div>
 
-            <div class="form-section">
+            <div class="form-section fade-in">
                 <h3 class="form-section-title"><i class="bi bi-person me-1"></i> Contact Information</h3>
+                <p class="form-section-desc">How to reach the customer’s contact person.</p>
                 <div class="row g-3">
                     <div class="col-md-6">
                         <label class="form-label" for="name">Customer Name</label>

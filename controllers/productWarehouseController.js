@@ -30,7 +30,7 @@ exports.getProductWarehouse = async (req, res) => {
                 type: 'Product',
                 date: {
                     [Op.gte]: inboundStartDate ? new Date(inboundStartDate) : new Date(defaultInboundStartDate),
-                    [Op.lte]: inboundEndDate ? new Date(inboundEndDate).setHours(23, 59, 59, 999) : new Date(defaultInboundEndDate).setHours(23, 59, 59, 999)
+                    [Op.lte]: inboundEndDate ? new Date(new Date(inboundEndDate).setHours(23, 59, 59, 999)) : new Date(new Date(defaultInboundEndDate).setHours(23, 59, 59, 999))
                 }
             },
             order: [['date', 'DESC']]
@@ -42,7 +42,7 @@ exports.getProductWarehouse = async (req, res) => {
                 type: 'Product',
                 date: {
                     [Op.gte]: outboundStartDate ? new Date(outboundStartDate) : new Date(defaultOutboundStartDate),
-                    [Op.lte]: outboundEndDate ? new Date(outboundEndDate).setHours(23, 59, 59, 999) : new Date(defaultOutboundEndDate).setHours(23, 59, 59, 999)
+                    [Op.lte]: outboundEndDate ? new Date(new Date(outboundEndDate).setHours(23, 59, 59, 999)) : new Date(new Date(defaultOutboundEndDate).setHours(23, 59, 59, 999))
                 }
             },
             include: [{

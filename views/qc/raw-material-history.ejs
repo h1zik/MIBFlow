@@ -1,367 +1,255 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Raw Material QC History</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.2/font/bootstrap-icons.css" rel="stylesheet">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <style>
-        :root {
-            --primary-color: #1b5e20;
-            --primary-light: #388E3C;
-            --background-light: #f4f6f8;
-            --text-color: #333;
-            --shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-            --transition: all 0.3s ease;
-        }
-
-        body {
-            font-family: 'Inter', sans-serif;
-            background-color: var(--background-light);
-            margin: 0;
-            padding: 0;
-            min-height: 100vh;
-        }
-
-        .main-content {
-            margin-left: 0;
-            padding: 1rem;
-            width: 100%;
-            transition: var(--transition);
-        }
-
-        .page-header {
-            background: white;
-            padding: 1rem;
-            border-radius: 15px;
-            box-shadow: var(--shadow);
-            margin-bottom: 1rem;
-        }
-
-        .page-title {
-            margin: 0;
-            color: var(--primary-color);
-            font-weight: 600;
-            font-size: 1.25rem;
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-        }
-
-        .page-subtitle {
-            color: #6c757d;
-            font-size: 0.875rem;
-            margin-top: 0.5rem;
-        }
-
-        .card {
-            background: white;
-            border-radius: 15px;
-            box-shadow: var(--shadow);
-            margin-bottom: 1rem;
-            border: none;
-            overflow: hidden;
-        }
-
-        .card-header {
-            background-color: var(--background-light);
-            padding: 1rem;
-            border-bottom: 1px solid rgba(0, 0, 0, 0.1);
-        }
-
-        .card-title {
-            color: var(--primary-color);
-            font-weight: 600;
-            font-size: 1rem;
-            margin: 0;
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-        }
-
-        .table {
-            margin: 0;
-        }
-
-        .table thead th {
-            background-color: var(--primary-color);
-            color: white;
-            font-weight: 600;
-            text-transform: uppercase;
-            font-size: 0.75rem;
-            letter-spacing: 0.5px;
-            padding: 1rem;
-            border: none;
-            white-space: nowrap;
-        }
-
-        .table tbody td {
-            padding: 1rem;
-            vertical-align: middle;
-            border-color: rgba(0, 0, 0, 0.05);
-            font-size: 0.875rem;
-        }
-
-        .table tbody tr:hover {
-            background-color: var(--background-light);
-        }
-
-        .badge {
-            padding: 0.35rem 0.65rem;
-            font-size: 0.75rem;
-            font-weight: 500;
-            border-radius: 2rem;
-            display: inline-flex;
-            align-items: center;
-            gap: 0.25rem;
-            margin: 0.125rem;
-        }
-
-        .badge-pass {
-            background-color: #d1e7dd;
-            color: #0f5132;
-        }
-
-        .badge-fail {
-            background-color: #f8d7da;
-            color: #721c24;
-        }
-
-        .badge-pending {
-            background-color: #fff3cd;
-            color: #856404;
-        }
-
-        .badge-reject {
-            background-color: #f8d7da;
-            color: #721c24;
-        }
-
-        @media (min-width: 769px) {
-            .main-content {
-                margin-left: 280px;
-                padding: 2rem;
-                width: calc(100% - 280px);
-            }
-
-            body:has(.sidebar.collapsed) .main-content {
-                margin-left: 70px;
-                width: calc(100% - 70px);
-            }
-        }
-    </style>
+    <%- include('../partials/head', { pageTitle: 'Raw Material QC History' }) %>
 </head>
-<body>
-    <%- include('../partials/sidebar', { userRole: userRole }) %>
+<body class="app-shell">
+    <%- include('../partials/sidebar', { userRole: userRole, path: '/qc/raw-material-history' }) %>
 
-    <div class="main-content">
-        <div class="page-header fade-in">
-            <h1 class="page-title">
-                <i class="bi bi-boxes"></i>
-                Raw Material QC History
-            </h1>
-            <p class="page-subtitle">View quality control history for raw materials</p>
+    <%
+        /* ---- Defensive normalisation (guard optional / null locals) ---- */
+        const rawList     = (typeof rawMaterialRequests !== 'undefined' && rawMaterialRequests) ? rawMaterialRequests : [];
+        const expiredList = (typeof expiredRawMaterials !== 'undefined' && expiredRawMaterials) ? expiredRawMaterials : [];
+
+        /* status badge helpers (mirror PPIC) */
+        const qb = (s) => s === 'Pass' ? 'status-completed'
+                        : (s === 'Fail' ? 'status-declined'
+                        : (s === 'Reject Sebagian' ? 'status-rejected' : 'status-pending'));
+        const qcLabel = (s) => s === 'Reject Sebagian' ? 'Partially Rejected' : (s || 'Pending');
+        const fmtDate = (d) => {
+            if (!d) return '—';
+            const dt = new Date(d);
+            return isNaN(dt) ? '—' : dt.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
+        };
+
+        /* counts for quick-stats */
+        const passCount   = rawList.filter(r => r.qcStatus === 'Pass').length;
+        const failCount   = rawList.filter(r => r.qcStatus === 'Fail').length;
+        const partialCount = rawList.filter(r => r.qcStatus === 'Reject Sebagian').length;
+    %>
+
+    <div class="content content-wide">
+
+        <%- include('../partials/page-header', {
+              pageTitle: 'Raw Material QC History',
+              pageIcon: 'bi-boxes',
+              pageSubtitle: 'Quality control outcomes for inbound raw materials',
+              actionsHtml: '<a href="/dashboard/qc" class="btn btn-soft"><i class="bi bi-arrow-left"></i> Back to Dashboard</a>'
+        }) %>
+
+        <!-- ===================== Quick stats ===================== -->
+        <div class="quick-stats stagger">
+            <div class="stat-card">
+                <div class="stat-icon is-info"><i class="bi bi-clipboard-data"></i></div>
+                <div class="stat-body">
+                    <div class="stat-label">Total Records</div>
+                    <div class="stat-value"><%= rawList.length %></div>
+                    <span class="stat-sub">QC entries on file</span>
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon is-success"><i class="bi bi-check-circle"></i></div>
+                <div class="stat-body">
+                    <div class="stat-label">Passed</div>
+                    <div class="stat-value"><%= passCount %></div>
+                    <span class="stat-sub">Approved materials</span>
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon is-warning"><i class="bi bi-exclamation-triangle"></i></div>
+                <div class="stat-body">
+                    <div class="stat-label">Partially Rejected</div>
+                    <div class="stat-value"><%= partialCount %></div>
+                    <span class="stat-sub">Reject Sebagian</span>
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon is-danger"><i class="bi bi-x-circle"></i></div>
+                <div class="stat-body">
+                    <div class="stat-label">Failed</div>
+                    <div class="stat-value"><%= failCount %></div>
+                    <span class="stat-sub">Rejected materials</span>
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon is-danger"><i class="bi bi-calendar-x"></i></div>
+                <div class="stat-body">
+                    <div class="stat-label">Expired</div>
+                    <div class="stat-value"><%= expiredList.length %></div>
+                    <span class="stat-sub">Past expiry date</span>
+                </div>
+            </div>
         </div>
 
-        <div class="card fade-in">
+        <!-- ===================== Toolbar ===================== -->
+        <div class="toolbar">
+            <div class="search">
+                <i class="bi bi-search"></i>
+                <input type="text" id="qcSearch" class="form-control" placeholder="Search materials, PO, batch, vendor…" autocomplete="off">
+            </div>
+        </div>
+
+        <!-- ===================== QC History ===================== -->
+        <div class="table-card">
             <div class="card-header">
-                <h2 class="card-title">
-                    <i class="bi bi-list-check"></i>
-                    QC History List
-                </h2>
+                <h2 class="card-title"><i class="bi bi-list-check"></i> QC History List</h2>
+                <span class="pill"><i class="bi bi-hash"></i> <%= rawList.length %> records</span>
             </div>
-            <div class="card-body">
-                <div class="table-responsive">
-                    <table class="table">
-                        <thead>
-                            <tr>
-                                <th>ID</th>
-                                <th>Material Name</th>
-                                <th>PO Number</th>
-                                <th>Batch Number</th>
-                                <th>Vendor</th>
-                                <th>Quantity</th>
-                                <th>QC Status</th>
-                                <th>QC Comment</th>
-                                <th>Reject Comment</th>
-                                <th>Reject Quantity</th>
-                                <th>Expired Date</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <% if (rawMaterialRequests && rawMaterialRequests.length > 0) { %>
-                                <% rawMaterialRequests.forEach(function(request) { %>
-                                    <tr>
-                                        <td>#<%= request.id %></td>
-                                        <td><%= request.RawMaterialRequest.materialName %></td>
-                                        <td><%= request.ponumber || 'N/A' %></td>
-                                        <td><%= request.batchNumber || 'N/A' %></td>
-                                        <td><%= request.Vendor.name %></td>
-                                        <td><%= request.RawMaterialRequest.realQuantity %> Kg</td>
-                                        <td>
-                                            <% if (request.qcStatus === 'Pass') { %>
-                                                <span class="badge badge-pass">
-                                                    <i class="bi bi-check-circle"></i>
-                                                    Pass
-                                                </span>
-                                            <% } else if (request.qcStatus === 'Fail') { %>
-                                                <span class="badge badge-fail">
-                                                    <i class="bi bi-x-circle"></i>
-                                                    Fail
-                                                </span>
-                                            <% } else if (request.qcStatus === 'Reject Sebagian') { %>
-                                                <span class="badge badge-reject">
+            <div class="table-responsive">
+                <table class="table table-cards align-middle" id="qcTable">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Material Name</th>
+                            <th>PO Number</th>
+                            <th>Batch Number</th>
+                            <th>Vendor</th>
+                            <th>Quantity</th>
+                            <th>QC Status</th>
+                            <th>QC Comment</th>
+                            <th>Reject Comment</th>
+                            <th>Reject Quantity</th>
+                            <th>Expired Date</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <% if (rawList.length > 0) { %>
+                            <% rawList.forEach(function(request) { %>
+                                <tr>
+                                    <td data-label="ID"><span class="cell-strong">#<%= request.id %></span></td>
+                                    <td data-label="Material Name"><span class="cell-strong"><%= request.RawMaterialRequest ? request.RawMaterialRequest.materialName : '—' %></span></td>
+                                    <td data-label="PO Number"><%= request.ponumber || 'N/A' %></td>
+                                    <td data-label="Batch Number"><%= request.batchNumber || 'N/A' %></td>
+                                    <td data-label="Vendor"><%= request.Vendor ? request.Vendor.name : '—' %></td>
+                                    <td data-label="Quantity" class="num"><%= request.RawMaterialRequest ? request.RawMaterialRequest.realQuantity : '—' %> Kg</td>
+                                    <td data-label="QC Status">
+                                        <span class="status-badge <%= qb(request.qcStatus) %>"><%= qcLabel(request.qcStatus) %></span>
+                                    </td>
+                                    <td data-label="QC Comment"><span class="cell-sub"><%= request.qcComment || '—' %></span></td>
+                                    <td data-label="Reject Comment"><span class="cell-sub"><%= request.rejectComment || '—' %></span></td>
+                                    <td data-label="Reject Quantity"><%= request.rejectQuantity ? request.rejectQuantity + ' Kg' : '—' %></td>
+                                    <td data-label="Expired Date">
+                                        <%
+                                        if (request.expiredDate) {
+                                            const expiryDate = new Date(request.expiredDate);
+                                            const today = new Date();
+                                            const monthsUntilExpiry = (expiryDate - today) / (1000 * 60 * 60 * 24 * 30);
+                                            const expiryLabel = expiryDate.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
+
+                                            if (monthsUntilExpiry <= 1) {
+                                                const daysUntilExpiry = (expiryDate - today) / (1000 * 60 * 60 * 24); %>
+                                                <span class="status-badge status-pending">
                                                     <i class="bi bi-exclamation-triangle"></i>
-                                                    Partially Rejected
+                                                    <%= expiryLabel %> · in <%= Math.ceil(daysUntilExpiry) %>d
+                                                </span>
+                                            <% } else if (monthsUntilExpiry <= 6) { %>
+                                                <span class="status-badge status-pending">
+                                                    <i class="bi bi-exclamation-triangle"></i>
+                                                    <%= expiryLabel %> · in <%= Math.ceil(monthsUntilExpiry) %>mo
                                                 </span>
                                             <% } else { %>
-                                                <span class="badge badge-pending">
-                                                    <i class="bi bi-clock"></i>
-                                                    Pending
-                                                </span>
-                                            <% } %>
-                                        </td>
-                                        <td><%= request.qcComment || '-' %></td>
-                                        <td><%= request.rejectComment || '-' %></td>
-                                        <td><%= request.rejectQuantity ? request.rejectQuantity + ' Kg' : '-' %></td>
-                                        <td>
-                                            <% 
-                                            if (request.expiredDate) {
-                                                const expiryDate = new Date(request.expiredDate);
-                                                const today = new Date();
-                                                const monthsUntilExpiry = (expiryDate - today) / (1000 * 60 * 60 * 24 * 30);
-                                                
-                                                if (monthsUntilExpiry <= 1) {
-                                                    const daysUntilExpiry = (expiryDate - today) / (1000 * 60 * 60 * 24); %>
-                                                    <span class="badge badge-pending">
-                                                        <i class="bi bi-exclamation-triangle"></i>
-                                                        <%= new Date(request.expiredDate).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' }) %>
-                                                        <br>
-                                                        Expires in <%= Math.ceil(daysUntilExpiry) %> days
-                                                    </span>
-                                                <% } else if (monthsUntilExpiry <= 6) { %>
-                                                    <span class="badge badge-pending">
-                                                        <i class="bi bi-exclamation-triangle"></i>
-                                                        <%= new Date(request.expiredDate).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' }) %>
-                                                        <br>
-                                                        Expires in <%= Math.ceil(monthsUntilExpiry) %> months
-                                                    </span>
-                                                <% } else { %>
-                                                    <%= new Date(request.expiredDate).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' }) %>
-                                                <% }
-                                            } else { %>
-                                                -
-                                            <% } %>
-                                        </td>
-                                    </tr>
-                                <% }); %>
-                            <% } else { %>
-                                <tr>
-                                    <td colspan="10" class="text-center text-muted">
-                                        <i class="bi bi-inbox fs-4 d-block mb-2"></i>
-                                        No QC history found
+                                                <span class="cell-sub"><%= expiryLabel %></span>
+                                            <% }
+                                        } else { %>
+                                            —
+                                        <% } %>
                                     </td>
                                 </tr>
-                            <% } %>
-                        </tbody>
-                    </table>
-                </div>
+                            <% }); %>
+                        <% } else { %>
+                            <tr class="is-empty-row">
+                                <td colspan="11">
+                                    <div class="empty-state">
+                                        <i class="bi bi-inbox"></i>
+                                        <h4>No QC history found</h4>
+                                        <p>Raw material quality control results will appear here.</p>
+                                    </div>
+                                </td>
+                            </tr>
+                        <% } %>
+                    </tbody>
+                </table>
             </div>
         </div>
 
-        <div class="card fade-in mt-4">
-            <div class="card-header bg-warning bg-opacity-10">
-                <h2 class="card-title">
-                    <i class="bi bi-exclamation-triangle"></i>
-                    Expired Raw Materials
-                </h2>
+        <!-- ===================== Expired Raw Materials ===================== -->
+        <div class="table-card">
+            <div class="card-header">
+                <h2 class="card-title"><i class="bi bi-calendar-x"></i> Expired Raw Materials</h2>
+                <span class="pill"><i class="bi bi-hash"></i> <%= expiredList.length %> records</span>
             </div>
-            <div class="card-body">
-                <div class="table-responsive">
-                    <table class="table">
-                        <thead>
-                            <tr>
-                                <th>ID</th>
-                                <th>Material Name</th>
-                                <th>PO Number</th>
-                                <th>Batch Number</th>
-                                <th>Vendor</th>
-                                <th>Quantity</th>
-                                <th>QC Status</th>
-                                <th>QC Comment</th>
-                                <th>Reject Comment</th>
-                                <th>Reject Quantity</th>
-                                <th>Expired Date</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <% if (expiredRawMaterials && expiredRawMaterials.length > 0) { %>
-                                <% expiredRawMaterials.forEach(function(request) { %>
-                                    <tr class="text-muted">
-                                        <td>#<%= request.id %></td>
-                                        <td><%= request.RawMaterialRequest.materialName %></td>
-                                        <td><%= request.ponumber || 'N/A' %></td>
-                                        <td><%= request.batchNumber || 'N/A' %></td>
-                                        <td><%= request.Vendor.name %></td>
-                                        <td><%= request.splitQuantity %> Kg</td>
-                                        <td>
-                                            <% if (request.qcStatus === 'Pass') { %>
-                                                <span class="badge badge-pass">
-                                                    <i class="bi bi-check-circle"></i>
-                                                    Pass
-                                                </span>
-                                            <% } else if (request.qcStatus === 'Fail') { %>
-                                                <span class="badge badge-fail">
-                                                    <i class="bi bi-x-circle"></i>
-                                                    Fail
-                                                </span>
-                                            <% } else if (request.qcStatus === 'Reject Sebagian') { %>
-                                                <span class="badge badge-reject">
-                                                    <i class="bi bi-exclamation-triangle"></i>
-                                                    Partially Rejected
-                                                </span>
-                                            <% } else { %>
-                                                <span class="badge badge-pending">
-                                                    <i class="bi bi-clock"></i>
-                                                    Pending
-                                                </span>
-                                            <% } %>
-                                        </td>
-                                        <td><%= request.qcComment || '-' %></td>
-                                        <td><%= request.rejectComment || '-' %></td>
-                                        <td><%= request.rejectQuantity ? request.rejectQuantity + ' Kg' : '-' %></td>
-                                        <td>
-                                            <span class="badge badge-fail">
-                                                <i class="bi bi-exclamation-circle"></i>
-                                                <%= new Date(request.expiredDate).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' }) %>
-                                            </span>
-                                        </td>
-                                    </tr>
-                                <% }); %>
-                            <% } else { %>
+            <div class="table-responsive">
+                <table class="table table-cards align-middle" id="expiredTable">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Material Name</th>
+                            <th>PO Number</th>
+                            <th>Batch Number</th>
+                            <th>Vendor</th>
+                            <th>Quantity</th>
+                            <th>QC Status</th>
+                            <th>QC Comment</th>
+                            <th>Reject Comment</th>
+                            <th>Reject Quantity</th>
+                            <th>Expired Date</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <% if (expiredList.length > 0) { %>
+                            <% expiredList.forEach(function(request) { %>
                                 <tr>
-                                    <td colspan="11" class="text-center text-muted">
-                                        <i class="bi bi-inbox fs-4 d-block mb-2"></i>
-                                        No expired raw materials found
+                                    <td data-label="ID"><span class="cell-strong">#<%= request.id %></span></td>
+                                    <td data-label="Material Name"><span class="cell-strong"><%= request.RawMaterialRequest ? request.RawMaterialRequest.materialName : '—' %></span></td>
+                                    <td data-label="PO Number"><%= request.ponumber || 'N/A' %></td>
+                                    <td data-label="Batch Number"><%= request.batchNumber || 'N/A' %></td>
+                                    <td data-label="Vendor"><%= request.Vendor ? request.Vendor.name : '—' %></td>
+                                    <td data-label="Quantity" class="num"><%= request.splitQuantity %> Kg</td>
+                                    <td data-label="QC Status">
+                                        <span class="status-badge <%= qb(request.qcStatus) %>"><%= qcLabel(request.qcStatus) %></span>
+                                    </td>
+                                    <td data-label="QC Comment"><span class="cell-sub"><%= request.qcComment || '—' %></span></td>
+                                    <td data-label="Reject Comment"><span class="cell-sub"><%= request.rejectComment || '—' %></span></td>
+                                    <td data-label="Reject Quantity"><%= request.rejectQuantity ? request.rejectQuantity + ' Kg' : '—' %></td>
+                                    <td data-label="Expired Date">
+                                        <span class="status-badge status-declined">
+                                            <i class="bi bi-exclamation-circle"></i>
+                                            <%= fmtDate(request.expiredDate) %>
+                                        </span>
                                     </td>
                                 </tr>
-                            <% } %>
-                        </tbody>
-                    </table>
-                </div>
+                            <% }); %>
+                        <% } else { %>
+                            <tr class="is-empty-row">
+                                <td colspan="11">
+                                    <div class="empty-state">
+                                        <i class="bi bi-inbox"></i>
+                                        <h4>No expired raw materials</h4>
+                                        <p>Materials past their expiry date will appear here.</p>
+                                    </div>
+                                </td>
+                            </tr>
+                        <% } %>
+                    </tbody>
+                </table>
             </div>
         </div>
 
-        <div class="mt-4">
-            <a href="/dashboard/qc" class="btn btn-secondary">
-                <i class="bi bi-arrow-left"></i>
-                Back to Dashboard
-            </a>
-        </div>
     </div>
 
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Live search across both QC history tables
+        document.addEventListener('DOMContentLoaded', function () {
+            const search = document.getElementById('qcSearch');
+            if (!search) return;
+            search.addEventListener('input', function () {
+                const q = this.value.trim().toLowerCase();
+                document.querySelectorAll('#qcTable tbody tr, #expiredTable tbody tr').forEach(function (row) {
+                    if (row.classList.contains('is-empty-row')) return;
+                    row.style.display = (!q || row.textContent.toLowerCase().includes(q)) ? '' : 'none';
+                });
+            });
+        });
+    </script>
 </body>
 </html>

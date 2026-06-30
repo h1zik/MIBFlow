@@ -1,251 +1,134 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Packaging Request History</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.2/font/bootstrap-icons.css" rel="stylesheet">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <%- include('../partials/head', { pageTitle: 'Packaging Request History' }) %>
     <style>
+        /* Page-scoped flourishes — built on the shared mibflow.css tokens only */
         :root {
-            --primary-color: #1b5e20;
-            --primary-light: #388E3C;
-            --background-light: #f4f6f8;
-            --text-color: #333;
-            --shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-            --transition: all 0.3s ease;
+            --primary-color: var(--mib-primary);
+            --primary-light: var(--mib-primary-light);
+            --primary-dark: var(--mib-primary-dark);
         }
-
-        body {
-            font-family: 'Inter', sans-serif;
-            background-color: var(--background-light);
-            margin: 0;
-            padding: 0;
-            min-height: 100vh;
-        }
-
-        .main-content {
-            margin-left: 0;
-            padding: 1rem;
-            width: 100%;
-            transition: var(--transition);
-        }
-
-        .page-header {
-            background: white;
-            padding: 1rem;
-            border-radius: 15px;
-            box-shadow: var(--shadow);
-            margin-bottom: 1rem;
-        }
-
-        .page-title {
-            margin: 0;
-            color: var(--primary-color);
-            font-weight: 600;
-            font-size: 1.25rem;
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-        }
-
-        .page-subtitle {
-            color: #6c757d;
-            font-size: 0.875rem;
-            margin-top: 0.5rem;
-        }
-
-        .card {
-            background: white;
-            border-radius: 15px;
-            box-shadow: var(--shadow);
-            margin-bottom: 1rem;
-            border: none;
-            overflow: hidden;
-        }
-
-        .card-header {
-            background-color: var(--background-light);
-            padding: 1rem;
-            border-bottom: 1px solid rgba(0, 0, 0, 0.1);
-        }
-
-        .card-title {
-            color: var(--primary-color);
-            font-weight: 600;
-            font-size: 1rem;
-            margin: 0;
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-        }
-
-        .table {
-            margin: 0;
-        }
-
-        .table thead th {
-            background-color: var(--primary-color);
-            color: white;
-            font-weight: 600;
-            text-transform: uppercase;
-            font-size: 0.75rem;
-            letter-spacing: 0.5px;
-            padding: 1rem;
-            border: none;
-            white-space: nowrap;
-        }
-
-        .table tbody td {
-            padding: 1rem;
-            vertical-align: middle;
-            border-color: rgba(0, 0, 0, 0.05);
-            font-size: 0.875rem;
-        }
-
-        .table tbody tr:hover {
-            background-color: var(--background-light);
-        }
-
-        .badge {
-            padding: 0.35rem 0.65rem;
-            font-size: 0.75rem;
-            font-weight: 500;
-            border-radius: 2rem;
-            display: inline-flex;
-            align-items: center;
-            gap: 0.25rem;
-            margin: 0.125rem;
-        }
-
-        .badge-pass {
-            background-color: #d1e7dd;
-            color: #0f5132;
-        }
-
-        .badge-fail {
-            background-color: #f8d7da;
-            color: #721c24;
-        }
-
-        .badge-pending {
-            background-color: #fff3cd;
-            color: #856404;
-        }
-
-        .badge-reject {
-            background-color: #f8d7da;
-            color: #721c24;
-        }
-
-        @media (min-width: 769px) {
-            .main-content {
-                margin-left: 280px;
-                padding: 2rem;
-                width: calc(100% - 280px);
-            }
-
-            body:has(.sidebar.collapsed) .main-content {
-                margin-left: 70px;
-                width: calc(100% - 70px);
-            }
-        }
+        .stagger > * { opacity: 0; animation: fadeIn 0.5s ease forwards; }
+        .stagger > *:nth-child(1) { animation-delay: 0.04s; }
+        .stagger > *:nth-child(2) { animation-delay: 0.10s; }
+        .stagger > *:nth-child(3) { animation-delay: 0.16s; }
+        .stagger > *:nth-child(4) { animation-delay: 0.22s; }
     </style>
 </head>
-<body>
-    <%- include('../partials/sidebar', { userRole: userRole }) %>
+<body class="app-shell">
+    <%- include('../partials/sidebar', { userRole: userRole, path: '/packaging-request/history' }) %>
 
-    <div class="main-content">
+    <%
+        /* ---- Defensive normalisation ---- */
+        const pkgList = (typeof packagingRequests !== 'undefined' && packagingRequests) ? packagingRequests : [];
+
+        /* QC status badge helper (Pass / Fail / Reject Sebagian / Pending) */
+        const qcMeta = (s) => {
+            if (s === 'Pass')           return { cls: 'status-completed', icon: 'bi-check-circle', label: 'Pass' };
+            if (s === 'Fail')           return { cls: 'status-declined',  icon: 'bi-x-circle',     label: 'Fail' };
+            if (s === 'Reject Sebagian')return { cls: 'status-partially-delivered', icon: 'bi-exclamation-triangle', label: 'Partially Rejected' };
+            return { cls: 'status-pending', icon: 'bi-clock', label: 'Pending' };
+        };
+
+        /* general status badge helper */
+        const KNOWN_STATUS = new Set(['pending','processing','onprod','on-production','production-completed','completed','approved','paid','delivered','on-delivery','ready-to-deliver','partially-delivered','open','printed','scheduled','cancelled','declined','rejected','neutral']);
+        const sb = (s) => { const k = String(s || '').toLowerCase().replace(/\s+/g, '-'); return 'status-' + (KNOWN_STATUS.has(k) ? k : 'neutral'); };
+
+        const passCount = pkgList.filter(r => r.qcStatus === 'Pass').length;
+        const pendingCount = pkgList.filter(r => !['Pass','Fail','Reject Sebagian'].includes(r.qcStatus)).length;
+    %>
+
+    <div class="content content-wide">
+
         <div class="page-header fade-in">
-            <h1 class="page-title">
-                <i class="bi bi-box2"></i>
-                Packaging Request History
-            </h1>
-            <p class="page-subtitle">View history of all packaging requests</p>
+            <div class="page-header__main">
+                <h1 class="page-title"><i class="bi bi-box2"></i> Packaging Request History</h1>
+                <p class="page-subtitle">View history of all packaging requests</p>
+            </div>
         </div>
 
-        <div class="card fade-in">
-            <div class="card-header">
-                <h2 class="card-title">
-                    <i class="bi bi-list-check"></i>
-                    Request History List
-                </h2>
+        <%- include('../partials/flash') %>
+
+        <!-- ===================== Quick stats ===================== -->
+        <div class="quick-stats stagger">
+            <div class="stat-card">
+                <div class="stat-icon is-info"><i class="bi bi-list-check"></i></div>
+                <div class="stat-body">
+                    <div class="stat-label">Total Requests</div>
+                    <div class="stat-value"><%= pkgList.length %></div>
+                    <span class="stat-sub">All packaging requests</span>
+                </div>
             </div>
-            <div class="card-body">
-                <div class="table-responsive">
-                    <table class="table">
-                        <thead>
-                            <tr>
-                                <th>ID</th>
-                                <th>PO Number</th>
-                                <th>Packaging</th>
-                                <th>Quantity</th>
-                                <th>Status</th>
-                                <th>Vendor</th>
-                                <th>QC Status</th>
-                                <th>QC Comment</th>
-                                <th>Reject Comment</th>
-                                <th>Reject Quantity</th>
-                                <th>Created Date</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <% if (packagingRequests && packagingRequests.length > 0) { %>
-                                <% packagingRequests.forEach(function(request) { %>
-                                    <tr>
-                                        <td>#<%= request.id %></td>
-                                        <td><%= request.ponumber || 'N/A' %></td>
-                                        <td>
-                                            <div class="fw-semibold"><%= request.PackagingRequest.Packaging.name %></div>
-                                        </td>
-                                        <td><%= request.splitQuantity %> pcs</td>
-                                        <td><%= request.status %></td>
-                                        <td><%= request.Vendor.name %></td>
-                                        <td>
-                                            <% if (request.qcStatus === 'Pass') { %>
-                                                <span class="badge badge-pass">
-                                                    <i class="bi bi-check-circle"></i>
-                                                    Pass
-                                                </span>
-                                            <% } else if (request.qcStatus === 'Fail') { %>
-                                                <span class="badge badge-fail">
-                                                    <i class="bi bi-x-circle"></i>
-                                                    Fail
-                                                </span>
-                                            <% } else if (request.qcStatus === 'Reject Sebagian') { %>
-                                                <span class="badge badge-reject">
-                                                    <i class="bi bi-exclamation-triangle"></i>
-                                                    Partially Rejected
-                                                </span>
-                                            <% } else { %>
-                                                <span class="badge badge-pending">
-                                                    <i class="bi bi-clock"></i>
-                                                    Pending
-                                                </span>
-                                            <% } %>
-                                        </td>
-                                        <td><%= request.qcComment || '-' %></td>
-                                        <td><%= request.rejectComment || '-' %></td>
-                                        <td><%= request.rejectQuantity ? request.rejectQuantity + ' pcs' : '-' %></td>
-                                        <td><%= new Date(request.createdAt).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' }) %></td>
-                                    </tr>
-                                <% }); %>
-                            <% } else { %>
-                                <tr>
-                                    <td colspan="11" class="text-center text-muted">
-                                        <i class="bi bi-inbox fs-4 d-block mb-2"></i>
-                                        No packaging requests found
-                                    </td>
-                                </tr>
-                            <% } %>
-                        </tbody>
-                    </table>
+            <div class="stat-card">
+                <div class="stat-icon is-success"><i class="bi bi-check-circle"></i></div>
+                <div class="stat-body">
+                    <div class="stat-label">QC Passed</div>
+                    <div class="stat-value"><%= passCount %></div>
+                    <span class="stat-sub">Cleared quality check</span>
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon is-warning"><i class="bi bi-clock-history"></i></div>
+                <div class="stat-body">
+                    <div class="stat-label">Pending QC</div>
+                    <div class="stat-value"><%= pendingCount %></div>
+                    <span class="stat-sub">Awaiting inspection</span>
                 </div>
             </div>
         </div>
-    </div>
 
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+        <!-- ===================== Request history ===================== -->
+        <div class="table-card fade-in">
+            <div class="card-header">
+                <h2 class="card-title"><i class="bi bi-list-check"></i> Request History List</h2>
+                <span class="status-badge status-neutral"><%= pkgList.length %> total</span>
+            </div>
+            <div class="table-responsive">
+                <table class="table table-cards align-middle">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>PO Number</th>
+                            <th>Packaging</th>
+                            <th>Quantity</th>
+                            <th>Status</th>
+                            <th>Vendor</th>
+                            <th>QC Status</th>
+                            <th>QC Comment</th>
+                            <th>Reject Comment</th>
+                            <th>Reject Quantity</th>
+                            <th>Created Date</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <% if (pkgList.length > 0) { %>
+                            <% pkgList.forEach(function(request) { %>
+                                <tr>
+                                    <td data-label="ID"><span class="cell-strong">#<%= request.id %></span></td>
+                                    <td data-label="PO Number"><%= request.ponumber || 'N/A' %></td>
+                                    <td data-label="Packaging"><span class="cell-strong"><%= request.PackagingRequest.Packaging.name %></span></td>
+                                    <td data-label="Quantity"><%= request.splitQuantity %> pcs</td>
+                                    <td data-label="Status"><span class="status-badge <%= sb(request.status) %>"><%= request.status %></span></td>
+                                    <td data-label="Vendor"><%= request.Vendor.name %></td>
+                                    <td data-label="QC Status">
+                                        <% const qc = qcMeta(request.qcStatus); %>
+                                        <span class="status-badge <%= qc.cls %>"><i class="bi <%= qc.icon %>"></i> <%= qc.label %></span>
+                                    </td>
+                                    <td data-label="QC Comment"><%= request.qcComment || '-' %></td>
+                                    <td data-label="Reject Comment"><%= request.rejectComment || '-' %></td>
+                                    <td data-label="Reject Quantity"><%= request.rejectQuantity ? request.rejectQuantity + ' pcs' : '-' %></td>
+                                    <td data-label="Created Date"><%= new Date(request.createdAt).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' }) %></td>
+                                </tr>
+                            <% }); %>
+                        <% } else { %>
+                            <tr class="is-empty-row"><td colspan="11"><div class="empty-state"><i class="bi bi-inbox"></i><h4>No packaging requests</h4><p>Packaging request history will appear here.</p></div></td></tr>
+                        <% } %>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+    </div>
 </body>
 </html>

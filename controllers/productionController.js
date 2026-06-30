@@ -440,8 +440,6 @@ exports.getStockUpdatedProductions = async (req, res) => {
         if (startDate) whereClause.startDate = { [Op.gte]: new Date(startDate) };
         if (endDate) whereClause.deadlineDate = { [Op.lte]: new Date(endDate) };
 
-        console.log('Where Clause:', whereClause); // Debugging
-
         const productions = await Production.findAll({
             where: whereClause,
             include: [
@@ -458,8 +456,6 @@ exports.getStockUpdatedProductions = async (req, res) => {
         });
 
         productions.sort((a, b) => a.timeInterval - b.timeInterval);
-
-        console.log('Filtered and Sorted Productions:', productions); // Debugging
 
         const userRole = req.user.role;
 

@@ -29,7 +29,8 @@ router.get('/assignCustomer/:id', authenticate, authorize(['Marketing']), async 
         res.render('products/assignCustomer', {
             product,
             customers,
-            userRole: req.session.userRole
+            userRole: req.user.role,
+            path: '/products/listProduct'
         });
     } catch (error) {
         console.error('Error loading assign customer page:', error);

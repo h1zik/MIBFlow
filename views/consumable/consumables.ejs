@@ -1,403 +1,170 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Edit Consumable Prices</title>
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.7.2/font/bootstrap-icons.css" rel="stylesheet">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <%- include('../partials/head', { pageTitle: 'Manage Consumables' }) %>
     <style>
+        /* Manage Consumables — page-scoped flourishes on the shared mibflow.css system */
         :root {
-            --primary-color: #2e7d32;
-            --primary-light: #4caf50;
-            --primary-dark: #1b5e20;
-            --text-color: #2c3e50;
-            --background-light: #e8f5e9;
-            --shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-            --transition: all 0.3s ease;
+            --primary-color: var(--mib-primary);
+            --primary-light: var(--mib-primary-light);
+            --primary-dark: var(--mib-primary-dark);
         }
+        .stagger > * { opacity: 0; animation: fadeIn 0.5s ease forwards; }
+        .stagger > *:nth-child(1) { animation-delay: 0.04s; }
+        .stagger > *:nth-child(2) { animation-delay: 0.10s; }
+        .quick-stats { margin-bottom: 1.4rem; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); }
 
-        body {
-            font-family: 'Inter', sans-serif;
-            background-color: var(--background-light);
-            margin: 0;
-            padding: 0;
-            min-height: 100vh;
+        .price-form { display: flex; gap: 0.5rem; align-items: center; flex-wrap: wrap; }
+        .price-input { max-width: 160px; }
+        .price-cell { font-variant-numeric: tabular-nums; font-weight: 600; color: var(--mib-text); }
+
+        /* button loading spinner (used by handleUpdatePrice) */
+        .btn.loading { pointer-events: none; position: relative; }
+        .btn.loading::after {
+            content: ""; position: absolute; width: 16px; height: 16px; top: 50%; left: 50%; margin: -8px 0 0 -8px;
+            border: 2px solid rgba(255, 255, 255, 0.55); border-top-color: #fff; border-radius: 50%; animation: spin 0.7s linear infinite;
         }
+        @keyframes spin { to { transform: rotate(360deg); } }
 
-        .main-content {
-            margin-left: 280px;
-            padding: 2rem;
-            transition: var(--transition);
-            width: calc(100% - 280px);
-        }
-
-        body.sidebar-collapsed .main-content {
-            margin-left: 70px;
-            width: calc(100% - 70px);
-        }
-
-        .page-header {
-            background: white;
-            padding: 1.5rem;
-            border-radius: 15px;
-            box-shadow: var(--shadow);
-            margin-bottom: 2rem;
-            animation: slideDown 0.5s ease-out;
-        }
-
-        @keyframes slideDown {
-            from {
-                opacity: 0;
-                transform: translateY(-20px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-
-        .page-title {
-            margin: 0;
-            color: var(--primary-dark);
-            font-weight: 600;
-            font-size: 1.5rem;
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-            margin-bottom: 0.5rem;
-        }
-
-        .card {
-            background: white;
-            border-radius: 15px;
-            box-shadow: var(--shadow);
-            margin-bottom: 2rem;
-            overflow: hidden;
-            animation: fadeIn 0.5s ease-out;
-        }
-
-        @keyframes fadeIn {
-            from {
-                opacity: 0;
-                transform: translateY(10px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-
-        .loading {
-            pointer-events: none;
-            position: relative;
-        }
-
-        .loading::after {
-            content: '';
-            position: absolute;
-            width: 20px;
-            height: 20px;
-            top: 50%;
-            left: 50%;
-            margin: -10px 0 0 -10px;
-            border: 3px solid rgba(255,255,255,0.3);
-            border-radius: 50%;
-            border-top-color: #fff;
-            animation: spin 1s ease-in-out infinite;
-        }
-
-        @keyframes spin {
-            to { transform: rotate(360deg); }
-        }
-
-        .price-form {
-            display: flex;
-            gap: 0.5rem;
-            align-items: center;
-        }
-
-        .price-input {
-            max-width: 150px;
-            border-radius: 8px;
-            border: 1px solid rgba(0,0,0,0.1);
-            padding: 0.5rem;
-            transition: var(--transition);
-        }
-
-        .price-input:focus {
-            border-color: var(--primary-color);
-            box-shadow: 0 0 0 0.2rem rgba(46, 125, 50, 0.25);
-        }
-
-        .btn-update {
-            padding: 0.5rem 1rem;
-            border-radius: 8px;
-            display: inline-flex;
-            align-items: center;
-            gap: 0.5rem;
-            font-weight: 500;
-            transition: var(--transition);
-        }
-
-        .btn-update:hover {
-            transform: translateY(-1px);
-            box-shadow: 0 4px 12px rgba(46, 125, 50, 0.25);
-        }
-
-        .btn-update i {
-            font-size: 1rem;
-        }
-
-        .alert {
-            border-radius: 12px;
-            padding: 1rem;
-            margin-bottom: 1rem;
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-            animation: slideDown 0.3s ease-out;
-        }
-
-        .table {
-            margin: 0;
-            background-color: white;
-        }
-
-        .table thead th {
-            background-color: var(--background-light);
-            color: var(--primary-dark);
-            font-weight: 600;
-            text-transform: uppercase;
-            font-size: 0.875rem;
-            letter-spacing: 0.5px;
-            padding: 1rem;
-            border: none;
-        }
-
-        .table tbody td {
-            padding: 1rem;
-            vertical-align: middle;
-            border-color: rgba(0,0,0,0.05);
-            transition: var(--transition);
-        }
-
-        .table tbody tr:hover td {
-            background-color: var(--background-light);
-        }
-
-        .price-cell {
-            font-family: 'Inter', monospace;
-            font-weight: 500;
-            color: var(--primary-dark);
-        }
-
-        .toast-container {
-            position: fixed;
-            top: 1rem;
-            right: 1rem;
-            z-index: 1050;
-        }
-
+        /* toast notifications */
+        .toast-container { position: fixed; top: 1rem; right: 1rem; z-index: 1080; }
         .toast {
-            background: white;
-            border-radius: 12px;
-            box-shadow: var(--shadow);
-            margin-bottom: 0.5rem;
-            min-width: 250px;
-            animation: slideIn 0.3s ease-out;
+            background: var(--mib-surface); border: 1px solid var(--mib-border); border-radius: var(--mib-radius-sm);
+            box-shadow: var(--mib-shadow-md); margin-bottom: 0.5rem; min-width: 250px; animation: toastIn 0.3s ease-out;
         }
-
-        @keyframes slideIn {
-            from {
-                transform: translateX(100%);
-                opacity: 0;
-            }
-            to {
-                transform: translateX(0);
-                opacity: 1;
-            }
-        }
-
-        .toast.success {
-            border-left: 4px solid var(--primary-color);
-        }
-
-        .toast.error {
-            border-left: 4px solid #dc3545;
-        }
-
-        .btn-primary {
-            background-color: var(--primary-color);
-            border: none;
-            padding: 0.5rem 1rem;
-            border-radius: 8px;
-            transition: var(--transition);
-        }
-
-        .btn-primary:hover {
-            background-color: var(--primary-dark);
-            transform: translateY(-1px);
-            box-shadow: 0 4px 12px rgba(46, 125, 50, 0.25);
-        }
-
-        .form-control {
-            border-radius: 8px;
-            border: 1px solid rgba(0, 0, 0, 0.1);
-            padding: 0.5rem;
-            transition: var(--transition);
-        }
-
-        .form-control:focus {
-            border-color: var(--primary-color);
-            box-shadow: 0 0 0 0.2rem rgba(46, 125, 50, 0.25);
-            outline: none;
-        }
-
-        @media (max-width: 768px) {
-            .main-content {
-                margin-left: 0;
-                padding: 1rem;
-                width: 100%;
-            }
-
-            .page-header {
-                padding: 1rem;
-            }
-
-            .table-responsive {
-                margin: 0 -1rem;
-            }
-        }
+        @keyframes toastIn { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+        .toast.success { border-left: 4px solid var(--mib-success); }
+        .toast.error   { border-left: 4px solid var(--mib-danger); }
     </style>
 </head>
-<body>
-    <%- include('../partials/sidebar', { userRole: userRole }) %>
-    <div class="main-content">
-        <div class="page-header">
-            <h1 class="page-title">
-                <i class="bi bi-currency-dollar"></i>
-                Edit Consumable Prices
-            </h1>
-            <p class="text-muted mb-0">Update and manage prices for consumable items</p>
-        </div>
-        <!-- Flash Messages -->
-        <% if (messages && messages.error) { %>
-            <div class="alert alert-danger alert-dismissible fade show mb-4" role="alert">
-                <i class="bi bi-exclamation-triangle-fill me-2"></i>
-                <%= messages.error %>
-                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-            </div>
-        <% } %>
-        
-        <% if (messages && messages.success) { %>
-            <div class="alert alert-success alert-dismissible fade show mb-4" role="alert">
-                <i class="bi bi-check-circle-fill me-2"></i>
-                <%= messages.success %>
-                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-            </div>
-        <% } %>
+<body class="app-shell">
+    <%- include('../partials/sidebar', { userRole: userRole, path: '/finance/consumables' }) %>
 
-        <!-- Add Consumable -->
-        <div class="card">
-            <div style="padding: 1.5rem;">
-                <h2 class="page-title" style="font-size: 1.15rem; margin-bottom: 1rem;">
-                    <i class="bi bi-plus-circle"></i>
-                    Add Consumable
-                </h2>
-                <% if (availableTypes && availableTypes.length > 0) { %>
-                    <form action="/consumables/add" method="POST" class="price-form" style="flex-wrap: wrap; gap: 0.75rem; align-items: flex-end;">
-                        <div>
-                            <label class="form-label mb-1" for="consumableName" style="font-size: 0.85rem; font-weight: 600;">Type</label>
-                            <select name="name" id="consumableName" class="form-control" required style="min-width: 200px;">
-                                <option value="">Select consumable…</option>
-                                <% availableTypes.forEach(type => { %>
-                                    <option value="<%= type %>"><%= type %></option>
-                                <% }) %>
-                            </select>
+    <%
+        /* ---- Defensive normalisation ---- */
+        const consumableList = (typeof consumables !== 'undefined' && consumables) ? consumables : [];
+        const typeList       = (typeof availableTypes !== 'undefined' && availableTypes) ? availableTypes : [];
+        const flash          = (typeof messages !== 'undefined' && messages) ? messages : {};
+        const flashSuccess   = [].concat(flash.success || []).filter(Boolean);
+        const flashError     = [].concat(flash.error || []).filter(Boolean);
+        const fmtRp = (v) => {
+            const n = Number(v);
+            return isNaN(n) ? '0.00' : n.toLocaleString('id-ID', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        };
+    %>
+
+    <!-- Toast container for dynamic notifications (used by handleUpdatePrice) -->
+    <div class="toast-container"></div>
+
+    <div class="content content-wide">
+        <%- include('../partials/page-header', {
+              pageTitle: 'Manage Consumables',
+              pageIcon: 'bi-box-seam',
+              pageSubtitle: 'Update and manage prices for consumable items used across order costing.'
+        }) %>
+
+        <!-- Flash messages -->
+        <% flashError.forEach(function(msg) { %>
+            <div class="mib-flash mib-flash-error alert-dismissible fade show" role="alert">
+                <i class="bi bi-exclamation-triangle-fill"></i>
+                <span><%= msg %></span>
+                <button type="button" class="btn-close ms-auto" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+        <% }); %>
+        <% flashSuccess.forEach(function(msg) { %>
+            <div class="mib-flash mib-flash-success alert-dismissible fade show" role="alert">
+                <i class="bi bi-check-circle-fill"></i>
+                <span><%= msg %></span>
+                <button type="button" class="btn-close ms-auto" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+        <% }); %>
+
+        <!-- ===================== Add Consumable ===================== -->
+        <div class="form-section fade-in">
+            <h2 class="form-section-title"><i class="bi bi-plus-circle"></i> Add Consumable</h2>
+            <p class="form-section-desc">Consumable types mirror Order History (Pallet, Sticker, Wrap, Handling, Logistic, Triplek, Peti, Kabel Ties).</p>
+            <% if (typeList.length > 0) { %>
+                <form action="/consumables/add" method="POST" class="price-form" style="align-items: flex-end;">
+                    <div>
+                        <label class="form-label" for="consumableName">Type</label>
+                        <select name="name" id="consumableName" class="form-select" required style="min-width: 220px;">
+                            <option value="">Select consumable…</option>
+                            <% typeList.forEach(type => { %>
+                                <option value="<%= type %>"><%= type %></option>
+                            <% }) %>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="form-label" for="consumableFee">Fee (Rp)</label>
+                        <div class="input-group price-input">
+                            <span class="input-group-text">Rp</span>
+                            <input type="number" name="fee" id="consumableFee" class="form-control" step="0.01" min="0" value="0" required>
                         </div>
-                        <div>
-                            <label class="form-label mb-1" for="consumableFee" style="font-size: 0.85rem; font-weight: 600;">Fee (Rp)</label>
-                            <input type="number" name="fee" id="consumableFee" class="form-control price-input" step="0.01" min="0" value="0" required>
-                        </div>
-                        <button type="submit" class="btn btn-primary btn-update">
-                            <i class="bi bi-plus-lg"></i>
-                            <span>Add</span>
-                        </button>
-                    </form>
-                    <p class="text-muted mb-0 mt-2" style="font-size: 0.8rem;">
-                        Jenis consumable mengikuti yang ada di Order History (Pallet, Sticker, Wrap, Handling, Logistic, Triplek, Peti, Kabel Ties).
-                    </p>
-                <% } else { %>
-                    <p class="text-muted mb-0">
-                        <i class="bi bi-check-circle-fill text-success me-1"></i>
-                        Semua jenis consumable sudah ditambahkan.
-                    </p>
-                <% } %>
-            </div>
+                    </div>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="bi bi-plus-lg"></i> <span>Add</span>
+                    </button>
+                </form>
+            <% } else { %>
+                <p class="text-muted-2 mb-0">
+                    <i class="bi bi-check-circle-fill text-success me-1"></i>
+                    Semua jenis consumable sudah ditambahkan.
+                </p>
+            <% } %>
         </div>
 
-        <div class="card">
-            <!-- Toast Container for Dynamic Notifications -->
-            <div class="toast-container"></div>
-
+        <!-- ===================== Consumable Prices ===================== -->
+        <div class="table-card fade-in">
+            <div class="card-header">
+                <h3 class="card-title"><i class="bi bi-currency-dollar"></i> Consumable Prices</h3>
+            </div>
             <div class="table-responsive">
-                <table class="table">
-                <thead>
-                    <tr>
-                        <th>Consumable</th>
-                        <th>Current Price (Rp)</th>
-                        <th>New Price (Rp)</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <% consumables.forEach(consumable => { %>
+                <table class="table table-cards align-middle">
+                    <thead>
                         <tr>
-                            <td><%= consumable.name %></td>
-                            <td>Rp<%= consumable.fee.toFixed(2) %></td>
-                            <td>
-                                <form onsubmit="handleUpdatePrice(event, '<%= consumable.id %>')" class="price-form">
-                                    <input 
-                                        type="number" 
-                                        name="newFee" 
-                                        value="<%= consumable.fee %>" 
-                                        step="0.01" 
-                                        min="0" 
-                                        class="form-control price-input" 
-                                        required
-                                    >
-                                    <button type="submit" class="btn btn-primary btn-update">
-                                        <i class="bi bi-check-lg"></i>
-                                        <span>Update</span>
-                                    </button>
-                                </form>
-                            </td>
+                            <th>Consumable</th>
+                            <th>Current Price (Rp)</th>
+                            <th>New Price (Rp)</th>
                         </tr>
-                    <% }) %>
-                </tbody>
-            </table>
+                    </thead>
+                    <tbody>
+                        <% if (consumableList.length > 0) { %>
+                            <% consumableList.forEach(consumable => { %>
+                                <tr>
+                                    <td data-label="Consumable"><span class="cell-strong"><%= consumable.name %></span></td>
+                                    <td data-label="Current Price (Rp)" class="price-cell">Rp<%= fmtRp(consumable.fee) %></td>
+                                    <td data-label="New Price (Rp)">
+                                        <form onsubmit="handleUpdatePrice(event, '<%= consumable.id %>')" class="price-form">
+                                            <div class="input-group price-input">
+                                                <span class="input-group-text">Rp</span>
+                                                <input
+                                                    type="number"
+                                                    name="newFee"
+                                                    value="<%= consumable.fee %>"
+                                                    step="0.01"
+                                                    min="0"
+                                                    class="form-control"
+                                                    required
+                                                >
+                                            </div>
+                                            <button type="submit" class="btn btn-primary btn-sm">
+                                                <i class="bi bi-check-lg"></i>
+                                                <span>Update</span>
+                                            </button>
+                                        </form>
+                                    </td>
+                                </tr>
+                            <% }) %>
+                        <% } else { %>
+                            <tr class="is-empty-row"><td colspan="3"><div class="empty-state"><i class="bi bi-inbox"></i><h4>No consumables yet</h4><p>Add a consumable above to start managing its price.</p></div></td></tr>
+                        <% } %>
+                    </tbody>
+                </table>
+            </div>
         </div>
     </div>
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-    <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            // Handle sidebar state changes
-            const sidebar = document.querySelector('.sidebar');
-            const observer = new MutationObserver(function(mutations) {
-                mutations.forEach(function(mutation) {
-                    if (mutation.attributeName === 'class') {
-                        if (sidebar.classList.contains('collapsed')) {
-                            document.body.classList.add('sidebar-collapsed');
-                        } else {
-                            document.body.classList.remove('sidebar-collapsed');
-                        }
-                    }
-                });
-            });
-            observer.observe(sidebar, { attributes: true });
-        });
 
+    <script>
         // Toast notification function
         function showToast(message, type = 'success') {
             const toastContainer = document.querySelector('.toast-container');
@@ -410,7 +177,7 @@
                 </div>
             `;
             toastContainer.appendChild(toast);
-            
+
             // Remove toast after 3 seconds
             setTimeout(() => {
                 toast.classList.remove('show');
@@ -425,7 +192,7 @@
             const submitBtn = form.querySelector('button[type="submit"]');
             const input = form.querySelector('input[name="newFee"]');
             const currentPriceCell = form.closest('tr').querySelector('td:nth-child(2)');
-            
+
             try {
                 // Add loading state
                 submitBtn.disabled = true;

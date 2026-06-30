@@ -1,312 +1,186 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Returned Raw Material History</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.7.2/font/bootstrap-icons.css" rel="stylesheet">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <style>
-        :root {
-            --primary-color: #2e7d32;
-            --primary-light: #4caf50;
-            --primary-dark: #1b5e20;
-            --text-color: #2c3e50;
-            --background-light: #e8f5e9;
-            --shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-            --transition: all 0.3s ease;
-        }
-
-        body {
-            font-family: 'Inter', sans-serif;
-            background-color: var(--background-light);
-            margin: 0;
-            padding: 0;
-            min-height: 100vh;
-        }
-
-        .main-content {
-            margin-left: 280px;
-            padding: 2rem;
-            transition: var(--transition);
-            width: calc(100% - 280px);
-        }
-
-        /* When sidebar is collapsed */
-        body.sidebar-collapsed .main-content {
-            margin-left: 70px;
-            width: calc(100% - 70px);
-        }
-
-        .page-header {
-            background: white;
-            padding: 1.5rem;
-            border-radius: 15px;
-            box-shadow: var(--shadow);
-            margin-bottom: 2rem;
-        }
-
-        .page-title {
-            margin: 0;
-            color: var(--primary-color);
-            font-weight: 600;
-            font-size: 1.5rem;
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-        }
-
-        .card {
-            background: white;
-            border-radius: 15px;
-            box-shadow: var(--shadow);
-            margin-bottom: 2rem;
-            border: none;
-            overflow: hidden;
-        }
-
-        .card-header {
-            background-color: var(--background-light);
-            padding: 1.5rem;
-            border-bottom: 1px solid rgba(0, 0, 0, 0.1);
-        }
-
-        .card-title {
-            color: var(--primary-color);
-            font-weight: 600;
-            font-size: 1.2rem;
-            margin: 0;
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-        }
-
-        .table {
-            margin: 0;
-        }
-
-        .table thead th {
-            background-color: var(--background-light);
-            color: var(--primary-dark);
-            font-weight: 600;
-            text-transform: uppercase;
-            font-size: 0.75rem;
-            letter-spacing: 0.5px;
-            padding: 1rem;
-            border: none;
-            white-space: nowrap;
-        }
-
-        .table tbody td {
-            padding: 1rem;
-            vertical-align: middle;
-            border-color: rgba(0, 0, 0, 0.05);
-        }
-
-        .table tbody tr:hover {
-            background-color: var(--background-light);
-        }
-
-        .badge {
-            padding: 0.5rem 1rem;
-            border-radius: 50px;
-            font-weight: 500;
-            display: inline-flex;
-            align-items: center;
-            gap: 0.25rem;
-        }
-
-        .badge i {
-            font-size: 0.75rem;
-        }
-
-        .badge-returned {
-            background-color: var(--background-light);
-            color: var(--primary-dark);
-        }
-
-        .badge-no-return {
-            background-color: #f8d7da;
-            color: #842029;
-        }
-
-        /* Loading Animation */
-        .loading {
-            pointer-events: none;
-            position: relative;
-        }
-
-        .loading::after {
-            content: '';
-            position: absolute;
-            width: 20px;
-            height: 20px;
-            top: 50%;
-            left: 50%;
-            margin: -10px 0 0 -10px;
-            border: 3px solid rgba(255,255,255,0.3);
-            border-radius: 50%;
-            border-top-color: #fff;
-            animation: spin 1s ease-in-out infinite;
-        }
-
-        @keyframes spin {
-            to { transform: rotate(360deg); }
-        }
-
-        @media (max-width: 768px) {
-            .main-content {
-                margin-left: 0;
-                width: 100%;
-                padding: 1rem;
-            }
-        }
-    </style>
+    <%- include('../partials/head', { pageTitle: 'Returned Raw Material History' }) %>
 </head>
-<body>
-    <%- include('../partials/sidebar', { userRole: userRole }) %>
+<body class="app-shell">
+    <%- include('../partials/sidebar', { userRole: userRole, path: '/purchase/returned-raw-material-history' }) %>
 
-    <div class="main-content">
-        <div class="page-header">
-            <h1 class="page-title">
-                <i class="bi bi-box-seam"></i>
-                Returned Raw Material History
-            </h1>
-            <p class="text-muted mb-0">View history of returned and no-return raw material requests</p>
+    <%
+        /* ---- Defensive normalisation ---- */
+        const returnedList = (typeof returnedRawMaterials !== 'undefined' && returnedRawMaterials) ? returnedRawMaterials : [];
+        const noReturnList = (typeof noReturnRawMaterials !== 'undefined' && noReturnRawMaterials) ? noReturnRawMaterials : [];
+
+        /* status badge helper */
+        const KNOWN_STATUS = new Set(['pending','processing','onprod','on-production','production-completed','completed','approved','paid','delivered','on-delivery','ready-to-deliver','partially-delivered','open','printed','scheduled','cancelled','declined','rejected','neutral']);
+        const sb = (s) => { const k = String(s || '').toLowerCase().replace(/\s+/g, '-'); return 'status-' + (KNOWN_STATUS.has(k) ? k : 'neutral'); };
+
+        const matName = (i) => (i && i.RawMaterialRequest && i.RawMaterialRequest.materialName) ? i.RawMaterialRequest.materialName : '—';
+        const vName   = (i) => (i && i.Vendor && i.Vendor.name) ? i.Vendor.name : '—';
+    %>
+
+    <div class="content content-wide">
+
+        <%- include('../partials/page-header', {
+              pageTitle: 'Returned Raw Material History',
+              pageIcon: 'bi-box-seam',
+              pageSubtitle: 'History of returned and no-return raw material requests',
+              actionsHtml: '<a href="/dashboard/purchase" class="btn btn-soft"><i class="bi bi-arrow-left"></i> Back to Dashboard</a>'
+        }) %>
+
+        <!-- Quick stats -->
+        <div class="quick-stats stagger">
+            <div class="stat-card">
+                <div class="stat-icon is-success"><i class="bi bi-box-arrow-in-left"></i></div>
+                <div class="stat-body">
+                    <div class="stat-label">Returned Raw Materials</div>
+                    <div class="stat-value"><%= returnedList.length %></div>
+                    <span class="stat-sub">Items returned to vendor</span>
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon is-danger"><i class="bi bi-x-circle"></i></div>
+                <div class="stat-body">
+                    <div class="stat-label">No Return Raw Materials</div>
+                    <div class="stat-value"><%= noReturnList.length %></div>
+                    <span class="stat-sub">Items kept without return</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Toolbar -->
+        <div class="toolbar">
+            <div class="search">
+                <i class="bi bi-search"></i>
+                <input type="text" id="searchInput" class="form-control" placeholder="Search by PO, material or vendor…" autocomplete="off">
+            </div>
         </div>
 
         <!-- Returned Section -->
-        <div class="card">
+        <div class="table-card">
             <div class="card-header">
-                <h2 class="card-title">
-                    <i class="bi bi-check-circle"></i>
-                    Returned Raw Materials
-                </h2>
+                <h2 class="card-title"><i class="bi bi-check-circle"></i> Returned Raw Materials</h2>
             </div>
-            <div class="card-body">
-                <div class="table-responsive">
-                    <table class="table">
-                        <thead>
-                            <tr>
-                                <th>ID</th>
-                                <th>PO Number</th>
-                                <th>Material Name</th>
-                                <th>Vendor</th>
-                                <th>Split Quantity</th>
-                                <th>Tax</th>
-                                <th>Payment Type</th>
-                                <th>QC Status</th>
-                                <th>QC Comment</th>
-                                <th>Reject Quantity</th>
-                                <th>Reject Comment</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <% if (returnedRawMaterials && returnedRawMaterials.length > 0) { %>
-                                <% returnedRawMaterials.forEach(item => { %>
-                                    <tr>
-                                        <td>#<%= item.id %></td>
-                                        <td><%= item.ponumber || '-' %></td>
-                                        <td><%= item.RawMaterialRequest.materialName %></td>
-                                        <td><%= item.Vendor.name %></td>
-                                        <td><%= item.splitQuantity %> Kg</td>
-                                        <td><%= item.tax %></td>
-                                        <td><%= item.paymentType %></td>
-                                        <td><%= item.qcStatus %></td>
-                                        <td><%= item.qcComment || '-' %></td>
-                                        <td><%= item.rejectQuantity %> Kg</td>
-                                        <td><%= item.rejectComment || '-' %></td>
-                                    </tr>
-                                <% }) %>
-                            <% } else { %>
+            <div class="table-responsive">
+                <table class="table table-cards align-middle searchable">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>PO Number</th>
+                            <th>Material Name</th>
+                            <th>Vendor</th>
+                            <th>Split Quantity</th>
+                            <th>Tax</th>
+                            <th>Payment Type</th>
+                            <th>QC Status</th>
+                            <th>QC Comment</th>
+                            <th>Reject Quantity</th>
+                            <th>Reject Comment</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <% if (returnedList.length > 0) { %>
+                            <% returnedList.forEach(item => { %>
                                 <tr>
-                                    <td colspan="11" class="text-center py-4 text-muted">
-                                        <i class="bi bi-inbox fs-4 d-block mb-2"></i>
-                                        No returned raw materials found
-                                    </td>
+                                    <td data-label="ID"><span class="cell-strong">#<%= item.id %></span></td>
+                                    <td data-label="PO Number"><%= item.ponumber || '—' %></td>
+                                    <td data-label="Material Name"><%= matName(item) %></td>
+                                    <td data-label="Vendor"><%= vName(item) %></td>
+                                    <td data-label="Split Quantity" class="num"><%= item.splitQuantity %> Kg</td>
+                                    <td data-label="Tax"><%= item.tax %></td>
+                                    <td data-label="Payment Type"><%= item.paymentType %></td>
+                                    <td data-label="QC Status"><span class="status-badge <%= sb(item.qcStatus) %>"><%= item.qcStatus || '—' %></span></td>
+                                    <td data-label="QC Comment"><span class="cell-sub"><%= item.qcComment || '—' %></span></td>
+                                    <td data-label="Reject Quantity" class="num"><%= item.rejectQuantity %> Kg</td>
+                                    <td data-label="Reject Comment"><span class="cell-sub"><%= item.rejectComment || '—' %></span></td>
                                 </tr>
-                            <% } %>
-                        </tbody>
-                    </table>
-                </div>
+                            <% }) %>
+                        <% } else { %>
+                            <tr class="is-empty-row">
+                                <td colspan="11">
+                                    <div class="empty-state">
+                                        <i class="bi bi-inbox"></i>
+                                        <h4>No returned raw materials</h4>
+                                        <p>Returned raw material records will appear here.</p>
+                                    </div>
+                                </td>
+                            </tr>
+                        <% } %>
+                    </tbody>
+                </table>
             </div>
         </div>
 
         <!-- No Return Section -->
-        <div class="card">
+        <div class="table-card">
             <div class="card-header">
-                <h2 class="card-title">
-                    <i class="bi bi-x-circle"></i>
-                    No Return Raw Materials
-                </h2>
+                <h2 class="card-title"><i class="bi bi-x-circle"></i> No Return Raw Materials</h2>
             </div>
-            <div class="card-body">
-                <div class="table-responsive">
-                    <table class="table">
-                        <thead>
-                            <tr>
-                                <th>ID</th>
-                                <th>PO Number</th>
-                                <th>Material Name</th>
-                                <th>Vendor</th>
-                                <th>Split Quantity</th>
-                                <th>Tax</th>
-                                <th>Payment Type</th>
-                                <th>QC Status</th>
-                                <th>QC Comment</th>
-                                <th>Reject Quantity</th>
-                                <th>Reject Comment</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <% if (noReturnRawMaterials && noReturnRawMaterials.length > 0) { %>
-                                <% noReturnRawMaterials.forEach(item => { %>
-                                    <tr>
-                                        <td>#<%= item.id %></td>
-                                        <td><%= item.ponumber || '-' %></td>
-                                        <td><%= item.RawMaterialRequest.materialName %></td>
-                                        <td><%= item.Vendor.name %></td>
-                                        <td><%= item.splitQuantity %> Kg</td>
-                                        <td><%= item.tax %></td>
-                                        <td><%= item.paymentType %></td>
-                                        <td><%= item.qcStatus %></td>
-                                        <td><%= item.qcComment || '-' %></td>
-                                        <td><%= item.rejectQuantity %> Kg</td>
-                                        <td><%= item.rejectComment || '-' %></td>
-                                    </tr>
-                                <% }) %>
-                            <% } else { %>
+            <div class="table-responsive">
+                <table class="table table-cards align-middle searchable">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>PO Number</th>
+                            <th>Material Name</th>
+                            <th>Vendor</th>
+                            <th>Split Quantity</th>
+                            <th>Tax</th>
+                            <th>Payment Type</th>
+                            <th>QC Status</th>
+                            <th>QC Comment</th>
+                            <th>Reject Quantity</th>
+                            <th>Reject Comment</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <% if (noReturnList.length > 0) { %>
+                            <% noReturnList.forEach(item => { %>
                                 <tr>
-                                    <td colspan="11" class="text-center py-4 text-muted">
-                                        <i class="bi bi-inbox fs-4 d-block mb-2"></i>
-                                        No no-return raw materials found
-                                    </td>
+                                    <td data-label="ID"><span class="cell-strong">#<%= item.id %></span></td>
+                                    <td data-label="PO Number"><%= item.ponumber || '—' %></td>
+                                    <td data-label="Material Name"><%= matName(item) %></td>
+                                    <td data-label="Vendor"><%= vName(item) %></td>
+                                    <td data-label="Split Quantity" class="num"><%= item.splitQuantity %> Kg</td>
+                                    <td data-label="Tax"><%= item.tax %></td>
+                                    <td data-label="Payment Type"><%= item.paymentType %></td>
+                                    <td data-label="QC Status"><span class="status-badge <%= sb(item.qcStatus) %>"><%= item.qcStatus || '—' %></span></td>
+                                    <td data-label="QC Comment"><span class="cell-sub"><%= item.qcComment || '—' %></span></td>
+                                    <td data-label="Reject Quantity" class="num"><%= item.rejectQuantity %> Kg</td>
+                                    <td data-label="Reject Comment"><span class="cell-sub"><%= item.rejectComment || '—' %></span></td>
                                 </tr>
-                            <% } %>
-                        </tbody>
-                    </table>
-                </div>
+                            <% }) %>
+                        <% } else { %>
+                            <tr class="is-empty-row">
+                                <td colspan="11">
+                                    <div class="empty-state">
+                                        <i class="bi bi-inbox"></i>
+                                        <h4>No no-return raw materials</h4>
+                                        <p>No-return raw material records will appear here.</p>
+                                    </div>
+                                </td>
+                            </tr>
+                        <% } %>
+                    </tbody>
+                </table>
             </div>
         </div>
     </div>
 
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
     <script>
-        // Handle sidebar state changes
-        const sidebar = document.querySelector('.sidebar');
-        const observer = new MutationObserver(function(mutations) {
-            mutations.forEach(function(mutation) {
-                if (mutation.attributeName === 'class') {
-                    if (sidebar.classList.contains('collapsed')) {
-                        document.body.classList.add('sidebar-collapsed');
-                    } else {
-                        document.body.classList.remove('sidebar-collapsed');
-                    }
-                }
+        // Live search across both tables
+        document.addEventListener('DOMContentLoaded', function () {
+            const input = document.getElementById('searchInput');
+            if (!input) return;
+            const rows = document.querySelectorAll('table.searchable tbody tr');
+            input.addEventListener('input', function () {
+                const q = this.value.trim().toLowerCase();
+                rows.forEach(row => {
+                    if (row.classList.contains('is-empty-row')) return;
+                    row.style.display = (!q || row.textContent.toLowerCase().includes(q)) ? '' : 'none';
+                });
             });
         });
-        observer.observe(sidebar, { attributes: true });
     </script>
 </body>
 </html>

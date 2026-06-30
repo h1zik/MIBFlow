@@ -30,25 +30,22 @@
     <%- include('../partials/sidebar', { userRole: userRole, path: '/orders/create' }) %>
 
     <div class="content content-wide">
+        <%- include('../partials/page-header', {
+              pageTitle: 'Create Order',
+              pageIcon: 'bi-cart-plus',
+              pageSubtitle: 'Add customer, products and packaging, then submit.',
+              breadcrumb: [{ label: 'Dashboard', href: '/dashboard/marketing' }, { label: 'Create Order' }],
+              actionsHtml: '<a href="/dashboard/marketing" class="btn btn-light"><i class="bi bi-arrow-left"></i> Back</a>'
+                + '<button type="submit" form="orderForm" class="btn btn-primary"><i class="bi bi-check-lg"></i> Create Order</button>'
+        }) %>
+
         <% if (locals.error) { %>
-            <div class="alert alert-danger alert-dismissible fade show" role="alert">
+            <div class="mib-flash mib-flash-error alert-dismissible fade show" role="alert">
                 <i class="bi bi-exclamation-triangle-fill"></i>
-                <div><strong>Error creating order:</strong> <%= error %></div>
-                <button type="button" class="btn-close ms-auto" data-bs-dismiss="alert"></button>
+                <span><strong>Error creating order:</strong> <%= error %></span>
+                <button type="button" class="btn-close ms-auto" data-bs-dismiss="alert" aria-label="Close"></button>
             </div>
         <% } %>
-
-        <div class="page-header fade-in">
-            <div class="page-header__main">
-                <ul class="mib-breadcrumb"><li><a href="/dashboard/marketing">Dashboard</a></li><li>Create Order</li></ul>
-                <h1 class="page-title"><i class="bi bi-cart-plus"></i> Create Order</h1>
-                <p class="page-subtitle">Add customer, products and packaging, then submit.</p>
-            </div>
-            <div class="page-actions">
-                <a href="/dashboard/marketing" class="btn btn-light"><i class="bi bi-arrow-left"></i> Back</a>
-                <button type="submit" form="orderForm" class="btn btn-primary"><i class="bi bi-check-lg"></i> Create Order</button>
-            </div>
-        </div>
 
         <form id="orderForm" action="/orders/create" method="POST" enctype="multipart/form-data">
             <ul class="nav nav-tabs fade-in" role="tablist">

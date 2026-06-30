@@ -1,321 +1,74 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Add New Tank</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.7.2/font/bootstrap-icons.css" rel="stylesheet">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <style>
-        :root {
-            --primary-color: #1b5e20;
-            --primary-light: #388E3C;
-            --background-light: #f4f6f8;
-            --text-color: #333;
-            --shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-            --transition: all 0.3s ease;
-        }
-
-        body {
-            font-family: 'Inter', sans-serif;
-            background-color: var(--background-light);
-            margin: 0;
-            padding: 0;
-            min-height: 100vh;
-        }
-
-        .main-content {
-            margin-left: 0;
-            padding: 1rem;
-            width: 100%;
-            transition: var(--transition);
-        }
-
-        .page-header {
-            background: white;
-            padding: 1rem;
-            border-radius: 15px;
-            box-shadow: var(--shadow);
-            margin-bottom: 1rem;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
-        .page-title {
-            margin: 0;
-            color: var(--primary-color);
-            font-weight: 600;
-            font-size: 1.25rem;
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-        }
-
-        .form-card {
-            background: white;
-            border-radius: 15px;
-            box-shadow: var(--shadow);
-            margin-bottom: 1rem;
-            overflow: hidden;
-        }
-
-        .form-header {
-            background-color: var(--background-light);
-            padding: 1rem;
-            border-bottom: 1px solid rgba(0, 0, 0, 0.1);
-        }
-
-        .form-title {
-            color: var(--primary-color);
-            font-weight: 600;
-            font-size: 1.1rem;
-            margin: 0;
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-        }
-
-        .form-body {
-            padding: 1.5rem;
-        }
-
-        .form-group {
-            margin-bottom: 1.5rem;
-        }
-
-        .form-label {
-            font-weight: 500;
-            color: var(--text-color);
-            margin-bottom: 0.5rem;
-            font-size: 0.875rem;
-        }
-
-        .form-control {
-            border-radius: 8px;
-            padding: 0.75rem 1rem;
-            border: 1px solid rgba(0, 0, 0, 0.1);
-            font-size: 0.875rem;
-            transition: var(--transition);
-        }
-
-        .form-control:focus {
-            outline: none;
-            border-color: var(--primary-color);
-            box-shadow: 0 0 0 2px rgba(27, 94, 32, 0.1);
-        }
-
-        .input-group-text {
-            background-color: var(--background-light);
-            border-color: rgba(0, 0, 0, 0.1);
-            color: #6c757d;
-            font-weight: 500;
-        }
-
-        .btn-group {
-            display: flex;
-            gap: 1rem;
-            margin-top: 2rem;
-        }
-
-        .btn {
-            padding: 0.75rem 1.5rem;
-            border-radius: 8px;
-            font-weight: 500;
-            display: inline-flex;
-            align-items: center;
-            gap: 0.5rem;
-            transition: var(--transition);
-            text-decoration: none;
-        }
-
-        .btn-primary {
-            background-color: var(--primary-color);
-            border: none;
-            color: white;
-        }
-
-        .btn-primary:hover {
-            background-color: var(--primary-light);
-            transform: translateY(-1px);
-        }
-
-        .btn-secondary {
-            background: none;
-            border: 1px solid #6c757d;
-            color: #6c757d;
-        }
-
-        .btn-secondary:hover {
-            background-color: #6c757d;
-            color: white;
-            transform: translateY(-1px);
-        }
-
-        .validation-message {
-            color: #dc3545;
-            font-size: 0.875rem;
-            margin-top: 0.25rem;
-            display: none;
-        }
-
-        @media (min-width: 769px) {
-            .main-content {
-                margin-left: 280px;
-                padding: 2rem;
-                width: calc(100% - 280px);
-            }
-
-            body:has(.sidebar.collapsed) .main-content {
-                margin-left: 70px;
-                width: calc(100% - 70px);
-            }
-        }
-
-        @media (max-width: 768px) {
-            .btn-group {
-                flex-direction: column;
-            }
-
-            .btn {
-                width: 100%;
-                justify-content: center;
-            }
-
-            .page-header {
-                flex-direction: column;
-                gap: 1rem;
-            }
-        }
-    </style>
+    <%- include('../partials/head', { pageTitle: 'Manage Tank' }) %>
 </head>
-<body>
-    <%- include('../partials/sidebar', { userRole: userRole }) %>
+<body class="app-shell">
+    <%- include('../partials/sidebar', { userRole: userRole, path: '/tank/add' }) %>
 
-    <div class="main-content">
-        <div class="page-header">
-            <h1 class="page-title">
-                <i class="bi bi-water"></i>
-                Add New Tank
-            </h1>
-        </div>
+    <div class="content content-narrow">
+        <%- include('../partials/page-header', {
+              pageTitle: 'Manage Tank',
+              pageIcon: 'bi-water',
+              pageSubtitle: 'Register a new blending tank and its capacity.',
+              breadcrumb: [{ label: 'Tanks', href: '/tank/tankList' }, { label: 'Add' }],
+              actionsHtml: '<a href="/tank/tankList" class="btn btn-light"><i class="bi bi-list-ul"></i> Tank List</a>'
+        }) %>
 
-        <div class="form-card">
-            <div class="form-header">
-                <h2 class="form-title">
-                    <i class="bi bi-plus-circle"></i>
-                    Tank Details
-                </h2>
-            </div>
-            <div class="form-body">
-                <form id="addTankForm" action="/tank/add" method="POST">
-                    <div class="row">
-                        <div class="col-md-12">
-                            <div class="form-group">
-                                <label for="name" class="form-label">Tank Name</label>
-                                <input type="text" class="form-control" id="name" name="name" required>
-                                <div class="validation-message" id="nameValidation">Please enter a tank name</div>
-                            </div>
-                        </div>
-                        <div class="col-md-6">
-                            <div class="form-group">
-                                <label for="volume" class="form-label">Volume (L)</label>
-                                <input type="number" class="form-control" id="volume" name="volume" step="0.01" min="0" required>
-                                <div class="validation-message" id="volumeValidation">Please enter a valid volume</div>
-                            </div>
-                        </div>
+        <form id="addTankForm" action="/tank/add" method="POST" class="needs-validation" novalidate>
+            <div class="form-section fade-in">
+                <h3 class="form-section-title"><i class="bi bi-water me-1"></i> Tank Details</h3>
+                <p class="form-section-desc">Give the tank a clear name and its volume in litres.</p>
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <label for="name" class="form-label">Tank Name</label>
+                        <input type="text" class="form-control" id="name" name="name" placeholder="e.g. Tank A-01" required>
+                        <div class="invalid-feedback" id="nameValidation">Please enter a tank name.</div>
                     </div>
-
-                    <div class="btn-group">
-                        <button type="submit" class="btn btn-primary">
-                            <i class="bi bi-check-lg"></i>
-                            Save Tank
-                        </button>
-                        <a href="/tank" class="btn btn-secondary">
-                            <i class="bi bi-x-lg"></i>
-                            Cancel
-                        </a>
+                    <div class="col-md-6">
+                        <label for="volume" class="form-label">Volume (L)</label>
+                        <div class="input-group">
+                            <input type="number" class="form-control" id="volume" name="volume" step="0.01" min="0" placeholder="0.00" required>
+                            <span class="input-group-text">L</span>
+                        </div>
+                        <div class="invalid-feedback" id="volumeValidation">Please enter a valid volume.</div>
                     </div>
-                </form>
+                </div>
             </div>
-        </div>
+
+            <div class="d-flex gap-2 justify-content-end">
+                <a href="/tank/tankList" class="btn btn-light"><i class="bi bi-x-lg"></i> Cancel</a>
+                <button type="submit" class="btn btn-primary" id="submitBtn"><i class="bi bi-check-lg"></i> Save Tank</button>
+            </div>
+        </form>
     </div>
 
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
     <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            // Handle sidebar state changes
-            const sidebar = document.querySelector('.sidebar');
-            const mainContent = document.querySelector('.main-content');
-
-            function updateContentWidth() {
-                if (window.innerWidth > 768) {
-                    if (sidebar.classList.contains('collapsed')) {
-                        mainContent.style.marginLeft = '70px';
-                        mainContent.style.width = 'calc(100% - 70px)';
-                    } else {
-                        mainContent.style.marginLeft = '280px';
-                        mainContent.style.width = 'calc(100% - 280px)';
-                    }
-                } else {
-                    mainContent.style.marginLeft = '0';
-                    mainContent.style.width = '100%';
-                }
-            }
-
-            // Initial width update
-            updateContentWidth();
-
-            // Watch for sidebar class changes
-            const observer = new MutationObserver(function(mutations) {
-                mutations.forEach(function(mutation) {
-                    if (mutation.attributeName === 'class') {
-                        updateContentWidth();
-                    }
-                });
-            });
-
-            observer.observe(sidebar, { attributes: true });
-
-            // Handle window resize
-            window.addEventListener('resize', updateContentWidth);
-
-            // Form validation
+        (function () {
+            'use strict';
             const form = document.getElementById('addTankForm');
-            const nameInput = document.getElementById('name');
             const volumeInput = document.getElementById('volume');
-            const nameValidation = document.getElementById('nameValidation');
-            const volumeValidation = document.getElementById('volumeValidation');
-
-            form.addEventListener('submit', function(event) {
-                let isValid = true;
-
-                // Name validation
-                if (!nameInput.value.trim()) {
-                    nameValidation.style.display = 'block';
-                    isValid = false;
+            form.addEventListener('submit', function (event) {
+                // Extra guard: volume must not be negative (mirrors legacy validation)
+                let valid = form.checkValidity();
+                if (volumeInput.value !== '' && Number(volumeInput.value) < 0) {
+                    volumeInput.setCustomValidity('invalid');
+                    valid = false;
                 } else {
-                    nameValidation.style.display = 'none';
+                    volumeInput.setCustomValidity('');
                 }
-
-                // Volume validation
-                if (!volumeInput.value || volumeInput.value < 0) {
-                    volumeValidation.style.display = 'block';
-                    isValid = false;
-                } else {
-                    volumeValidation.style.display = 'none';
-                }
-
-                if (!isValid) {
+                if (!valid) {
                     event.preventDefault();
+                    event.stopPropagation();
+                } else {
+                    const b = document.getElementById('submitBtn');
+                    if (b) b.disabled = true;
                 }
-            });
+                form.classList.add('was-validated');
+            }, false);
 
-            // Clear validation messages on input
-            nameInput.addEventListener('input', () => nameValidation.style.display = 'none');
-            volumeInput.addEventListener('input', () => volumeValidation.style.display = 'none');
-        });
+            volumeInput.addEventListener('input', () => volumeInput.setCustomValidity(''));
+        })();
     </script>
 </body>
 </html>

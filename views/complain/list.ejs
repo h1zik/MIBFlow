@@ -2,9 +2,29 @@
 <html lang="en">
 <head>
     <%- include('../partials/head', { pageTitle: 'Complain List' }) %>
+    <style>
+        /* page-scoped helpers to echo the PPIC family look */
+        .stat-card .stat-sub { display: block; margin-top: 0.3rem; font-size: 0.76rem; color: var(--mib-text-muted); }
+        .stagger > * { opacity: 0; animation: fadeIn 0.5s ease forwards; }
+        .stagger > *:nth-child(1) { animation-delay: 0.04s; }
+        .stagger > *:nth-child(2) { animation-delay: 0.10s; }
+        .stagger > *:nth-child(3) { animation-delay: 0.16s; }
+    </style>
 </head>
 <body class="app-shell">
     <%- include('../partials/sidebar', { userRole: userRole, path: '/complain' }) %>
+
+    <%
+        const complainList = (typeof complains !== 'undefined' && complains) ? complains : [];
+        const KNOWN_STATUS = new Set(['pending','processing','onprod','on-production','production-completed','completed','approved','paid','delivered','on-delivery','ready-to-deliver','partially-delivered','open','printed','scheduled','cancelled','declined','rejected','neutral']);
+        const sb = (s) => { const k = String(s || '').toLowerCase().replace(/\s+/g, '-'); return 'status-' + (KNOWN_STATUS.has(k) ? k : 'neutral'); };
+        let pendingCount = 0, approvedCount = 0, rejectedCount = 0;
+        complainList.forEach(c => {
+            if (c.status === 'Pending') pendingCount++;
+            else if (c.status === 'Approved') approvedCount++;
+            else if (c.status === 'Rejected') rejectedCount++;
+        });
+    %>
 
     <div class="content content-wide">
         <div class="page-header fade-in">
@@ -19,9 +39,36 @@
             <% } %>
         </div>
 
+        <div class="quick-stats stagger">
+            <div class="stat-card">
+                <div class="stat-icon"><i class="bi bi-exclamation-circle"></i></div>
+                <div class="stat-body">
+                    <div class="stat-label">Total Complaints</div>
+                    <div class="stat-value"><%= complainList.length.toLocaleString('id-ID') %></div>
+                    <span class="stat-sub">All time</span>
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon <%= pendingCount > 0 ? 'is-warning' : 'is-success' %>"><i class="bi bi-hourglass-split"></i></div>
+                <div class="stat-body">
+                    <div class="stat-label">Pending</div>
+                    <div class="stat-value"><%= pendingCount.toLocaleString('id-ID') %></div>
+                    <span class="stat-sub">Awaiting QC review</span>
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon is-info"><i class="bi bi-check2-circle"></i></div>
+                <div class="stat-body">
+                    <div class="stat-label">Approved</div>
+                    <div class="stat-value"><%= approvedCount.toLocaleString('id-ID') %></div>
+                    <span class="stat-sub">Accepted complaints</span>
+                </div>
+            </div>
+        </div>
+
         <div class="table-card fade-in">
             <div class="table-responsive">
-                <% if (complains && complains.length > 0) { %>
+                <% if (complainList.length > 0) { %>
                 <table class="table table-cards align-middle">
                     <thead>
                         <tr>
@@ -34,13 +81,13 @@
                         </tr>
                     </thead>
                     <tbody>
-                        <% complains.forEach(complain => { %>
+                        <% complainList.forEach(complain => { %>
                             <tr>
                                 <td data-label="ID" class="cell-sub">#<%= complain.id %></td>
                                 <td data-label="SO Number" class="cell-strong"><%= complain.sonumber %></td>
                                 <td data-label="Customer"><%= complain.customerName %></td>
                                 <td data-label="Status">
-                                    <span class="status-badge status-<%= complain.status === 'Pending' ? 'pending' : (complain.status === 'Approved' ? 'approved' : 'rejected') %>"><%= complain.status %></span>
+                                    <span class="status-badge <%= sb(complain.status) %>"><%= complain.status %></span>
                                 </td>
                                 <td data-label="Date"><%= new Date(complain.createdAt).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' }) %></td>
                                 <td data-label="Actions" class="text-end">
