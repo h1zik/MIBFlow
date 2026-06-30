@@ -1,432 +1,157 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Stock Updated Productions</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.7.2/font/bootstrap-icons.css" rel="stylesheet">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <%- include('../partials/head', { pageTitle: 'Productions History' }) %>
     <style>
+        /* Productions History — page-scoped flourishes (built on --mib-* tokens) */
         :root {
-            --primary-color: #1b5e20;
-            --primary-light: #388E3C;
-            --background-light: #f4f6f8;
-            --text-color: #333;
-            --shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-            --transition: all 0.3s ease;
+            --primary-color: var(--mib-primary);
+            --primary-light: var(--mib-primary-light);
+            --primary-dark: var(--mib-primary-dark);
         }
-
-        body {
-            font-family: 'Inter', sans-serif;
-            background-color: var(--background-light);
-            margin: 0;
-            padding: 0;
-            min-height: 100vh;
-        }
-
-        .main-content {
-            margin-left: 0;
-            padding: 1rem;
-            width: 100%;
-            transition: var(--transition);
-        }
-
-        .page-header {
-            background: white;
-            padding: 1rem;
-            border-radius: 15px;
-            box-shadow: var(--shadow);
-            margin-bottom: 1rem;
-        }
-
-        .page-title {
-            margin: 0;
-            color: var(--primary-color);
-            font-weight: 600;
-            font-size: 1.25rem;
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-        }
-
-        .page-subtitle {
-            color: #6c757d;
-            font-size: 0.875rem;
-            margin-top: 0.5rem;
-        }
-
-        .card {
-            background: white;
-            border-radius: 15px;
-            box-shadow: var(--shadow);
-            margin-bottom: 1rem;
-            border: none;
-            overflow: hidden;
-        }
-
-        .card-header {
-            background-color: var(--background-light);
-            padding: 1rem;
-            border-bottom: 1px solid rgba(0, 0, 0, 0.1);
-        }
-
-        .card-title {
-            color: var(--primary-color);
-            font-weight: 600;
-            font-size: 1rem;
-            margin: 0;
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-        }
-
-        .card-body {
-            padding: 1rem;
-        }
-
-        .form-group {
-            margin-bottom: 1rem;
-        }
-
-        .form-label {
-            font-weight: 600;
-            color: var(--primary-color);
-            margin-bottom: 0.5rem;
-            font-size: 0.875rem;
-        }
-
-        .form-control {
-            border-radius: 8px;
-            padding: 0.75rem 1rem;
-            border: 1px solid rgba(0, 0, 0, 0.1);
-            font-size: 0.875rem;
-            transition: var(--transition);
-        }
-
-        .form-control:focus {
-            border-color: var(--primary-color);
-            box-shadow: 0 0 0 0.2rem rgba(27, 94, 32, 0.25);
-        }
-
-        .table {
-            margin: 0;
-        }
-
-        .table thead th {
-            background-color: var(--primary-color);
-            color: white;
-            font-weight: 600;
-            text-transform: uppercase;
-            font-size: 0.75rem;
-            letter-spacing: 0.5px;
-            padding: 1rem;
-            border: none;
-            white-space: nowrap;
-        }
-
-        .table tbody td {
-            padding: 1rem;
-            vertical-align: middle;
-            border-color: rgba(0, 0, 0, 0.05);
-            font-size: 0.875rem;
-        }
-
-        .table tbody tr:hover {
-            background-color: var(--background-light);
-        }
-
-        .status-badge {
-            padding: 0.35rem 0.65rem;
-            font-size: 0.75rem;
-            font-weight: 500;
-            border-radius: 2rem;
-            display: inline-flex;
-            align-items: center;
-            gap: 0.25rem;
-        }
-
-        .status-completed {
-            background-color: #d4edda;
-            color: #155724;
-        }
-
-        .status-pending {
-            background-color: #fff3cd;
-            color: #856404;
-        }
-
-        .btn {
-            padding: 0.75rem 1rem;
-            border-radius: 8px;
-            font-weight: 500;
-            display: inline-flex;
-            align-items: center;
-            gap: 0.5rem;
-            transition: var(--transition);
-            font-size: 0.875rem;
-            width: 100%;
-            justify-content: center;
-        }
-
-        .btn-primary {
-            background-color: var(--primary-color);
-            border: none;
-            color: white;
-        }
-
-        .btn-primary:hover {
-            background-color: var(--primary-light);
-            transform: translateY(-1px);
-        }
-
-        .btn-secondary {
-            background-color: #6c757d;
-            border: none;
-            color: white;
-        }
-
-        .btn-secondary:hover {
-            background-color: #5a6268;
-            transform: translateY(-1px);
-        }
-
-        .fade-in {
-            animation: fadeIn 0.3s ease-in;
-        }
-
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(10px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-
-        /* Desktop styles */
-        @media (min-width: 769px) {
-            .main-content {
-                margin-left: 280px;
-                padding: 2rem;
-                width: calc(100% - 280px);
-            }
-
-            body:has(.sidebar.collapsed) .main-content {
-                margin-left: 70px;
-                width: calc(100% - 70px);
-            }
-
-            .page-header {
-                padding: 1.5rem;
-                margin-bottom: 2rem;
-            }
-
-            .page-title {
-                font-size: 1.5rem;
-            }
-
-            .card-header {
-                padding: 1.5rem;
-            }
-
-            .card-title {
-                font-size: 1.2rem;
-            }
-
-            .card-body {
-                padding: 1.5rem;
-            }
-
-            .form-label {
-                font-size: 1rem;
-            }
-
-            .form-control {
-                font-size: 1rem;
-            }
-
-            .btn {
-                font-size: 1rem;
-                width: auto;
-            }
-
-            .btn-group {
-                display: flex;
-                gap: 1rem;
-            }
-        }
-
-        /* Mobile styles */
-        @media (max-width: 768px) {
-            .btn-group {
-                display: grid;
-                gap: 0.5rem;
-            }
-
-            .table-responsive {
-                margin: 0 -1rem;
-            }
-
-            .table {
-                margin: 0 1rem;
-            }
-
-            .table td {
-                white-space: normal;
-                min-width: 120px;
-            }
-
-            .table td:first-child {
-                position: sticky;
-                left: 0;
-                background-color: white;
-                z-index: 1;
-            }
-        }
+        .stagger > * { opacity: 0; animation: fadeIn 0.5s ease forwards; }
+        .stagger > *:nth-child(1) { animation-delay: 0.04s; }
+        .stagger > *:nth-child(2) { animation-delay: 0.10s; }
+        .stagger > *:nth-child(3) { animation-delay: 0.16s; }
+        .filter-card { margin-bottom: 1.4rem; }
+        .filter-card .card-body { padding: 1.1rem 1.25rem; }
+        .ph-table thead th { background: var(--mib-surface-2); white-space: nowrap; }
     </style>
 </head>
-<body>
-    <%- include('../partials/sidebar', { userRole: userRole }) %>
+<body class="app-shell">
+    <%- include('../partials/sidebar', { userRole: userRole, path: '/productions/stock-updated' }) %>
 
-    <div class="main-content">
-        <div class="page-header fade-in">
-            <h1 class="page-title">
-                <i class="bi bi-box-seam-fill"></i>
-                Stock Updated Productions
-            </h1>
-            <p class="page-subtitle">View productions with updated stock status</p>
+    <%
+        /* ---- Defensive normalisation ---- */
+        const prodList  = (typeof productions !== 'undefined' && productions) ? productions : [];
+        const sd        = (typeof startDate !== 'undefined' && startDate) ? startDate : '';
+        const ed        = (typeof endDate !== 'undefined' && endDate) ? endDate : '';
+
+        /* status badge helper (shared design system) */
+        const KNOWN_STATUS = new Set(['pending','processing','onprod','on-production','production-completed','completed','approved','paid','delivered','on-delivery','ready-to-deliver','partially-delivered','open','printed','scheduled','cancelled','declined','rejected','neutral']);
+        const sb = (s) => { const k = String(s || '').toLowerCase().replace(/\s+/g, '-'); return 'status-' + (KNOWN_STATUS.has(k) ? k : 'neutral'); };
+        const fmtDate = (d) => {
+            if (!d) return '—';
+            try { return new Date(d).toISOString().split('T')[0]; }
+            catch (e) { return '—'; }
+        };
+    %>
+
+    <div class="content content-wide">
+
+        <%- include('../partials/page-header', {
+              pageTitle: 'Productions History',
+              pageIcon: 'bi-box-seam-fill',
+              pageSubtitle: 'Productions whose stock has been updated — filter by date range to review past batches.',
+              actionsHtml: '<a href="/dashboard/production" class="btn btn-light"><i class="bi bi-arrow-left"></i> Back to Dashboard</a>'
+        }) %>
+
+        <!-- ===================== Quick stats ===================== -->
+        <div class="quick-stats stagger">
+            <div class="stat-card">
+                <div class="stat-icon is-success"><i class="bi bi-check2-circle"></i></div>
+                <div class="stat-body">
+                    <div class="stat-label">Stock-Updated Batches</div>
+                    <div class="stat-value"><%= prodList.length %></div>
+                    <span class="stat-sub">In the current selection</span>
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon is-info"><i class="bi bi-calendar-range"></i></div>
+                <div class="stat-body">
+                    <div class="stat-label">From</div>
+                    <div class="stat-value" style="font-size:1.35rem"><%= sd || 'Earliest' %></div>
+                    <span class="stat-sub">Start date filter</span>
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon is-warning"><i class="bi bi-calendar-check"></i></div>
+                <div class="stat-body">
+                    <div class="stat-label">To</div>
+                    <div class="stat-value" style="font-size:1.35rem"><%= ed || 'Latest' %></div>
+                    <span class="stat-sub">End date filter</span>
+                </div>
+            </div>
         </div>
 
-        <div class="card fade-in">
+        <!-- ===================== Filter ===================== -->
+        <div class="card filter-card fade-in">
             <div class="card-header">
-                <h2 class="card-title">
-                    <i class="bi bi-calendar-range"></i>
-                    Filter by Date Range
-                </h2>
+                <h2 class="card-title"><i class="bi bi-funnel"></i> Filter by Date Range</h2>
             </div>
             <div class="card-body">
                 <form action="/productions/stock-updated" method="GET">
-                    <div class="row g-3">
+                    <div class="row g-3 align-items-end">
                         <div class="col-md-4">
-                            <div class="form-group">
-                                <label class="form-label" for="startDate">Start Date</label>
-                                <input type="date" class="form-control" id="startDate" name="startDate" value="<%= startDate %>">
-                            </div>
+                            <label class="form-label" for="startDate">Start Date</label>
+                            <input type="date" class="form-control" id="startDate" name="startDate" value="<%= sd %>">
                         </div>
                         <div class="col-md-4">
-                            <div class="form-group">
-                                <label class="form-label" for="endDate">End Date</label>
-                                <input type="date" class="form-control" id="endDate" name="endDate" value="<%= endDate %>">
-                            </div>
+                            <label class="form-label" for="endDate">End Date</label>
+                            <input type="date" class="form-control" id="endDate" name="endDate" value="<%= ed %>">
                         </div>
-                        <div class="col-md-4 d-flex align-items-end">
-                            <button type="submit" class="btn btn-primary">
-                                <i class="bi bi-funnel"></i>
-                                Apply Filter
-                            </button>
+                        <div class="col-md-4 d-flex gap-2">
+                            <button type="submit" class="btn btn-primary"><i class="bi bi-funnel"></i> Apply Filter</button>
+                            <% if (sd || ed) { %>
+                                <a href="/productions/stock-updated" class="btn btn-light"><i class="bi bi-x-lg"></i> Clear</a>
+                            <% } %>
                         </div>
                     </div>
                 </form>
             </div>
         </div>
 
-        <div class="card fade-in">
+        <!-- ===================== Production list ===================== -->
+        <div class="table-card">
             <div class="card-header">
-                <h2 class="card-title">
-                    <i class="bi bi-table"></i>
-                    Production List
-                </h2>
+                <h2 class="card-title"><i class="bi bi-table"></i> Production List</h2>
             </div>
-            <div class="card-body">
-                <div class="table-responsive">
-                    <table class="table">
-                        <thead>
-                            <tr>
-                                <th>PREQ ID</th>
-                                <th>Batch Number</th>
-                                <th>Product Name</th>
-                                <th>Quantity</th>
-                                <th>Start Date</th>
-                                <th>Deadline Date</th>
-                                <th>Status</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <% if (productions && productions.length > 0) { %>
-                                <% productions.forEach(function(production) { %>
-                                    <tr>
-                                        <td>#<%= production.productionRequestId %></td>
-                                        <td><%= production.batchNumber %></td>
-                                        <td><%= production.Product.name %></td>
-                                        <td><%= production.quantity %> Kg</td>
-                                        <td><%= production.startDate.toISOString().split('T')[0] %></td>
-                                        <td><%= production.deadlineDate.toISOString().split('T')[0] %></td>
-                                        <td>
-                                            <span class="status-badge status-completed">
-                                                <i class="bi bi-check-circle"></i>
-                                                <%= production.status %>
-                                            </span>
-                                        </td>
-                                    </tr>
-                                <% }); %>
-                            <% } else { %>
+            <div class="table-responsive">
+                <table class="table table-cards align-middle ph-table">
+                    <thead>
+                        <tr>
+                            <th>PREQ ID</th>
+                            <th>Batch Number</th>
+                            <th>Product Name</th>
+                            <th class="text-end">Quantity</th>
+                            <th>Start Date</th>
+                            <th>Deadline Date</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <% if (prodList.length > 0) { %>
+                            <% prodList.forEach(function(production) { %>
                                 <tr>
-                                    <td colspan="7" class="text-center text-muted">
-                                        <i class="bi bi-inbox fs-4 d-block mb-2"></i>
-                                        No productions found with stock updated
+                                    <td data-label="PREQ ID"><span class="cell-strong">#<%= production.productionRequestId %></span></td>
+                                    <td data-label="Batch Number"><%= production.batchNumber || 'Not Generated' %></td>
+                                    <td data-label="Product Name"><span class="cell-strong"><%= production.Product ? production.Product.name : '—' %></span></td>
+                                    <td data-label="Quantity" class="text-end num"><%= production.quantity %> Kg</td>
+                                    <td data-label="Start Date"><%= fmtDate(production.startDate) %></td>
+                                    <td data-label="Deadline Date"><%= fmtDate(production.deadlineDate) %></td>
+                                    <td data-label="Status">
+                                        <span class="status-badge <%= sb(production.status) %>">
+                                            <i class="bi bi-check-circle"></i> <%= production.status %>
+                                        </span>
                                     </td>
                                 </tr>
-                            <% } %>
-                        </tbody>
-                    </table>
-                </div>
+                            <% }); %>
+                        <% } else { %>
+                            <tr class="is-empty-row">
+                                <td colspan="7">
+                                    <div class="empty-state">
+                                        <i class="bi bi-inbox"></i>
+                                        <h4>No productions found</h4>
+                                        <p>No stock-updated productions match the selected date range.</p>
+                                    </div>
+                                </td>
+                            </tr>
+                        <% } %>
+                    </tbody>
+                </table>
             </div>
         </div>
 
-        <div class="mt-4">
-            <a href="/dashboard/production" class="btn btn-secondary">
-                <i class="bi bi-arrow-left"></i>
-                Back to Dashboard
-            </a>
-        </div>
     </div>
-
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
-    <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            // Handle sidebar state changes
-            const sidebar = document.querySelector('.sidebar');
-            const mainContent = document.querySelector('.main-content');
-
-            function updateContentWidth() {
-                if (window.innerWidth > 768) {
-                    if (sidebar.classList.contains('collapsed')) {
-                        mainContent.style.marginLeft = '70px';
-                        mainContent.style.width = 'calc(100% - 70px)';
-                    } else {
-                        mainContent.style.marginLeft = '280px';
-                        mainContent.style.width = 'calc(100% - 280px)';
-                    }
-                } else {
-                    mainContent.style.marginLeft = '0';
-                    mainContent.style.width = '100%';
-                }
-            }
-
-            // Initial width update
-            updateContentWidth();
-
-            // Watch for sidebar class changes
-            const observer = new MutationObserver(function(mutations) {
-                mutations.forEach(function(mutation) {
-                    if (mutation.attributeName === 'class') {
-                        updateContentWidth();
-                    }
-                });
-            });
-
-            observer.observe(sidebar, { attributes: true });
-
-            // Handle window resize
-            window.addEventListener('resize', updateContentWidth);
-        });
-    </script>
 </body>
 </html>

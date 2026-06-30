@@ -974,7 +974,8 @@ exports.getRAndDOrders = async (req, res) => {
             userRole,
             userId: req.user.id,
             users, // Add users data
-            path: '/dashboard/rd'
+            path: '/dashboard/rd',
+            messages: req.flash()
         });
     } catch (error) {
         console.error('Error fetching orders, formula requests, and TDS/MSDS requests:', error);

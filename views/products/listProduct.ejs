@@ -14,6 +14,14 @@
         .customer-price-item { padding: 0.4rem 0; border-bottom: 1px solid var(--mib-border); font-size: 0.85rem; }
         .customer-price-item:last-child { border-bottom: none; }
         .more-indicator { color: var(--mib-primary); font-size: 0.78rem; margin-left: 0.4rem; cursor: pointer; }
+
+        /* page-scoped helpers to echo the PPIC family look */
+        .stat-card .stat-sub { display: block; margin-top: 0.3rem; font-size: 0.76rem; color: var(--mib-text-muted); }
+        .stagger > * { opacity: 0; animation: fadeIn 0.5s ease forwards; }
+        .stagger > *:nth-child(1) { animation-delay: 0.04s; }
+        .stagger > *:nth-child(2) { animation-delay: 0.10s; }
+        .stagger > *:nth-child(3) { animation-delay: 0.16s; }
+        .stagger > *:nth-child(4) { animation-delay: 0.22s; }
     </style>
 </head>
 <body class="app-shell">
@@ -25,18 +33,70 @@
                 <h1 class="page-title"><i class="bi bi-box-seam"></i> Product Stock</h1>
                 <p class="page-subtitle">Overview of all products and their stock levels, prices, and formulas.</p>
             </div>
-            <div class="page-actions">
-                <div class="search">
-                    <i class="bi bi-search"></i>
-                    <input type="text" class="form-control search-input" placeholder="Search products…">
+        </div>
+
+        <%
+            const productList = (typeof products !== 'undefined' && products) ? products : [];
+            let totalStock = 0, lowStockCount = 0, missingFormula = 0;
+            productList.forEach(p => {
+                const s = Number(p.stock) || 0;
+                totalStock += s;
+                if (s <= 0) lowStockCount++;
+                if (!p.formula) missingFormula++;
+            });
+            const fmtNum = (n) => (Number(n) || 0).toLocaleString('id-ID');
+        %>
+
+        <div class="quick-stats stagger">
+            <div class="stat-card">
+                <div class="stat-icon"><i class="bi bi-box-seam"></i></div>
+                <div class="stat-body">
+                    <div class="stat-label">Total Products</div>
+                    <div class="stat-value"><%= fmtNum(productList.length) %></div>
+                    <span class="stat-sub">In the catalogue</span>
                 </div>
+            </div>
+            <% if (userRole == 'Product Warehouse' || userRole == 'PPIC') { %>
+            <div class="stat-card">
+                <div class="stat-icon is-info"><i class="bi bi-droplet-half"></i></div>
+                <div class="stat-body">
+                    <div class="stat-label">Total Stock</div>
+                    <div class="stat-value"><%= fmtNum(Math.round(totalStock)) %></div>
+                    <span class="stat-sub">KG on hand</span>
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon <%= lowStockCount > 0 ? 'is-danger' : 'is-success' %>"><i class="bi bi-exclamation-triangle"></i></div>
+                <div class="stat-body">
+                    <div class="stat-label">Out of Stock</div>
+                    <div class="stat-value"><%= fmtNum(lowStockCount) %></div>
+                    <span class="stat-sub">Products at zero</span>
+                </div>
+            </div>
+            <% } %>
+            <% if (userRole == 'R&D') { %>
+            <div class="stat-card">
+                <div class="stat-icon <%= missingFormula > 0 ? 'is-warning' : 'is-success' %>"><i class="bi bi-file-earmark-text"></i></div>
+                <div class="stat-body">
+                    <div class="stat-label">Missing Formula</div>
+                    <div class="stat-value"><%= fmtNum(missingFormula) %></div>
+                    <span class="stat-sub">Awaiting R&amp;D</span>
+                </div>
+            </div>
+            <% } %>
+        </div>
+
+        <div class="toolbar">
+            <div class="search">
+                <i class="bi bi-search"></i>
+                <input type="text" class="form-control search-input" placeholder="Search products…">
             </div>
         </div>
 
         <div class="table-card fade-in">
             <div class="card-header"><h2 class="card-title"><i class="bi bi-list-ul"></i> Product List</h2></div>
             <div class="table-responsive">
-                <table class="table align-middle">
+                <table class="table table-cards align-middle">
                     <thead>
                         <tr>
                             <th>ID</th>
@@ -50,18 +110,19 @@
                         </tr>
                     </thead>
                     <tbody>
-                        <% products.forEach(product => { %>
+                        <% if (productList.length > 0) { %>
+                        <% productList.forEach(product => { %>
                             <tr>
-                                <td class="cell-sub">#<%= product.id %></td>
-                                <td class="cell-strong"><%= product.name %></td>
+                                <td data-label="ID" class="cell-sub">#<%= product.id %></td>
+                                <td data-label="Name" class="cell-strong"><%= product.name %></td>
                                 <% if (userRole == 'Marketing' || userRole == 'R&D') { %>
-                                    <td>
+                                    <td data-label="TDS">
                                         <% if (product.tds) { %><a href="/<%= product.tds %>" class="text-decoration-none" target="_blank"><i class="bi bi-file-earmark-pdf"></i> TDS</a>
                                         <% } else if (userRole === 'Marketing') { %>
                                             <form action="/tdsmsdsRequest/create" method="POST"><input type="hidden" name="productId" value="<%= product.id %>"><input type="hidden" name="requestType" value="TDS"><button type="submit" class="btn btn-sm btn-soft"><i class="bi bi-plus-lg"></i> Request</button></form>
                                         <% } else { %><span class="cell-sub">—</span><% } %>
                                     </td>
-                                    <td>
+                                    <td data-label="MSDS">
                                         <% if (product.msds) { %><a href="/<%= product.msds %>" class="text-decoration-none" target="_blank"><i class="bi bi-file-earmark-pdf"></i> MSDS</a>
                                         <% } else if (userRole === 'Marketing') { %>
                                             <form action="/tdsmsdsRequest/create" method="POST"><input type="hidden" name="productId" value="<%= product.id %>"><input type="hidden" name="requestType" value="MSDS"><button type="submit" class="btn btn-sm btn-soft"><i class="bi bi-plus-lg"></i> Request</button></form>
@@ -69,12 +130,12 @@
                                     </td>
                                 <% } %>
                                 <% if (userRole == 'Product Warehouse' || userRole == 'PPIC') { %>
-                                    <td><%= product.density %></td>
-                                    <td class="num"><%= product.stock %> KG</td>
-                                    <td class="num"><%= (product.stock / product.density).toFixed(2) %> L</td>
+                                    <td data-label="Density"><%= product.density %></td>
+                                    <td data-label="Stock (KG)" class="num"><%= product.stock %> KG</td>
+                                    <td data-label="Stock (L)" class="num"><%= (product.stock / product.density).toFixed(2) %> L</td>
                                 <% } %>
                                 <% if (userRole == 'Marketing') { %>
-                                    <td>
+                                    <td data-label="Price/Kg">
                                         <% if (product.Customers && product.Customers.length > 0) { %>
                                             <div class="customer-pricing">
                                                 <div><% product.Customers.slice(0, 2).forEach((customer, index) => { %><%= customer.name %>: Rp<%= customer.ProductCustomer && customer.ProductCustomer.price ? Math.round(customer.ProductCustomer.price).toLocaleString('id-ID') : '0' %><%= index < Math.min(product.Customers.length, 2) - 1 ? ', ' : '' %><% }) %><% if (product.Customers.length > 2) { %><span class="more-indicator">+<%= product.Customers.length - 2 %> more</span><% } %></div>
@@ -82,7 +143,7 @@
                                             </div>
                                         <% } else { %>Rp <span class="price-format"><%= product.price ? product.price.toLocaleString('id-ID', {minimumFractionDigits: 2, maximumFractionDigits: 2}) : '0.00' %></span><small class="cell-sub d-block">(No customer pricing)</small><% } %>
                                     </td>
-                                    <td>
+                                    <td data-label="Price/L">
                                         <% if (product.Customers && product.Customers.length > 0) { %>
                                             <div class="customer-pricing">
                                                 <div><% product.Customers.slice(0, 2).forEach((customer, index) => { %><%= customer.name %>: Rp<%= customer.ProductCustomer && customer.ProductCustomer.price ? Math.round(customer.ProductCustomer.price * product.density).toLocaleString('id-ID') : '0' %><%= index < Math.min(product.Customers.length, 2) - 1 ? ', ' : '' %><% }) %><% if (product.Customers.length > 2) { %><span class="more-indicator">+<%= product.Customers.length - 2 %> more</span><% } %></div>
@@ -92,14 +153,14 @@
                                     </td>
                                 <% } %>
                                 <% if (userRole == 'R&D') { %>
-                                    <td><% if (product.formula) { %><a href="/uploads/<%= product.formula %>" class="text-decoration-none" target="_blank"><i class="bi bi-file-earmark-pdf"></i> PDF</a><% } else { %><span class="cell-sub">—</span><% } %></td>
+                                    <td data-label="Formula"><% if (product.formula) { %><a href="/uploads/<%= product.formula %>" class="text-decoration-none" target="_blank"><i class="bi bi-file-earmark-pdf"></i> PDF</a><% } else { %><span class="cell-sub">—</span><% } %></td>
                                 <% } %>
-                                <td class="cell-sub">
+                                <td data-label="Last Updated" class="cell-sub">
                                     <% const d = new Date(product.updatedAt); const p2 = n => n.toString().padStart(2,'0'); %>
                                     <%= `${p2(d.getDate())}-${p2(d.getMonth()+1)}-${d.getFullYear()} ${p2(d.getHours())}:${p2(d.getMinutes())}` %>
                                 </td>
                                 <% if (userRole != 'PPIC') { %>
-                                <td class="text-end">
+                                <td data-label="Actions" class="text-end">
                                     <div class="d-flex gap-1 justify-content-end flex-wrap">
                                         <% if (userRole === 'Marketing') { %><a href="/productCustomer/assignCustomer/<%= product.id %>" class="btn btn-sm btn-soft"><i class="bi bi-people"></i> Assign</a><% } %>
                                         <% if (userRole === 'R&D') { %><a href="/products/<%= product.id %>/editFormula" class="btn btn-sm btn-soft"><i class="bi bi-pencil-square"></i> Formula</a><% } %>
@@ -110,6 +171,9 @@
                                 <% } %>
                             </tr>
                         <% }) %>
+                        <% } else { %>
+                            <tr class="is-empty-row"><td colspan="12"><div class="empty-state"><i class="bi bi-inbox"></i><h4>No products found</h4><p>Products will appear here once they are added.</p></div></td></tr>
+                        <% } %>
                     </tbody>
                 </table>
             </div>

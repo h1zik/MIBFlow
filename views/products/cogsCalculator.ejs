@@ -1,613 +1,259 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>COGS Calculator</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.7.2/font/bootstrap-icons.css" rel="stylesheet">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <%- include('../partials/head', { pageTitle: 'COGS Calculator' }) %>
     <style>
+        /* COGS Calculator — page-scoped flourishes on the shared mibflow.css system */
         :root {
-            --primary-color: #1b5e20;
-            --primary-light: #388E3C;
-            --background-light: #f4f6f8;
-            --text-color: #333;
-            --shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-            --transition: all 0.3s ease;
-        }
-
-        body {
-            font-family: 'Inter', sans-serif;
-            background-color: var(--background-light);
-            margin: 0;
-            padding: 0;
-            min-height: 100vh;
-        }
-
-        .main-content {
-            margin-left: 0;
-            padding: 1rem;
-            width: 100%;
-            transition: var(--transition);
-        }
-
-        .page-header {
-            background: white;
-            padding: 1rem;
-            border-radius: 15px;
-            box-shadow: var(--shadow);
-            margin-bottom: 1rem;
-        }
-
-        .page-title {
-            margin: 0;
-            color: var(--primary-color);
-            font-weight: 600;
-            font-size: 1.25rem;
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-        }
-
-        .page-subtitle {
-            color: #6c757d;
-            font-size: 0.875rem;
-            margin-top: 0.5rem;
-        }
-
-        .card {
-            background: white;
-            border-radius: 15px;
-            box-shadow: var(--shadow);
-            margin-bottom: 1rem;
-            border: none;
-            overflow: hidden;
-        }
-
-        .card-header {
-            background-color: var(--background-light);
-            padding: 1rem;
-            border-bottom: 1px solid rgba(0, 0, 0, 0.1);
-        }
-
-        .card-title {
-            color: var(--primary-color);
-            font-weight: 600;
-            font-size: 1rem;
-            margin: 0;
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-        }
-
-        .card-body {
-            padding: 1rem;
-        }
-
-        .form-group {
-            margin-bottom: 1rem;
-        }
-
-        .form-label {
-            font-weight: 600;
-            color: var(--primary-color);
-            margin-bottom: 0.5rem;
-            font-size: 0.875rem;
-        }
-
-        .form-control {
-            border-radius: 8px;
-            padding: 0.75rem 1rem;
-            border: 1px solid rgba(0, 0, 0, 0.1);
-            font-size: 0.875rem;
-            transition: var(--transition);
-        }
-
-        .form-control:focus {
-            border-color: var(--primary-color);
-            box-shadow: 0 0 0 0.2rem rgba(27, 94, 32, 0.25);
-        }
-
-        .form-select {
-            border-radius: 8px;
-            padding: 0.75rem 1rem;
-            border: 1px solid rgba(0, 0, 0, 0.1);
-            font-size: 0.875rem;
-            transition: var(--transition);
-            background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3e%3cpath fill='none' stroke='%23343a40' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='m2 5 6 6 6-6'/%3e%3c/svg%3e");
-            background-repeat: no-repeat;
-            background-position: right 1rem center;
-            background-size: 16px 12px;
-        }
-
-        .form-select:focus {
-            border-color: var(--primary-color);
-            box-shadow: 0 0 0 0.2rem rgba(27, 94, 32, 0.25);
+            --primary-color: var(--mib-primary);
+            --primary-light: var(--mib-primary-light);
+            --primary-dark: var(--mib-primary-dark);
         }
 
         .raw-material-group {
-            background-color: var(--background-light);
+            background-color: var(--mib-surface-2);
+            border: 1px solid var(--mib-border);
             padding: 1rem;
-            border-radius: 8px;
+            border-radius: var(--mib-radius-sm);
             margin-bottom: 1rem;
             position: relative;
             opacity: 1;
             transition: opacity 0.3s ease;
+            display: flex;
+            gap: 1rem;
         }
-
-        .raw-material-group.loading {
-            opacity: 0.5;
-            pointer-events: none;
-        }
-
-        .raw-material-group:last-child {
-            margin-bottom: 0;
-        }
-
-        .raw-material-group > div {
-            flex: 1;
-            min-width: 0;
-        }
+        .raw-material-group.loading { opacity: 0.5; pointer-events: none; }
+        .raw-material-group:last-child { margin-bottom: 0; }
+        .raw-material-group > div { flex: 1; min-width: 0; }
 
         .raw-material-total {
-            background-color: var(--background-light);
-            padding: 1rem;
-            border-radius: 8px;
+            background-color: var(--mib-surface-2);
+            border: 1px solid var(--mib-border);
+            padding: 0.9rem 1rem;
+            border-radius: var(--mib-radius-sm);
             margin-top: 1rem;
             display: flex;
             justify-content: space-between;
             align-items: center;
+            font-weight: 600;
         }
-
-        .raw-material-total.invalid {
-            background-color: #f8d7da;
-            color: #842029;
-        }
-
-        .raw-material-total.valid {
-            background-color: #d1e7dd;
-            color: #0f5132;
-        }
+        .raw-material-total.invalid { background-color: var(--mib-danger-soft); color: #991b1b; border-color: #fecaca; }
+        .raw-material-total.valid   { background-color: var(--mib-success-soft); color: #166534; border-color: #bbf7d0; }
 
         .loading-overlay {
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
+            position: absolute; inset: 0;
             background: rgba(255, 255, 255, 0.8);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            border-radius: 8px;
-            z-index: 10;
+            display: flex; align-items: center; justify-content: center;
+            border-radius: var(--mib-radius-sm); z-index: 10;
         }
-
         .loading-spinner {
-            width: 2rem;
-            height: 2rem;
-            border: 3px solid var(--background-light);
-            border-top-color: var(--primary-color);
+            width: 2rem; height: 2rem;
+            border: 3px solid var(--mib-surface-2);
+            border-top-color: var(--mib-primary);
             border-radius: 50%;
             animation: spin 1s linear infinite;
         }
+        @keyframes spin { to { transform: rotate(360deg); } }
 
         .error-message {
-            padding: 1rem;
-            background-color: #f8d7da;
-            color: #842029;
-            border-radius: 8px;
+            padding: 0.9rem 1rem;
+            background-color: var(--mib-danger-soft);
+            color: #991b1b;
+            border: 1px solid #fecaca;
+            border-radius: var(--mib-radius-sm);
             margin-bottom: 1rem;
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
+            display: flex; align-items: center; gap: 0.5rem;
         }
 
-        .input-group-text {
-            background-color: var(--background-light);
-            border-color: rgba(0, 0, 0, 0.1);
-            color: #6c757d;
-            font-weight: 500;
-        }
-
-        .btn {
-            padding: 0.75rem 1rem;
-            border-radius: 8px;
-            font-weight: 500;
-            display: inline-flex;
-            align-items: center;
-            gap: 0.5rem;
-            transition: var(--transition);
-            font-size: 0.875rem;
-            width: 100%;
-            justify-content: center;
-        }
-
-        .btn-primary {
-            background-color: var(--primary-color);
-            border: none;
-            color: white;
-        }
-
-        .btn-primary:hover {
-            background-color: var(--primary-light);
-            transform: translateY(-1px);
-        }
-
-        .btn-outline {
-            background: none;
-            border: 2px solid var(--primary-color);
-            color: var(--primary-color);
-        }
-
-        .btn-outline:hover {
-            background-color: var(--primary-color);
-            color: white;
-            transform: translateY(-1px);
-        }
-
-        .calculation-result {
-            margin-top: 2rem;
-            padding-top: 2rem;
-            border-top: 1px solid rgba(0, 0, 0, 0.1);
-        }
-
+        /* Result cards */
         .result-card {
-            background: white;
-            border-radius: 15px;
+            background: var(--mib-surface);
+            border: 1px solid var(--mib-border);
+            border-radius: var(--mib-radius);
+            box-shadow: var(--mib-shadow);
             padding: 1.5rem;
             text-align: center;
-            margin-bottom: 1rem;
+            height: 100%;
         }
+        .result-label { font-size: 0.82rem; color: var(--mib-text-muted); margin-bottom: 0.5rem; font-weight: 600; }
+        .result-value { font-size: 2rem; font-weight: 700; color: var(--mib-text); font-variant-numeric: tabular-nums; }
+        .result-value.cogs  { color: var(--mib-primary-dark); }
+        .result-value.final { color: var(--mib-primary); }
 
-        .result-label {
-            font-size: 0.875rem;
-            color: #6c757d;
-            margin-bottom: 0.5rem;
-        }
-
-        .result-value {
-            font-size: 2rem;
-            font-weight: 600;
-            color: var(--primary-color);
-        }
-
-        .result-value.cogs {
-            color: var(--primary-color);
-        }
-
-        .result-value.margin {
-            color: var(--primary-light);
-        }
-
-        .result-value.final {
-            color: #00d9ff;
-        }
-
-        .details-list {
-            list-style: none;
-            padding: 0;
-            margin: 0;
-        }
-
+        .details-list { list-style: none; padding: 0; margin: 0; }
         .details-item {
-            display: flex;
-            justify-content: space-between;
-            padding: 0.75rem;
-            border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+            display: flex; justify-content: space-between; gap: 1rem;
+            padding: 0.75rem 0; border-bottom: 1px solid var(--mib-border);
         }
+        .details-item:last-child { border-bottom: none; }
+        .details-label { color: var(--mib-text-muted); }
+        .details-value { font-weight: 600; color: var(--mib-text); font-variant-numeric: tabular-nums; }
 
-        .details-item:last-child {
-            border-bottom: none;
-        }
+        .calculation-result { margin-top: 2rem; padding-top: 0.5rem; }
 
-        .details-label {
-            color: #6c757d;
-        }
-
-        .details-value {
-            font-weight: 600;
-            color: var(--text-color);
-        }
-
-        .fade-in {
-            animation: fadeIn 0.3s ease-in;
-        }
-
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(10px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-
-        @keyframes spin {
-            to { transform: rotate(360deg); }
-        }
-
-        /* Desktop styles */
-        @media (min-width: 769px) {
-            .main-content {
-                margin-left: 280px;
-                padding: 2rem;
-                width: calc(100% - 280px);
-            }
-
-            body:has(.sidebar.collapsed) .main-content {
-                margin-left: 70px;
-                width: calc(100% - 70px);
-            }
-
-            .page-header {
-                padding: 1.5rem;
-                margin-bottom: 2rem;
-            }
-
-            .page-title {
-                font-size: 1.5rem;
-            }
-
-            .card-header {
-                padding: 1.5rem;
-            }
-
-            .card-title {
-                font-size: 1.2rem;
-            }
-
-            .card-body {
-                padding: 1.5rem;
-            }
-
-            .form-label {
-                font-size: 1rem;
-            }
-
-            .form-control, .form-select {
-                font-size: 1rem;
-            }
-
-            .btn {
-                font-size: 1rem;
-                width: auto;
-            }
-
-            .btn-group {
-                display: flex;
-                gap: 1rem;
-            }
-
-            .raw-material-group {
-                display: flex;
-                gap: 1rem;
-            }
-
-            .raw-material-group > div {
-                flex: 1;
-            }
-        }
-
-        /* Mobile styles */
         @media (max-width: 768px) {
-            .btn-group {
-                display: grid;
-                gap: 0.5rem;
-            }
-
-            .raw-material-group {
-                display: grid;
-                gap: 1rem;
-            }
-
-            .result-value {
-                font-size: 1.5rem;
-            }
-
-            .raw-material-group > div {
-                width: 100%;
-                min-width: 0;
-            }
-        }
-
-        @media print {
-            .main-content {
-                margin: 0;
-                width: 100%;
-            }
+            .raw-material-group { display: grid; }
+            .result-value { font-size: 1.5rem; }
         }
     </style>
 </head>
-<body>
-    <%- include('../partials/sidebar', { userRole: userRole }) %>
+<body class="app-shell">
+    <%- include('../partials/sidebar', { userRole: userRole, path: '/overhead/cogs-calculator' }) %>
 
-    <div class="main-content">
-        <!-- Previous HTML content remains unchanged -->
-        <div class="page-header fade-in">
-            <h1 class="page-title">
-                <i class="bi bi-calculator"></i>
-                COGS Calculator
-            </h1>
-            <p class="page-subtitle">Calculate the Cost of Goods Sold for your products</p>
-        </div>
+    <%
+        /* ---- Defensive normalisation ---- */
+        const productList       = (typeof products !== 'undefined' && products) ? products : [];
+        const packagingList     = (typeof packagingOptions !== 'undefined' && packagingOptions) ? packagingOptions : [];
+        const rawMaterialList   = (typeof rawMaterial !== 'undefined' && rawMaterial) ? rawMaterial : [];
+        const productFormulaList = (typeof productFormulas !== 'undefined' && productFormulas) ? productFormulas : [];
+        const selProductType    = (typeof selectedProductType !== 'undefined' && selectedProductType) ? selectedProductType : 'existing';
+        const selProductName    = (typeof selectedProductName !== 'undefined' && selectedProductName) ? selectedProductName : '';
+        const calcResult        = (typeof calculationResult !== 'undefined') ? calculationResult : null;
+    %>
+
+    <div class="content content-wide">
+        <%- include('../partials/page-header', {
+              pageTitle: 'COGS Calculator',
+              pageIcon: 'bi-calculator',
+              pageSubtitle: 'Calculate the Cost of Goods Sold for your products.'
+        }) %>
 
         <form action="/overhead/calculate-cogs" method="POST" id="cogsForm">
-            <!-- Previous form content remains unchanged -->
-            <div class="card fade-in">
-                <div class="card-header">
-                    <h2 class="card-title">
-                        <i class="bi bi-box-seam"></i>
-                        Product Information
-                    </h2>
-                </div>
-                <div class="card-body">
-                    <div class="row g-3">
-                        <div class="col-md-6">
-                            <div class="form-group">
-                                <label class="form-label" for="productType">Product Type</label>
-                                <select class="form-select" id="productType" name="productType" required>
-                                    <option value="" selected disabled>Select product type</option>
-                                    <option value="existing" <%= selectedProductType === 'existing' ? 'selected' : '' %>>Existing Product</option>
-                                    <option value="new" <%= selectedProductType === 'new' ? 'selected' : '' %>>New Product</option>
-                                </select>
-                            </div>
-                        </div>
-
-                        <div class="col-md-6" id="productNameSection" style="<%= selectedProductType === 'existing' ? '' : 'display: none;' %>">
-                            <div class="form-group">
-                                <label class="form-label" for="productName">Product Name</label>
-                                <select class="form-select" id="productName" name="productName" <%= selectedProductType === 'existing' ? 'required' : '' %>>
-                                    <option value="" selected disabled>Select product</option>
-                                    <% products.forEach(product => { %>
-                                        <option value="<%= product.name %>" <%= (product.name === selectedProductName) ? 'selected' : '' %>><%= product.name %></option>
-                                    <% }); %>
-                                </select>
-                            </div>
-                        </div>
-
-                        <div class="col-md-6" id="newProductSection" style="<%= selectedProductType === 'new' ? '' : 'display: none;' %>">
-                            <div class="form-group">
-                                <label class="form-label" for="newProductName">New Product Name</label>
-                                <input type="text" class="form-control" id="newProductName" name="newProductName" <%= selectedProductType === 'new' ? 'required' : '' %>>
-                            </div>
-                        </div>
-
-                        <div class="col-md-6">
-                            <div class="form-group">
-                                <label class="form-label" for="packagingId">Packaging</label>
-                                <select class="form-select" id="packagingId" name="packagingId" required>
-                                    <option value="" selected disabled>Select packaging</option>
-                                    <% packagingOptions.forEach(packaging => { %>
-                                        <option value="<%= packaging.id %>"><%= packaging.name %> - <%= packaging.volume %>L</option>
-                                    <% }); %>
-                                </select>
-                            </div>
-                        </div>
+            <!-- ===================== Product Information ===================== -->
+            <div class="form-section fade-in">
+                <h2 class="form-section-title"><i class="bi bi-box-seam"></i> Product Information</h2>
+                <p class="form-section-desc">Choose an existing product or define a new one, plus its packaging.</p>
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <label class="form-label" for="productType">Product Type</label>
+                        <select class="form-select" id="productType" name="productType" required>
+                            <option value="" selected disabled>Select product type</option>
+                            <option value="existing" <%= selProductType === 'existing' ? 'selected' : '' %>>Existing Product</option>
+                            <option value="new" <%= selProductType === 'new' ? 'selected' : '' %>>New Product</option>
+                        </select>
                     </div>
-                </div>
-            </div>
 
-            <div class="card fade-in">
-                <div class="card-header">
-                    <h2 class="card-title">
-                        <i class="bi bi-tag"></i>
-                        Label Information
-                    </h2>
-                </div>
-                <div class="card-body">
-                    <div class="row g-3">
-                        <div class="col-md-4">
-                            <div class="form-group">
-                                <label class="form-label" for="labelWidth">Label Width (mm)</label>
-                                <input type="number" class="form-control" id="labelWidth" name="labelWidth" min="0" required>
-                            </div>
-                        </div>
-                        <div class="col-md-4">
-                            <div class="form-group">
-                                <label class="form-label" for="labelHeight">Label Height (mm)</label>
-                                <input type="number" class="form-control" id="labelHeight" name="labelHeight" min="0" required>
-                            </div>
-                        </div>
-                        <div class="col-md-4">
-                            <div class="form-group">
-                                <label class="form-label" for="paperPrice">A3 Paper Price</label>
-                                <div class="input-group">
-                                    <span class="input-group-text">Rp</span>
-                                    <input type="number" class="form-control" id="paperPrice" name="paperPrice" min="0" required>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <div class="card fade-in">
-                <div class="card-header">
-                    <h2 class="card-title">
-                        <i class="bi bi-gear"></i>
-                        Production Information
-                    </h2>
-                </div>
-                <div class="card-body">
-                    <div class="row g-3">
-                        <div class="col-md-4">
-                            <div class="form-group">
-                                <label class="form-label" for="batchMonth">Batch/Month</label>
-                                <input type="number" class="form-control" id="batchMonth" name="batchMonth" step="0.01" min="0" required>
-                            </div>
-                        </div>
-                        <div class="col-md-4">
-                            <div class="form-group">
-                                <label class="form-label" for="batchSize">Batch Size (L)</label>
-                                <input type="number" class="form-control" id="batchSize" name="batchSize" step="0.01" min="0" required>
-                            </div>
-                        </div>
-                        <div class="col-md-4">
-                            <div class="form-group">
-                                <label class="form-label" for="productionTime">Production Time (hours)</label>
-                                <input type="number" class="form-control" id="productionTime" name="productionTime" step="0.01" min="0" required>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <div class="card fade-in" id="rawMaterialsSection">
-                <div class="card-header">
-                    <h2 class="card-title">
-                        <i class="bi bi-box2"></i>
-                        Raw Materials
-                    </h2>
-                </div>
-                <div class="card-body">
-                    <div id="rawMaterialFields">
-                        <% if (selectedProductType === 'existing' && productFormulas.length > 0) { %>
-                            <% productFormulas.forEach((formula, index) => { %>
-                                <div class="raw-material-group">
-                                    <div class="form-group">
-                                        <label class="form-label">Raw Material</label>
-                                        <input type="text" class="form-control" value="<%= formula.RawMaterial.name %>" readonly>
-                                        <input type="hidden" name="rawMaterials[<%= index %>][id]" value="<%= formula.rawMaterialId %>">
-                                    </div>
-                                    <div class="form-group">
-                                        <label class="form-label">Percentage (%)</label>
-                                        <input type="number" class="form-control percentage-input" name="rawMaterials[<%= index %>][percentage]" value="<%= formula.percentage %>" readonly>
-                                    </div>
-                                </div>
+                    <div class="col-md-6" id="productNameSection" style="<%= selProductType === 'existing' ? '' : 'display: none;' %>">
+                        <label class="form-label" for="productName">Product Name</label>
+                        <select class="form-select" id="productName" name="productName" <%= selProductType === 'existing' ? 'required' : '' %>>
+                            <option value="" selected disabled>Select product</option>
+                            <% productList.forEach(product => { %>
+                                <option value="<%= product.name %>" <%= (product.name === selProductName) ? 'selected' : '' %>><%= product.name %></option>
                             <% }); %>
-                        <% } %>
+                        </select>
                     </div>
 
-                    <div id="rawMaterialTotal" class="raw-material-total" style="display: none;">
-                        <span>Total Percentage:</span>
-                        <span id="totalPercentage">0%</span>
+                    <div class="col-md-6" id="newProductSection" style="<%= selProductType === 'new' ? '' : 'display: none;' %>">
+                        <label class="form-label" for="newProductName">New Product Name</label>
+                        <input type="text" class="form-control" id="newProductName" name="newProductName" <%= selProductType === 'new' ? 'required' : '' %>>
                     </div>
 
-                    <div id="apiError" class="error-message" style="display: none;">
-                        <i class="bi bi-exclamation-triangle"></i>
-                        <span>Error loading product formulas. Please try again.</span>
+                    <div class="col-md-6">
+                        <label class="form-label" for="packagingId">Packaging</label>
+                        <select class="form-select" id="packagingId" name="packagingId" required>
+                            <option value="" selected disabled>Select packaging</option>
+                            <% packagingList.forEach(packaging => { %>
+                                <option value="<%= packaging.id %>"><%= packaging.name %> - <%= packaging.volume %>L</option>
+                            <% }); %>
+                        </select>
                     </div>
-
-                    <button type="button" class="btn btn-outline mt-3" id="addRawMaterialBtn" style="display: <%= selectedProductType === 'new' ? 'block' : 'none' %>;">
-                        <i class="bi bi-plus-lg"></i>
-                        Add Raw Material
-                    </button>
                 </div>
             </div>
 
-            <div class="btn-group mt-4">
-                <button type="submit" class="btn btn-primary" id="calculateBtn">
-                    <i class="bi bi-calculator"></i>
-                    Calculate COGS
+            <!-- ===================== Label Information ===================== -->
+            <div class="form-section fade-in">
+                <h2 class="form-section-title"><i class="bi bi-tag"></i> Label Information</h2>
+                <p class="form-section-desc">Label dimensions and paper price for sticker cost.</p>
+                <div class="row g-3">
+                    <div class="col-md-4">
+                        <label class="form-label" for="labelWidth">Label Width (mm)</label>
+                        <input type="number" class="form-control" id="labelWidth" name="labelWidth" min="0" required>
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label" for="labelHeight">Label Height (mm)</label>
+                        <input type="number" class="form-control" id="labelHeight" name="labelHeight" min="0" required>
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label" for="paperPrice">A3 Paper Price</label>
+                        <div class="input-group">
+                            <span class="input-group-text">Rp</span>
+                            <input type="number" class="form-control" id="paperPrice" name="paperPrice" min="0" required>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ===================== Production Information ===================== -->
+            <div class="form-section fade-in">
+                <h2 class="form-section-title"><i class="bi bi-gear"></i> Production Information</h2>
+                <p class="form-section-desc">Batch and production details used to spread overhead.</p>
+                <div class="row g-3">
+                    <div class="col-md-4">
+                        <label class="form-label" for="batchMonth">Batch/Month</label>
+                        <input type="number" class="form-control" id="batchMonth" name="batchMonth" step="0.01" min="0" required>
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label" for="batchSize">Batch Size (L)</label>
+                        <input type="number" class="form-control" id="batchSize" name="batchSize" step="0.01" min="0" required>
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label" for="productionTime">Production Time (hours)</label>
+                        <input type="number" class="form-control" id="productionTime" name="productionTime" step="0.01" min="0" required>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ===================== Raw Materials ===================== -->
+            <div class="form-section fade-in" id="rawMaterialsSection">
+                <h2 class="form-section-title"><i class="bi bi-box2"></i> Raw Materials</h2>
+                <p class="form-section-desc">Formula composition. For new products, percentages must total 100%.</p>
+                <div id="rawMaterialFields">
+                    <% if (selProductType === 'existing' && productFormulaList.length > 0) { %>
+                        <% productFormulaList.forEach((formula, index) => { %>
+                            <div class="raw-material-group">
+                                <div>
+                                    <label class="form-label">Raw Material</label>
+                                    <input type="text" class="form-control" value="<%= formula.RawMaterial.name %>" readonly>
+                                    <input type="hidden" name="rawMaterials[<%= index %>][id]" value="<%= formula.rawMaterialId %>">
+                                </div>
+                                <div>
+                                    <label class="form-label">Percentage (%)</label>
+                                    <input type="number" class="form-control percentage-input" name="rawMaterials[<%= index %>][percentage]" value="<%= formula.percentage %>" readonly>
+                                </div>
+                            </div>
+                        <% }); %>
+                    <% } %>
+                </div>
+
+                <div id="rawMaterialTotal" class="raw-material-total" style="display: none;">
+                    <span>Total Percentage:</span>
+                    <span id="totalPercentage">0%</span>
+                </div>
+
+                <div id="apiError" class="error-message" style="display: none;">
+                    <i class="bi bi-exclamation-triangle"></i>
+                    <span>Error loading product formulas. Please try again.</span>
+                </div>
+
+                <button type="button" class="btn btn-outline-primary mt-3" id="addRawMaterialBtn" style="display: <%= selProductType === 'new' ? 'inline-flex' : 'none' %>;">
+                    <i class="bi bi-plus-lg"></i> Add Raw Material
+                </button>
+            </div>
+
+            <div class="mt-4">
+                <button type="submit" class="btn btn-primary btn-lg" id="calculateBtn">
+                    <i class="bi bi-calculator"></i> Calculate COGS
                 </button>
             </div>
         </form>
 
-        <% if (calculationResult) { %>
+        <% if (calcResult) { %>
             <div class="calculation-result fade-in">
                 <div class="row g-3">
                     <div class="col-md-4">
                         <div class="result-card">
                             <div class="result-label">Cost of Goods Sold</div>
-                            <div class="result-value cogs">Rp <%= calculationResult.finalProductCost.toFixed(2) %></div>
+                            <div class="result-value cogs">Rp <%= calcResult.finalProductCost.toFixed(2) %></div>
                         </div>
                     </div>
 
@@ -628,28 +274,25 @@
 
                 <div class="card mt-4 fade-in">
                     <div class="card-header">
-                        <h2 class="card-title">
-                            <i class="bi bi-list-ul"></i>
-                            Cost Breakdown
-                        </h2>
+                        <h3 class="card-title"><i class="bi bi-list-ul"></i> Cost Breakdown</h3>
                     </div>
                     <div class="card-body">
                         <ul class="details-list">
                             <li class="details-item">
                                 <span class="details-label">Raw Material Cost per Product</span>
-                                <span class="details-value">Rp <%= (rawMatCostPerProduct ? rawMatCostPerProduct.toFixed(2) : "0.00") %></span>
+                                <span class="details-value">Rp <%= (typeof rawMatCostPerProduct !== 'undefined' && rawMatCostPerProduct ? rawMatCostPerProduct.toFixed(2) : "0.00") %></span>
                             </li>
                             <li class="details-item">
                                 <span class="details-label">Packaging Price per Liter</span>
-                                <span class="details-value">Rp <%= (packagingPricePerLiter ? packagingPricePerLiter.toFixed(2) : "0.00") %></span>
+                                <span class="details-value">Rp <%= (typeof packagingPricePerLiter !== 'undefined' && packagingPricePerLiter ? packagingPricePerLiter.toFixed(2) : "0.00") %></span>
                             </li>
                             <li class="details-item">
                                 <span class="details-label">Sticker Price per Pcs</span>
-                                <span class="details-value">Rp <%= (stickerPrice ? stickerPrice.toFixed(2) : "0.00") %></span>
+                                <span class="details-value">Rp <%= (typeof stickerPrice !== 'undefined' && stickerPrice ? stickerPrice.toFixed(2) : "0.00") %></span>
                             </li>
                             <li class="details-item">
                                 <span class="details-label">Overhead Cost per Kg</span>
-                                <span class="details-value">Rp <%= (cogsPerUnit ? cogsPerUnit.toFixed(2) : "0.00") %></span>
+                                <span class="details-value">Rp <%= (typeof cogsPerUnit !== 'undefined' && cogsPerUnit ? cogsPerUnit.toFixed(2) : "0.00") %></span>
                             </li>
                         </ul>
                     </div>
@@ -658,45 +301,8 @@
         <% } %>
     </div>
 
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
     <script>
         document.addEventListener('DOMContentLoaded', function() {
-            // Handle sidebar state changes
-            const sidebar = document.querySelector('.sidebar');
-            const mainContent = document.querySelector('.main-content');
-
-            function updateContentWidth() {
-                if (window.innerWidth > 768) {
-                    if (sidebar.classList.contains('collapsed')) {
-                        mainContent.style.marginLeft = '70px';
-                        mainContent.style.width = 'calc(100% - 70px)';
-                    } else {
-                        mainContent.style.marginLeft = '280px';
-                        mainContent.style.width = 'calc(100% - 280px)';
-                    }
-                } else {
-                    mainContent.style.marginLeft = '0';
-                    mainContent.style.width = '100%';
-                }
-            }
-
-            // Initial width update
-            updateContentWidth();
-
-            // Watch for sidebar class changes
-            const observer = new MutationObserver(function(mutations) {
-                mutations.forEach(function(mutation) {
-                    if (mutation.attributeName === 'class') {
-                        updateContentWidth();
-                    }
-                });
-            });
-
-            observer.observe(sidebar, { attributes: true });
-
-            // Handle window resize
-            window.addEventListener('resize', updateContentWidth);
-
             // Form validation
             const form = document.getElementById('cogsForm');
             const calculateBtn = document.getElementById('calculateBtn');
@@ -757,7 +363,7 @@
                     selectedProductType = this.value;
                     productNameSection.style.display = (selectedProductType === 'existing') ? 'block' : 'none';
                     newProductSection.style.display = (selectedProductType === 'new') ? 'block' : 'none';
-                    addRawMaterialBtn.style.display = (selectedProductType === 'new') ? 'block' : 'none';
+                    addRawMaterialBtn.style.display = (selectedProductType === 'new') ? 'inline-flex' : 'none';
                     rawMaterialFields.innerHTML = '';
                     rawMaterialTotal.style.display = 'none';
                 });
@@ -775,20 +381,20 @@
 
                             const response = await fetch(`/overhead/api/product-formulas?productName=${encodeURIComponent(productName)}`);
                             if (!response.ok) throw new Error('Failed to fetch product formulas');
-                            
+
                             const productFormulas = await response.json();
                             rawMaterialFields.innerHTML = '';
-                            
+
                             productFormulas.forEach((formula, index) => {
                                 const newField = document.createElement('div');
                                 newField.classList.add('raw-material-group', 'fade-in');
                                 newField.innerHTML = `
-                                    <div class="form-group">
+                                    <div>
                                         <label class="form-label">Raw Material</label>
                                         <input type="text" class="form-control" value="${formula.name}" readonly>
                                         <input type="hidden" name="rawMaterials[${index}][id]" value="${formula.id}">
                                     </div>
-                                    <div class="form-group">
+                                    <div>
                                         <label class="form-label">Percentage (%)</label>
                                         <input type="number" class="form-control percentage-input" value="${formula.percentage}" readonly>
                                     </div>
@@ -811,16 +417,16 @@
                     const newField = document.createElement('div');
                     newField.classList.add('raw-material-group', 'fade-in');
                     newField.innerHTML = `
-                        <div class="form-group">
+                        <div>
                             <label class="form-label">Raw Material</label>
                             <select class="form-select" name="rawMaterials[${index}][id]" required>
                                 <option value="" selected disabled>Select raw material</option>
-                                <% rawMaterial.forEach(material => { %>
+                                <% rawMaterialList.forEach(material => { %>
                                     <option value="<%= material.id %>"><%= material.name %></option>
                                 <% }); %>
                             </select>
                         </div>
-                        <div class="form-group">
+                        <div>
                             <label class="form-label">Percentage (%)</label>
                             <input type="number" class="form-control percentage-input" name="rawMaterials[${index}][percentage]" step="0.01" min="0" required>
                         </div>
@@ -836,7 +442,7 @@
             // Margin calculation
             const marginElement = document.getElementById('margin');
             const finalPriceElement = document.getElementById('finalPrice');
-            const cogs = parseFloat('<%= calculationResult ? calculationResult.finalProductCost : 0 %>');
+            const cogs = parseFloat('<%= calcResult ? calcResult.finalProductCost : 0 %>');
 
             if (marginElement && finalPriceElement) {
                 marginElement.addEventListener('input', function() {

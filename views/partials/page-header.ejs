@@ -1,14 +1,11 @@
 <%#
-  Reusable page header.
-  Locals:
+  Reusable page header. Locals:
     pageTitle      (string, required)
     pageSubtitle   (string, optional)
-    pageIcon       (string, optional bootstrap-icon name e.g. 'bi-cart')
-    breadcrumb     (array of { label, href? }, optional)
+    pageIcon       (string, optional bootstrap-icon name, e.g. 'bi-cart')
+    breadcrumb     (array of objects with label and optional href)
     actionsHtml    (raw HTML string for right-side actions, optional)
-  Usage:
-    <%- include('../partials/page-header', { pageTitle: 'Orders', pageIcon: 'bi-cart',
-          actionsHtml: '<a href="/orders/create" class="btn btn-primary"><i class="bi bi-plus-lg"></i> New Order</a>' }) %>
+  Include with: include('../partials/page-header', { pageTitle, pageIcon, pageSubtitle, actionsHtml })
 %>
 <div class="page-header fade-in">
     <div class="page-header__main">

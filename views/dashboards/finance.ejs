@@ -1,245 +1,325 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Finance Dashboard - MIB Flow</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.7.2/font/bootstrap-icons.css" rel="stylesheet">
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="/css/stylepurchase.css">
+    <%- include('../partials/head', { pageTitle: 'Finance Dashboard', extraScripts: ['https://cdn.jsdelivr.net/npm/chart.js'] }) %>
     <style>
-        .badge-approved {
-            background-color: #d1e7dd;
-            color: #0f5132;
+        /* ============================================================
+           Finance Dashboard — page-specific flourishes
+           Built on the shared mibflow.css design system.
+           ============================================================ */
+
+        /* Legacy-var bridge so shared partials (chat) stay on-brand */
+        :root {
+            --primary-color: var(--mib-primary);
+            --primary-light: var(--mib-primary-light);
+            --primary-dark: var(--mib-primary-dark);
         }
 
-        .badge-declined {
-            background-color: #f8d7da;
-            color: #842029;
-        }
-
-        .badge-paid {
-            background-color: #cff4fc;
-            color: #055160;
-        }
-
-        .action-buttons {
+        /* ---------- Hero ---------- */
+        .fin-hero {
+            position: relative;
+            overflow: hidden;
+            border-radius: var(--mib-radius-lg);
+            padding: 1.85rem 2rem;
+            margin-bottom: 1.6rem;
+            color: #eaf6ef;
+            background: var(--mib-sidebar-bg);
+            box-shadow: var(--mib-shadow-md);
             display: flex;
-            gap: 0.5rem;
+            align-items: center;
+            justify-content: space-between;
+            gap: 1.25rem;
             flex-wrap: wrap;
         }
-
-        .action-buttons .btn {
-            padding: 0.4rem 0.8rem;
-            font-size: 0.875rem;
+        .fin-hero::after {
+            content: "";
+            position: absolute;
+            inset: 0;
+            pointer-events: none;
+            background:
+                radial-gradient(460px 220px at 86% -30%, rgba(110, 231, 183, 0.30), transparent 60%),
+                radial-gradient(360px 200px at 8% 130%, rgba(110, 231, 183, 0.15), transparent 60%);
         }
-
-        .form-select {
-            padding: 0.5rem;
-            border: 2px solid #e0e0e0;
-            border-radius: 8px;
-            transition: var(--transition);
-            cursor: pointer;
-            background-color: white;
+        .fin-hero__text { position: relative; z-index: 1; min-width: 0; }
+        .fin-eyebrow {
+            margin: 0 0 0.4rem; font-size: 0.78rem; font-weight: 600;
+            letter-spacing: 0.06em; text-transform: uppercase; color: rgba(255, 255, 255, 0.66);
+            display: inline-flex; align-items: center; gap: 0.5rem;
         }
-
-        .form-select:focus {
-            border-color: var(--primary-color);
-            box-shadow: 0 0 0 0.25rem rgba(46, 125, 50, 0.25);
-            outline: none;
+        .live-dot {
+            width: 8px; height: 8px; border-radius: 50%;
+            background: #6ee7b7; box-shadow: 0 0 0 0 rgba(110, 231, 183, 0.7);
+            animation: livePulse 1.8s ease-out infinite;
         }
-
-        /* Chart Styles */
-        .chart-header {
-            text-align: center;
-            margin-bottom: 1.5rem;
+        @keyframes livePulse {
+            0%   { box-shadow: 0 0 0 0 rgba(110, 231, 183, 0.55); }
+            70%  { box-shadow: 0 0 0 9px rgba(110, 231, 183, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(110, 231, 183, 0); }
         }
-
-        .chart-header h4 {
-            font-weight: 600;
-            color: var(--primary-dark);
-            margin-bottom: 0.5rem;
+        .fin-hero h1 {
+            margin: 0; font-size: 1.85rem; font-weight: 750; letter-spacing: -0.025em; color: #fff;
+            display: flex; align-items: center; gap: 0.6rem;
         }
+        .fin-hero .sub { margin: 0.5rem 0 0; color: rgba(255, 255, 255, 0.78); font-size: 0.92rem; max-width: 56ch; }
+        .fin-hero__actions { position: relative; z-index: 1; display: flex; gap: 0.55rem; flex-wrap: wrap; justify-content: flex-end; }
+        .fin-hero .btn-white { background: #fff; color: var(--mib-primary-dark); border: none; box-shadow: 0 8px 18px -6px rgba(0,0,0,0.3); }
+        .fin-hero .btn-white:hover { background: #f3faf6; color: var(--mib-primary-dark); transform: translateY(-1px); }
+        .fin-hero .btn-glass { background: rgba(255,255,255,0.13); border: 1px solid rgba(255,255,255,0.22); color: #fff; backdrop-filter: blur(4px); }
+        .fin-hero .btn-glass:hover { background: rgba(255,255,255,0.22); color: #fff; }
 
-        .chart-header .total-amount {
-            font-size: 1.2rem;
-            color: var(--primary-dark);
-            font-weight: 500;
+        /* ---------- Staggered entrance ---------- */
+        .stagger > * { opacity: 0; animation: fadeIn 0.5s ease forwards; }
+        .stagger > *:nth-child(1) { animation-delay: 0.04s; }
+        .stagger > *:nth-child(2) { animation-delay: 0.10s; }
+        .stagger > *:nth-child(3) { animation-delay: 0.16s; }
+        .stagger > *:nth-child(4) { animation-delay: 0.22s; }
+        .stagger > *:nth-child(5) { animation-delay: 0.28s; }
+        .stagger > *:nth-child(6) { animation-delay: 0.34s; }
+
+        .stat-sub { display: block; font-size: 0.76rem; color: var(--mib-text-muted); margin-top: 0.45rem; }
+        .stat-icon.is-violet { background: linear-gradient(135deg, #a78bfa, #7c3aed); box-shadow: 0 8px 18px -4px rgba(124, 58, 237, 0.35); }
+
+        /* ---------- Chart cards ---------- */
+        .chart-card .seg { display: inline-flex; background: var(--mib-surface-2); border: 1px solid var(--mib-border); border-radius: var(--mib-radius-pill); padding: 0.2rem; gap: 0.12rem; }
+        .chart-card .seg .btn {
+            border: none; border-radius: var(--mib-radius-pill); padding: 0.3rem 0.65rem; font-size: 0.82rem;
+            color: var(--mib-text-muted); background: transparent; box-shadow: none; font-weight: 600;
         }
+        .chart-card .seg .btn:hover { color: var(--mib-primary-dark); transform: none; }
+        .chart-card .seg .btn.active { background: var(--mib-surface); color: var(--mib-primary-dark); box-shadow: var(--mib-shadow-xs); }
+        .chart-total { font-size: 0.84rem; color: var(--mib-text-muted); font-weight: 600; }
+        .chart-total strong { color: var(--mib-text); font-variant-numeric: tabular-nums; }
+        .chart-card .chart-container { min-height: 320px; }
 
-        /* Price Formatting */
-        .price {
-            font-family: 'Inter', monospace;
-            font-weight: 500;
+        /* ---------- Queue panels (work queues) ---------- */
+        .dashboard-section {
+            --accent: var(--mib-primary);
+            --accent-soft: var(--mib-primary-soft);
+            background: var(--mib-grad-surface);
+            border: 1px solid var(--mib-border);
+            border-radius: var(--mib-radius);
+            box-shadow: var(--mib-shadow);
+            margin-bottom: 1rem;
+            overflow: hidden;
+            transition: box-shadow var(--mib-transition), border-color var(--mib-transition);
         }
+        .dashboard-section:hover { box-shadow: var(--mib-shadow-md); }
+        .section-header {
+            position: relative; display: flex; align-items: center; gap: 0.85rem;
+            padding: 1rem 1.25rem 1rem 1.4rem; cursor: pointer; transition: background var(--mib-transition);
+        }
+        .section-header:hover { background: var(--mib-surface-2); }
+        .section-header::before { content: ""; position: absolute; left: 0; top: 0; bottom: 0; width: 4px; background: var(--accent); }
+        .sec-ico {
+            flex-shrink: 0; width: 40px; height: 40px; border-radius: 12px; display: grid; place-items: center;
+            font-size: 1.1rem; color: var(--accent); background: var(--accent-soft);
+        }
+        .sec-titles { min-width: 0; }
+        .sec-title { margin: 0; font-weight: 650; font-size: 1rem; color: var(--mib-text); display: flex; align-items: center; gap: 0.55rem; }
+        .sec-sub { margin: 0.1rem 0 0; font-size: 0.78rem; color: var(--mib-text-muted); }
+        .sec-count {
+            display: inline-flex; align-items: center; justify-content: center; min-width: 1.5rem; height: 1.5rem; padding: 0 0.5rem;
+            border-radius: var(--mib-radius-pill); background: var(--accent-soft); color: var(--accent);
+            font-size: 0.78rem; font-weight: 700;
+        }
+        .sec-count.is-zero { background: var(--mib-surface-2); color: var(--mib-text-faint); }
+        .sec-chevron { margin-left: auto; color: var(--mib-text-faint); font-size: 1.1rem; transition: transform 0.28s ease; }
+        .section-header[aria-expanded="true"] .sec-chevron { transform: rotate(180deg); }
+        .section-content { border-top: 1px solid var(--mib-border); }
+        .section-content .table-responsive { box-shadow: none; border: none; border-radius: 0; margin: 0; }
+        .table thead th { background: var(--mib-surface-2); }
+        .action-buttons { display: flex; gap: 0.4rem; flex-wrap: wrap; align-items: center; }
 
-        /* Enhanced Mobile Styles */
+        /* ---------- Button loading spinner ---------- */
+        .btn.loading { pointer-events: none; color: transparent !important; position: relative; }
+        .btn.loading::after {
+            content: ""; position: absolute; width: 16px; height: 16px; top: 50%; left: 50%; margin: -8px 0 0 -8px;
+            border: 2px solid rgba(255, 255, 255, 0.55); border-top-color: #fff; border-radius: 50%; animation: spin 0.7s linear infinite;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
         @media (max-width: 768px) {
-            .action-buttons {
-                display: flex;
-                flex-direction: column;
-                gap: 0.5rem;
-            }
-
-            .action-buttons .btn {
-                width: 100%;
-                justify-content: center;
-            }
+            .fin-hero { padding: 1.4rem 1.25rem; }
+            .fin-hero__actions { justify-content: flex-start; width: 100%; }
         }
     </style>
 </head>
-<body>
-    <%- include('../partials/sidebar', { userRole: userRole }) %>
+<body class="app-shell">
+    <%- include('../partials/sidebar', { userRole: userRole, path: '/dashboard/finance' }) %>
+    <%- include('../partials/chat', { users: (typeof users !== 'undefined' ? users : []), userRole: userRole, userId: userId }) %>
 
-    <div class="main-content">
-        <div class="page-header">
-            <h1 class="page-title">
-                <i class="bi bi-cash-stack"></i>
-                Finance Dashboard
-            </h1>
-            <p class="text-muted mb-0">Manage orders and raw material payments</p>
+    <%
+        /* ---- Defensive normalisation ---- */
+        const orderList   = (typeof orders !== 'undefined' && orders) ? orders : [];
+        const rawReqList  = (typeof rawMaterialRequestsVendors !== 'undefined' && rawMaterialRequestsVendors) ? rawMaterialRequestsVendors : [];
+        const pkgReqList  = (typeof packagingRequestVendors !== 'undefined' && packagingRequestVendors) ? packagingRequestVendors : [];
+
+        /* status badge helper (shared design-system mapping) */
+        const KNOWN_STATUS = new Set(['pending','processing','onprod','on-production','production-completed','completed','approved','paid','delivered','on-delivery','ready-to-deliver','partially-delivered','open','printed','scheduled','cancelled','declined','rejected','neutral']);
+        const sb = (s) => { const k = String(s || '').toLowerCase().replace(/\s+/g, '-'); return 'status-' + (KNOWN_STATUS.has(k) ? k : 'neutral'); };
+        const pendingCount = rawReqList.filter(r => r.status === 'Pending').length + pkgReqList.filter(r => r.status === 'Pending').length;
+    %>
+
+    <div class="content content-wide">
+
+        <!-- ===================== Hero ===================== -->
+        <div class="fin-hero fade-in">
+            <div class="fin-hero__text">
+                <p class="fin-eyebrow"><span class="live-dot"></span> Finance Workspace</p>
+                <h1><i class="bi bi-cash-stack"></i> Finance Dashboard</h1>
+                <p class="sub">Approve payments, track buying &amp; selling and manage raw material and packaging procurement — all in one place.</p>
+            </div>
+            <div class="fin-hero__actions">
+                <a href="/finance/orderHistory" class="btn btn-glass"><i class="bi bi-clock-history"></i> Selling History</a>
+                <a href="/overhead/cogs-calculator" class="btn btn-white"><i class="bi bi-calculator"></i> COGS Calculator</a>
+            </div>
         </div>
 
-        <!-- Analytics Section -->
-        <div class="row mb-4">
-            <!-- Raw Material Purchases Chart -->
-            <div class="col-md-6">
-                <div class="dashboard-section h-100" style="background: var(--background-light);">
-                    <div style="background: white; padding: 1rem; border-radius: 15px;">
-                        <div class="d-flex justify-content-between align-items-center mb-3">
-                            <div class="d-flex align-items-center gap-2">
-                                <i class="bi bi-clock text-success"></i>
-                                <span class="text-success fw-semibold">Raw Material Purchases</span>
-                            </div>
-                            <div class="btn-group">
-                                <button type="button" class="btn btn-sm btn-outline-success active" data-chart-type="pie">
-                                    <i class="bi bi-pie-chart"></i>
-                                </button>
-                                <button type="button" class="btn btn-sm btn-outline-success" data-chart-type="bar">
-                                    <i class="bi bi-bar-chart"></i>
-                                </button>
-                            </div>
-                        </div>
-                        <div class="text-center mb-3">
-                            <div class="total-amount" style="font-size: 1.2rem; color: var(--primary-dark);">
-                                Total: <span id="buyingTotal">Rp 0</span>
-                            </div>
-                        </div>
-                        <div style="height: 400px; position: relative; display: flex; align-items: center; justify-content: center;">
-                            <canvas id="buyingChart"></canvas>
-                        </div>
-                    </div>
+        <!-- ===================== Quick stats ===================== -->
+        <div class="quick-stats stagger">
+            <div class="stat-card">
+                <div class="stat-icon"><i class="bi bi-check-circle"></i></div>
+                <div class="stat-body">
+                    <div class="stat-label">Approved Orders</div>
+                    <div class="stat-value" data-count="<%= orderList.length %>">0</div>
+                    <span class="stat-sub">Awaiting payment &amp; delivery</span>
                 </div>
             </div>
-
-            <!-- Top 5 Vendors -->
-            <div class="col-md-6">
-                <div class="dashboard-section h-100" style="background: var(--background-light);">
-                    <div style="background: white; padding: 1rem; border-radius: 15px;">
-                        <div class="d-flex justify-content-between align-items-center mb-3">
-                            <div class="d-flex align-items-center gap-2">
-                                <i class="bi bi-trophy text-success"></i>
-                                <span class="text-success fw-semibold">Selling Overview</span>
-                            </div>
-                            <div class="btn-group">
-                                <button type="button" class="btn btn-sm btn-outline-success active" data-chart-type="pie">
-                                    <i class="bi bi-pie-chart"></i>
-                                </button>
-                                <button type="button" class="btn btn-sm btn-outline-success" data-chart-type="bar">
-                                    <i class="bi bi-bar-chart"></i>
-                                </button>
-                            </div>
-                        </div>
-                        <div class="text-center mb-3">
-                            <div class="total-amount" style="font-size: 1.2rem; color: var(--primary-dark);">
-                                Total: <span id="sellingTotal">Rp 0</span>
-                            </div>
-                        </div>
-                        <div style="height: 400px; position: relative; display: flex; align-items: center; justify-content: center;">
-                            <canvas id="sellingChart"></canvas>
-                        </div>
-                    </div>
+            <div class="stat-card">
+                <div class="stat-icon is-warning"><i class="bi bi-box-seam"></i></div>
+                <div class="stat-body">
+                    <div class="stat-label">Raw Material Requests</div>
+                    <div class="stat-value" data-count="<%= rawReqList.length %>">0</div>
+                    <span class="stat-sub">From vendors</span>
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon is-info"><i class="bi bi-box2"></i></div>
+                <div class="stat-body">
+                    <div class="stat-label">Packaging Requests</div>
+                    <div class="stat-value" data-count="<%= pkgReqList.length %>">0</div>
+                    <span class="stat-sub">From vendors</span>
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon <%= pendingCount > 0 ? 'is-danger' : 'is-success' %>"><i class="bi bi-hourglass-split"></i></div>
+                <div class="stat-body">
+                    <div class="stat-label">Pending Approvals</div>
+                    <div class="stat-value" data-count="<%= pendingCount %>">0</div>
+                    <span class="stat-sub">Raw material &amp; packaging</span>
                 </div>
             </div>
         </div>
 
-        <!-- Approved Orders Section -->
+        <!-- ===================== Charts ===================== -->
+        <div class="chart-grid">
+            <!-- Raw Material / Packaging Purchases -->
+            <div class="chart-card card-hover">
+                <div class="d-flex align-items-center justify-content-between mb-2 flex-wrap gap-2">
+                    <h3 class="mb-0"><i class="bi bi-cart-dash me-1"></i> Raw Material Purchases</h3>
+                    <div class="seg" role="group" aria-label="Chart type">
+                        <button type="button" class="btn btn-sm active" data-chart-type="pie" aria-label="Pie chart"><i class="bi bi-pie-chart"></i></button>
+                        <button type="button" class="btn btn-sm" data-chart-type="bar" aria-label="Bar chart"><i class="bi bi-bar-chart"></i></button>
+                    </div>
+                </div>
+                <div class="chart-total mb-3">Total: <strong id="buyingTotal">Rp 0</strong></div>
+                <div class="chart-container">
+                    <canvas id="buyingChart"></canvas>
+                </div>
+            </div>
+
+            <!-- Selling Overview -->
+            <div class="chart-card card-hover">
+                <div class="d-flex align-items-center justify-content-between mb-2 flex-wrap gap-2">
+                    <h3 class="mb-0"><i class="bi bi-trophy me-1"></i> Selling Overview</h3>
+                    <div class="seg" role="group" aria-label="Chart type">
+                        <button type="button" class="btn btn-sm active" data-chart-type="pie" aria-label="Pie chart"><i class="bi bi-pie-chart"></i></button>
+                        <button type="button" class="btn btn-sm" data-chart-type="bar" aria-label="Bar chart"><i class="bi bi-bar-chart"></i></button>
+                    </div>
+                </div>
+                <div class="chart-total mb-3">Total: <strong id="sellingTotal">Rp 0</strong></div>
+                <div class="chart-container">
+                    <canvas id="sellingChart"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- ===================== Work queues ===================== -->
         <%- include('../partials/kanban-toggle') %>
-        <div class="dashboard-section">
-            <div class="section-header" data-bs-toggle="collapse" data-bs-target="#approvedOrders">
-                <h2 class="section-title">
-                    <i class="bi bi-check-circle"></i>
-                    Approved Orders
-                    <% if (orders && orders.length > 0) { %>
-                        <span class="badge rounded-pill bg-danger ms-2"><%= orders.length %></span>
-                    <% } %>
-                </h2>
-                <i class="bi bi-chevron-down"></i>
+
+        <!-- Approved Orders -->
+        <section class="dashboard-section" id="sec-approvedOrders" style="--accent:#2f6f4e;--accent-soft:#e7f1ec">
+            <div class="section-header" data-bs-toggle="collapse" data-bs-target="#approvedOrders" aria-expanded="true" aria-controls="approvedOrders">
+                <span class="sec-ico"><i class="bi bi-check-circle"></i></span>
+                <div class="sec-titles">
+                    <h2 class="sec-title">Approved Orders <span class="sec-count <%= orderList.length ? '' : 'is-zero' %>"><%= orderList.length %></span></h2>
+                    <p class="sec-sub">Print, collect payment and proceed to delivery</p>
+                </div>
+                <i class="bi bi-chevron-down sec-chevron"></i>
             </div>
-            <div id="approvedOrders" class="section-content">
+            <div id="approvedOrders" class="section-content collapse show">
                 <div class="table-responsive">
-                    <table class="table">
+                    <table class="table table-cards align-middle">
                         <thead>
                             <tr>
                                 <th>ID</th>
                                 <th>SO Number</th>
                                 <th>Customer</th>
                                 <th>Product</th>
-                                <th>Total Price</th>
+                                <th class="text-end">Total Price</th>
                                 <th>Payment</th>
                                 <th>Tax</th>
                                 <th>Status</th>
-                                <th>Actions</th>
+                                <th class="text-end">Actions</th>
                             </tr>
                         </thead>
                         <tbody>
-                            <% if (orders && orders.length > 0) { %>
-                                <% orders.forEach(order => { %>
+                            <% if (orderList.length > 0) { %>
+                                <% orderList.forEach(order => { %>
                                     <tr id="order-<%= order.id %>">
-                                        <td data-label="ID">#<%= order.id %></td>
-                                        <td data-label="SO Number"><%= order.sonumber || '-' %></td>
+                                        <td data-label="ID"><span class="cell-strong">#<%= order.id %></span></td>
+                                        <td data-label="SO Number"><span class="cell-strong"><%= order.sonumber || '-' %></span></td>
                                         <td data-label="Customer"><%= order.Customer ? order.Customer.name : '-' %></td>
                                         <td data-label="Product">
-                                                <% if (order.OrderItems && order.OrderItems.length > 0) { %>
-                                                    <% order.OrderItems.forEach(item => { %>
-                                                        <% if (item.sentQuantity !== item.invoicedQuantity) { %>
-                                                <div class="fw-semibold">
-                                                    <%= item.Product ? item.Product.name : '-' %> 
-                                                    (<%= item.sentQuantity - item.invoicedQuantity || 0 %> Pcs Of <%= item.Packaging.name %> <%= item.Packaging.volume %>L)
-                                                </div>
-                                                        <% } %>
-                                                    <% }) %>
+                                            <% if (order.OrderItems && order.OrderItems.length > 0) { %>
+                                                <% order.OrderItems.forEach(item => { %>
+                                                    <% if (item.sentQuantity !== item.invoicedQuantity) { %>
+                                            <div class="cell-strong">
+                                                <%= item.Product ? item.Product.name : '-' %>
+                                                (<%= (item.sentQuantity - item.invoicedQuantity) || 0 %> Pcs Of <%= item.Packaging ? item.Packaging.name : '-' %> <%= item.Packaging ? item.Packaging.volume : '-' %>L)
+                                            </div>
+                                                    <% } %>
+                                                <% }) %>
                                             <% } else { %>
                                                 -
                                             <% } %>
                                         </td>
-                                        <td data-label="Total Price" class="price">
-                                            <% 
+                                        <td data-label="Total Price" class="text-end num">
+                                            <%
                                             let orderTotal = 0;
-                                            order.OrderItems.forEach(item => {
+                                            (order.OrderItems || []).forEach(item => {
+                                                if (!item.Packaging || !item.Product) return;
                                                 // Get packaging volume capacity
                                                 const packagingVolume = item.Packaging.volume;
-                                                
+
                                                 // Calculate uninvoiced units
                                                 const sentUnits = item.sentQuantity;
                                                 const invoicedUnits = item.invoicedQuantity;
                                                 const uninvoicedUnits = sentUnits - invoicedUnits;
-                                                
+
                                                 if (uninvoicedUnits > 0) {
                                                     // Convert order quantity to liters
-                                                    const totalOrderVolume = item.satuan === 'L' ? 
-                                                        item.quantity : 
+                                                    const totalOrderVolume = item.satuan === 'L' ?
+                                                        item.quantity :
                                                         item.quantity / item.Product.density;
-                                                    
+
                                                     // Calculate how many full packages needed
                                                     const totalPackagesNeeded = Math.ceil(totalOrderVolume / packagingVolume);
-                                                    
+
                                                     let deliveredVolume = 0;
                                                     const startUnit = item.invoicedQuantity;
                                                     const endUnit = startUnit + uninvoicedUnits;
-                                                    
+
                                                     // Calculate volume for each package
                                                     for (let i = startUnit; i < endUnit; i++) {
                                                         if (i < totalPackagesNeeded - 1) {
@@ -251,7 +331,7 @@
                                                             deliveredVolume += remainingVolume;
                                                         }
                                                     }
-                                                    
+
                                                     // Always calculate price in L (price * density)
                                                     const priceInL = item.Product.price * item.Product.density;
                                                     orderTotal += priceInL * deliveredVolume;
@@ -261,45 +341,37 @@
                                             Rp <%= orderTotal.toLocaleString('id-ID') %>
                                         </td>
                                         <td data-label="Payment">
-                                            <span class="badge badge-<%= order.paymentType === 'CBD' ? 'approved' : 'pending' %>">
+                                            <span class="status-badge <%= order.paymentType === 'CBD' ? 'status-approved' : 'status-pending' %>">
                                                 <%= order.paymentType %>
                                             </span>
                                         </td>
                                         <td data-label="Tax"><%= order.tax %></td>
                                         <td data-label="Status" id="status-<%= order.id %>">
-                                            <span class="badge badge-<%= order.status.toLowerCase() %>">
-                                                <i class="bi bi-circle-fill me-1"></i>
-                                                <%= order.status %>
-                                            </span>
+                                            <span class="status-badge <%= sb(order.status) %>"><%= order.status %></span>
                                         </td>
-                                        <td data-label="Actions" id="actions-<%= order.id %>">
-                                            <div class="action-buttons">
+                                        <td data-label="Actions" id="actions-<%= order.id %>" class="text-end">
+                                            <div class="action-buttons justify-content-end">
                                                 <% if (!order.printed) { %>
-                                                    <button class="btn btn-primary print-btn" data-id="<%= order.id %>">
-                                                        <i class="bi bi-printer"></i>
-                                                        Print
+                                                    <button class="btn btn-sm btn-primary print-btn" data-id="<%= order.id %>">
+                                                        <i class="bi bi-printer"></i> Print
                                                     </button>
-                                                    <a href="/orders/<%= order.id %>" class="btn btn-primary">
-                                                        <i class="bi bi-eye"></i>
-                                                        View
+                                                    <a href="/orders/<%= order.id %>" class="btn btn-sm btn-soft">
+                                                        <i class="bi bi-eye"></i> View
                                                     </a>
                                                 <% } else { %>
                                                     <% if (order.paymentType === 'CBD' || order.paymentType === 'DP') { %>
                                                         <% if (order.status === 'Approved' || order.status === 'Partially Delivered') { %>
-                                                            <button class="btn btn-success mark-paid-btn" data-id="<%= order.id %>">
-                                                                <i class="bi bi-cash"></i>
-                                                                Mark as Paid
+                                                            <button class="btn btn-sm btn-success mark-paid-btn" data-id="<%= order.id %>">
+                                                                <i class="bi bi-cash"></i> Mark as Paid
                                                             </button>
                                                         <% } else if (order.status === 'Paid') { %>
-                                                            <button class="btn btn-primary proceed-delivery-btn" data-id="<%= order.id %>">
-                                                                <i class="bi bi-truck"></i>
-                                                                Proceed Delivery
+                                                            <button class="btn btn-sm btn-primary proceed-delivery-btn" data-id="<%= order.id %>">
+                                                                <i class="bi bi-truck"></i> Proceed Delivery
                                                             </button>
                                                         <% } %>
                                                     <% } else if (order.paymentType.startsWith('TOP')) { %>
-                                                        <button class="btn btn-primary proceed-delivery-btn" data-id="<%= order.id %>">
-                                                            <i class="bi bi-truck"></i>
-                                                            Proceed Delivery
+                                                        <button class="btn btn-sm btn-primary proceed-delivery-btn" data-id="<%= order.id %>">
+                                                            <i class="bi bi-truck"></i> Proceed Delivery
                                                         </button>
                                                     <% } %>
                                                 <% } %>
@@ -308,10 +380,9 @@
                                     </tr>
                                 <% }) %>
                             <% } else { %>
-                                <tr>
-                                    <td colspan="10" class="text-center py-4 text-muted">
-                                        <i class="bi bi-inbox fs-4 d-block mb-2"></i>
-                                        No approved orders found
+                                <tr class="is-empty-row">
+                                    <td colspan="9">
+                                        <div class="empty-state"><i class="bi bi-inbox"></i><h4>No approved orders</h4><p>Approved orders awaiting payment will appear here.</p></div>
                                     </td>
                                 </tr>
                             <% } %>
@@ -319,118 +390,108 @@
                     </table>
                 </div>
             </div>
-        </div>
+        </section>
 
-        <!-- Raw Material Requests Section -->
-        <div class="dashboard-section">
-            <div class="section-header" data-bs-toggle="collapse" data-bs-target="#rawMaterialRequests">
-                <h2 class="section-title">
-                    <i class="bi bi-box-seam"></i>
-                    Raw Material Requests
-                    <% if (rawMaterialRequestsVendors && rawMaterialRequestsVendors.length > 0) { %>
-                        <span class="badge rounded-pill bg-danger ms-2"><%= rawMaterialRequestsVendors.length %></span>
-                    <% } %>
-                </h2>
-                <i class="bi bi-chevron-down"></i>
+        <!-- Raw Material Requests -->
+        <section class="dashboard-section" id="sec-rawMaterialRequests" style="--accent:#d97706;--accent-soft:#fef3c7">
+            <div class="section-header" data-bs-toggle="collapse" data-bs-target="#rawMaterialRequests" aria-expanded="true" aria-controls="rawMaterialRequests">
+                <span class="sec-ico"><i class="bi bi-box-seam"></i></span>
+                <div class="sec-titles">
+                    <h2 class="sec-title">Raw Material Requests <span class="sec-count <%= rawReqList.length ? '' : 'is-zero' %>"><%= rawReqList.length %></span></h2>
+                    <p class="sec-sub">Approve, pay and deliver vendor procurement</p>
+                </div>
+                <i class="bi bi-chevron-down sec-chevron"></i>
             </div>
-            <div id="rawMaterialRequests" class="section-content">
+            <div id="rawMaterialRequests" class="section-content collapse show">
                 <div class="table-responsive">
-                    <table class="table">
+                    <table class="table table-cards align-middle">
                         <thead>
                             <tr>
                                 <th>ID</th>
                                 <th>PO Number</th>
                                 <th>Material</th>
                                 <th>Quantity</th>
-                                <th>Total</th>
+                                <th class="text-end">Total</th>
                                 <th>Payment</th>
                                 <th>Vendor</th>
                                 <th>Status</th>
-                                <th>Actions</th>
+                                <th class="text-end">Actions</th>
                             </tr>
                         </thead>
                         <tbody>
-                            <% if (rawMaterialRequestsVendors && rawMaterialRequestsVendors.length > 0) { %>
-                                <% rawMaterialRequestsVendors.forEach(request => { %>
+                            <% if (rawReqList.length > 0) { %>
+                                <% rawReqList.forEach(request => { %>
                                     <tr>
-                                        <td data-label="ID">#<%= request.id %></td>
+                                        <td data-label="ID"><span class="cell-strong">#<%= request.id %></span></td>
                                         <td data-label="PO Number"><%= request.ponumber || '-' %></td>
                                         <td data-label="Material">
-                                            <div class="fw-semibold"><%= request.RawMaterialRequest.materialName %></div>
+                                            <span class="cell-strong"><%= request.RawMaterialRequest.materialName %></span>
                                         </td>
                                         <td data-label="Quantity">
-                                            <div class="d-flex align-items-center gap-2">
+                                            <div class="d-flex align-items-center gap-2 justify-content-end justify-content-md-start">
                                                 <span class="quantity-value"><%= request.splitQuantity %></span>
-                                                <select class="form-select form-select-sm unit-selection" 
+                                                <select class="form-select form-select-sm unit-selection"
                                                     style="width: auto;"
-                                                    data-density="<%= request.RawMaterialRequest.RawMaterial.density %>" 
+                                                    data-density="<%= request.RawMaterialRequest.RawMaterial.density %>"
                                                     data-quantity="<%= request.splitQuantity %>">
                                                     <option value="Kg">Kg</option>
                                                     <option value="L">L</option>
                                                 </select>
                                             </div>
                                         </td>
-                                        <td data-label="Total" class="price">
-                                            <% 
+                                        <td data-label="Total" class="text-end num">
+                                            <%
                                             // Get vendor-specific price if available
                                             let vendorPrice = null;
-                                            
+
                                             // Check if we have a vendor-specific price from the controller
                                             if (request.vendorSpecificPrice) {
                                                 vendorPrice = parseFloat(request.vendorSpecificPrice);
                                             }
-                                            
+
                                             // If no vendor-specific price found, use default price
                                             if (!vendorPrice) {
                                                 vendorPrice = parseFloat(request.RawMaterialRequest.RawMaterial.price);
                                             }
-                                            
+
                                             // Ensure we have a valid number for the calculation
                                             vendorPrice = vendorPrice || 0;
-                                            const splitQuantity = parseFloat(request.splitQuantity) || 0;
-                                            const total = splitQuantity * vendorPrice;
+                                            const splitQuantityRaw = parseFloat(request.splitQuantity) || 0;
+                                            const rawTotal = splitQuantityRaw * vendorPrice;
                                             %>
-                                            Rp <%= total.toLocaleString('id-ID') %>
+                                            Rp <%= rawTotal.toLocaleString('id-ID') %>
                                         </td>
                                         <td data-label="Payment">
-                                            <span class="badge badge-<%= request.paymentType === 'CBD' ? 'approved' : 'pending' %>">
+                                            <span class="status-badge <%= request.paymentType === 'CBD' ? 'status-approved' : 'status-pending' %>">
                                                 <%= request.paymentType %>
                                             </span>
                                         </td>
                                         <td data-label="Vendor"><%= request.Vendor.name %></td>
                                         <td data-label="Status" id="status-<%= request.id %>">
-                                            <span class="badge badge-<%= request.status.toLowerCase() %>">
-                                                <i class="bi bi-circle-fill me-1"></i>
-                                                <%= request.status %>
-                                            </span>
+                                            <span class="status-badge <%= sb(request.status) %>"><%= request.status %></span>
                                         </td>
-                                        <td data-label="Actions" id="actions-<%= request.id %>">
-                                            <div class="action-buttons">
+                                        <td data-label="Actions" id="actions-<%= request.id %>" class="text-end">
+                                            <div class="action-buttons justify-content-end">
                                                 <% if (request.status === 'Pending') { %>
-                                                    <button class="btn btn-primary approve-raw-material-btn" data-id="<%= request.id %>">
-                                                        <i class="bi bi-check-lg"></i>
-                                                        Approve
+                                                    <button class="btn btn-sm btn-success approve-raw-material-btn" data-id="<%= request.id %>">
+                                                        <i class="bi bi-check-lg"></i> Approve
                                                     </button>
-                                                    <button class="btn btn-danger decline-raw-material-btn" data-id="<%= request.id %>">
-                                                        <i class="bi bi-x-lg"></i>
-                                                        Decline
+                                                    <button class="btn btn-sm btn-outline-danger decline-raw-material-btn" data-id="<%= request.id %>">
+                                                        <i class="bi bi-x-lg"></i> Decline
                                                     </button>
                                                 <% } else if (request.status === 'Approved') { %>
                                                     <% if (request.paymentType === 'CBD' || request.paymentType === 'DP') { %>
-                                                        <button class="btn btn-success paid-request-btn" data-id="<%= request.id %>">
-                                                            <i class="bi bi-cash"></i>
-                                                            Mark as Paid
+                                                        <button class="btn btn-sm btn-success paid-request-btn" data-id="<%= request.id %>">
+                                                            <i class="bi bi-cash"></i> Mark as Paid
                                                         </button>
                                                     <% } else { %>
-                                                        <button class="btn btn-primary deliver-request-btn" data-id="<%= request.id %>" data-payment="<%= request.paymentType %>">
-                                                            <i class="bi bi-truck"></i>
-                                                            Deliver
+                                                        <button class="btn btn-sm btn-primary deliver-request-btn" data-id="<%= request.id %>" data-payment="<%= request.paymentType %>">
+                                                            <i class="bi bi-truck"></i> Deliver
                                                         </button>
                                                     <% } %>
                                                 <% } else if (request.status === 'Paid') { %>
-                                                    <button class="btn btn-primary deliver-request-btn" data-id="<%= request.id %>" data-payment="<%= request.paymentType %>">
-                                                        <i class="bi bi-truck"></i>
-                                                        Deliver
+                                                    <button class="btn btn-sm btn-primary deliver-request-btn" data-id="<%= request.id %>" data-payment="<%= request.paymentType %>">
+                                                        <i class="bi bi-truck"></i> Deliver
                                                     </button>
                                                 <% } %>
                                             </div>
@@ -438,10 +499,9 @@
                                     </tr>
                                 <% }) %>
                             <% } else { %>
-                                <tr>
-                                    <td colspan="9" class="text-center py-4 text-muted">
-                                        <i class="bi bi-inbox fs-4 d-block mb-2"></i>
-                                        No raw material requests found
+                                <tr class="is-empty-row">
+                                    <td colspan="9">
+                                        <div class="empty-state"><i class="bi bi-inbox"></i><h4>No raw material requests</h4><p>Vendor raw material requests will appear here.</p></div>
                                     </td>
                                 </tr>
                             <% } %>
@@ -449,120 +509,103 @@
                     </table>
                 </div>
             </div>
-        </div>
+        </section>
 
-        <!-- Packaging Requests Section -->
-        <div class="dashboard-section">
-            <div class="section-header" data-bs-toggle="collapse" data-bs-target="#packagingRequests">
-                <h2 class="section-title">
-                    <i class="bi bi-box2"></i>
-                    Packaging Requests
-                    <% if (packagingRequestVendors && packagingRequestVendors.length > 0) { %>
-                        <span class="badge rounded-pill bg-danger ms-2"><%= packagingRequestVendors.length %></span>
-                    <% } %>
-                </h2>
-                <i class="bi bi-chevron-down"></i>
+        <!-- Packaging Requests -->
+        <section class="dashboard-section" id="sec-packagingRequests" style="--accent:#0d9488;--accent-soft:#ccfbf1">
+            <div class="section-header" data-bs-toggle="collapse" data-bs-target="#packagingRequests" aria-expanded="true" aria-controls="packagingRequests">
+                <span class="sec-ico"><i class="bi bi-box2"></i></span>
+                <div class="sec-titles">
+                    <h2 class="sec-title">Packaging Requests <span class="sec-count <%= pkgReqList.length ? '' : 'is-zero' %>"><%= pkgReqList.length %></span></h2>
+                    <p class="sec-sub">Approve, pay and deliver packaging procurement</p>
+                </div>
+                <i class="bi bi-chevron-down sec-chevron"></i>
             </div>
-            <div id="packagingRequests" class="section-content">
+            <div id="packagingRequests" class="section-content collapse show">
                 <div class="table-responsive">
-                    <table class="table">
+                    <table class="table table-cards align-middle">
                         <thead>
                             <tr>
                                 <th>ID</th>
                                 <th>PO Number</th>
                                 <th>Packaging</th>
                                 <th>Quantity</th>
-                                <th>Total</th>
+                                <th class="text-end">Total</th>
                                 <th>Payment</th>
                                 <th>Vendor</th>
                                 <th>Status</th>
-                                <th>Actions</th>
+                                <th class="text-end">Actions</th>
                             </tr>
                         </thead>
                         <tbody>
-                            <% if (packagingRequestVendors && packagingRequestVendors.length > 0) { %>
-                                <% packagingRequestVendors.forEach(request => { %>
+                            <% if (pkgReqList.length > 0) { %>
+                                <% pkgReqList.forEach(request => { %>
                                     <tr>
-                                        <td data-label="ID">#<%= request.id %></td>
+                                        <td data-label="ID"><span class="cell-strong">#<%= request.id %></span></td>
                                         <td data-label="PO Number"><%= request.ponumber %></td>
                                         <td data-label="Packaging">
-                                            <div class="fw-semibold"><%= request.PackagingRequest.packagingName %></div>
+                                            <span class="cell-strong"><%= request.PackagingRequest.packagingName %></span>
                                         </td>
                                         <td data-label="Quantity"><%= request.splitQuantity %> pcs</td>
-                                        <td data-label="Total" class="price">
-                                            <% 
+                                        <td data-label="Total" class="text-end num">
+                                            <%
                                             // Find vendor-specific price if available
-                                            let vendorPrice = null;
-                                            
+                                            let pkgVendorPrice = null;
+
                                             // Check if the packaging has a vendor association with this specific vendor
                                             if (request.PackagingRequest.Packaging.Vendors) {
                                                 const vendorAssociation = request.PackagingRequest.Packaging.Vendors.find(
                                                     v => v.id === request.Vendor.id
                                                 );
-                                                
+
                                                 if (vendorAssociation && vendorAssociation.packagingvendor) {
-                                                    vendorPrice = parseFloat(vendorAssociation.packagingvendor.price);
+                                                    pkgVendorPrice = parseFloat(vendorAssociation.packagingvendor.price);
                                                 }
                                             }
-                                            
+
                                             // If no vendor-specific price found, use default price
-                                            if (!vendorPrice) {
-                                                vendorPrice = parseFloat(request.PackagingRequest.Packaging.price);
+                                            if (!pkgVendorPrice) {
+                                                pkgVendorPrice = parseFloat(request.PackagingRequest.Packaging.price);
                                             }
-                                            
+
                                             // Ensure we have a valid number for the calculation
-                                            vendorPrice = vendorPrice || 0;
-                                            const splitQuantity = parseFloat(request.splitQuantity) || 0;
-                                            const total = splitQuantity * vendorPrice;
-                                            
-                                            // Debug information
-                                            console.log('Packaging:', request.PackagingRequest.Packaging.name);
-                                            console.log('Vendor:', request.Vendor.name);
-                                            console.log('Vendor Price:', vendorPrice);
-                                            console.log('Split Quantity:', splitQuantity);
-                                            console.log('Total:', total);
+                                            pkgVendorPrice = pkgVendorPrice || 0;
+                                            const splitQuantityPkg = parseFloat(request.splitQuantity) || 0;
+                                            const pkgTotal = splitQuantityPkg * pkgVendorPrice;
                                             %>
-                                            Rp <%= total.toLocaleString('id-ID') %>
+                                            Rp <%= pkgTotal.toLocaleString('id-ID') %>
                                         </td>
                                         <td data-label="Payment">
-                                            <span class="badge badge-<%= request.paymentType === 'CBD' ? 'approved' : 'pending' %>">
+                                            <span class="status-badge <%= request.paymentType === 'CBD' ? 'status-approved' : 'status-pending' %>">
                                                 <%= request.paymentType %>
                                             </span>
                                         </td>
                                         <td data-label="Vendor"><%= request.Vendor.name %></td>
                                         <td data-label="Status" id="status-<%= request.id %>">
-                                            <span class="badge badge-<%= request.status.toLowerCase() %>">
-                                                <i class="bi bi-circle-fill me-1"></i>
-                                                <%= request.status %>
-                                            </span>
+                                            <span class="status-badge <%= sb(request.status) %>"><%= request.status %></span>
                                         </td>
-                                        <td data-label="Actions" id="actions-<%= request.id %>">
-                                            <div class="action-buttons">
+                                        <td data-label="Actions" id="actions-<%= request.id %>" class="text-end">
+                                            <div class="action-buttons justify-content-end">
                                                 <% if (request.status === 'Pending') { %>
-                                                    <button class="btn btn-primary approve-packaging-btn" data-id="<%= request.id %>">
-                                                        <i class="bi bi-check-lg"></i>
-                                                        Approve
+                                                    <button class="btn btn-sm btn-success approve-packaging-btn" data-id="<%= request.id %>">
+                                                        <i class="bi bi-check-lg"></i> Approve
                                                     </button>
-                                                    <button class="btn btn-danger decline-packaging-btn" data-id="<%= request.id %>">
-                                                        <i class="bi bi-x-lg"></i>
-                                                        Decline
+                                                    <button class="btn btn-sm btn-outline-danger decline-packaging-btn" data-id="<%= request.id %>">
+                                                        <i class="bi bi-x-lg"></i> Decline
                                                     </button>
                                                 <% } else if (request.status === 'Approved') { %>
                                                     <% if (request.paymentType === 'CBD' || request.paymentType === 'DP') { %>
-                                                        <button class="btn btn-success paid-packaging-btn" data-id="<%= request.id %>">
-                                                            <i class="bi bi-cash"></i>
-                                                            Mark as Paid
+                                                        <button class="btn btn-sm btn-success paid-packaging-btn" data-id="<%= request.id %>">
+                                                            <i class="bi bi-cash"></i> Mark as Paid
                                                         </button>
                                                     <% } else { %>
-                                                        <button class="btn btn-primary deliver-packaging-btn" data-id="<%= request.id %>" data-payment="<%= request.paymentType %>">
-                                                            <i class="bi bi-truck"></i>
-                                                            Deliver
+                                                        <button class="btn btn-sm btn-primary deliver-packaging-btn" data-id="<%= request.id %>" data-payment="<%= request.paymentType %>">
+                                                            <i class="bi bi-truck"></i> Deliver
                                                         </button>
                                                     <% } %>
                                                 <% } else if (request.status === 'Paid') { %>
-                                                    <button class="btn btn-primary deliver-packaging-btn" data-id="<%= request.id %>" data-payment="<%= request.paymentType %>">
-                                                        <i class="bi bi-truck"></i>
-                                                        Deliver
+                                                    <button class="btn btn-sm btn-primary deliver-packaging-btn" data-id="<%= request.id %>" data-payment="<%= request.paymentType %>">
+                                                        <i class="bi bi-truck"></i> Deliver
                                                     </button>
                                                 <% } %>
                                             </div>
@@ -570,10 +613,9 @@
                                     </tr>
                                 <% }) %>
                             <% } else { %>
-                                <tr>
-                                    <td colspan="8" class="text-center py-4 text-muted">
-                                        <i class="bi bi-inbox fs-4 d-block mb-2"></i>
-                                        No packaging requests found
+                                <tr class="is-empty-row">
+                                    <td colspan="9">
+                                        <div class="empty-state"><i class="bi bi-inbox"></i><h4>No packaging requests</h4><p>Vendor packaging requests will appear here.</p></div>
                                     </td>
                                 </tr>
                             <% } %>
@@ -581,42 +623,32 @@
                     </table>
                 </div>
             </div>
-        </div>
+        </section>
     </div>
 
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
     <script>
-        // Set up SSE for notifications
+        // ---- SSE notifications ----
         const evtSource = new EventSource('/notifications');
         const audio = new Audio('/audio/purchase.mp3');
 
         evtSource.onmessage = function(event) {
             const data = JSON.parse(event.data);
-            
+
             if (data.type === 'newFinanceRawMaterial') {
-                // Show notification for new raw material request
                 const notification = `New raw material request for finance: ${data.materialName} (${data.quantity} Kg)`;
                 showNotification(notification);
-                
-                // Play audio if specified
                 if (data.audio) {
                     audio.play().catch(e => console.error('Error playing audio:', e));
                 }
             } else if (data.type === 'newFinanceOrder') {
-                // Show notification for new order
                 const notification = `New order for finance: ${data.sonumber} (${data.customerName}) - ${data.status}`;
                 showNotification(notification);
-                
-                // Play audio if specified
                 if (data.audio) {
                     audio.play().catch(e => console.error('Error playing audio:', e));
                 }
             } else if (data.type === 'newFinancePackaging') {
-                // Show notification for new packaging request
                 const notification = `New packaging request for finance: ${data.packagingName} (${data.quantity} pcs)`;
                 showNotification(notification);
-                
-                // Play audio if specified
                 if (data.audio) {
                     audio.play().catch(e => console.error('Error playing audio:', e));
                 }
@@ -630,13 +662,13 @@
             notificationDiv.style.top = '20px';
             notificationDiv.style.right = '20px';
             notificationDiv.style.zIndex = '9999';
+            notificationDiv.style.maxWidth = '360px';
             notificationDiv.innerHTML = `
                 ${message}
                 <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
             `;
             document.body.appendChild(notificationDiv);
 
-            // Auto-remove after 5 seconds
             setTimeout(() => {
                 notificationDiv.remove();
             }, 5000);
@@ -651,7 +683,7 @@
         function createCharts() {
             // Process raw material requests
             const rawMaterialData = [];
-            const rawMaterialRequests = JSON.parse('<%- JSON.stringify(allRawMaterialRequestsVendors || []) %>');
+            const rawMaterialRequests = JSON.parse('<%- JSON.stringify((typeof allRawMaterialRequestsVendors !== 'undefined' && allRawMaterialRequestsVendors) || []) %>');
             rawMaterialRequests.forEach(request => {
                 if (request.status !== 'Declined') {
                     const amount = request.splitQuantity * request.RawMaterialRequest.RawMaterial.price;
@@ -667,7 +699,7 @@
 
             // Process packaging requests
             const packagingData = [];
-            const packagingRequests = JSON.parse('<%- JSON.stringify(allPackagingRequestVendors || []) %>');
+            const packagingRequests = JSON.parse('<%- JSON.stringify((typeof allPackagingRequestVendors !== 'undefined' && allPackagingRequestVendors) || []) %>');
             packagingRequests.forEach(request => {
                 if (request.status !== 'Declined') {
                     const amount = request.splitQuantity * request.PackagingRequest.Packaging.price;
@@ -683,7 +715,7 @@
 
             // Process orders by customer
             const customerData = [];
-            const orders = JSON.parse('<%- JSON.stringify(allOrders || []) %>');
+            const orders = JSON.parse('<%- JSON.stringify((typeof allOrders !== 'undefined' && allOrders) || []) %>');
             orders.forEach(order => {
                 if (order.status !== 'Declined') {
                     const customerName = order.Customer.perusahaan;
@@ -700,7 +732,7 @@
             // Calculate totals and store globally
             buyingTotal = [...rawMaterialData, ...packagingData].reduce((sum, d) => sum + d.amount, 0);
             sellingTotal = customerData.reduce((sum, d) => sum + d.amount, 0);
-            
+
             // Update total displays
             document.getElementById('buyingTotal').textContent = `Rp ${buyingTotal.toLocaleString('id-ID')}`;
             document.getElementById('sellingTotal').textContent = `Rp ${sellingTotal.toLocaleString('id-ID')}`;
@@ -710,7 +742,7 @@
                 '#FF6B6B', '#4ECDC4', '#45B7D1', '#96CEB4', '#FFEEAD',
                 '#D4A5A5', '#9ED2C6', '#54BAB9', '#A7D2CB', '#F2D388'
             ];
-            
+
             window.sellingColors = [
                 '#2ECC71', '#3498DB', '#9B59B6', '#F1C40F', '#E67E22',
                 '#16A085', '#2980B9', '#8E44AD', '#F39C12', '#D35400'
@@ -823,14 +855,26 @@
             // Create the buying and selling charts
             createCharts();
 
+            // count-up stat values
+            document.querySelectorAll('.stat-value[data-count]').forEach(el => {
+                const target = parseInt(el.getAttribute('data-count'), 10) || 0;
+                if (!target) { el.textContent = '0'; return; }
+                const dur = 850, start = performance.now();
+                (function tick(now) {
+                    const p = Math.min((now - start) / dur, 1);
+                    el.textContent = Math.round(target * (1 - Math.pow(1 - p, 3))).toLocaleString('id-ID');
+                    if (p < 1) requestAnimationFrame(tick);
+                })(start);
+            });
+
             // Handle chart type toggle
             document.querySelectorAll('[data-chart-type]').forEach(button => {
                 button.addEventListener('click', function() {
                     const chartType = this.getAttribute('data-chart-type');
-                    const chartContainer = this.closest('.dashboard-section');
+                    const chartContainer = this.closest('.chart-card');
                     const chartCanvas = chartContainer.querySelector('canvas');
                     const isSellingChart = chartCanvas.id === 'sellingChart';
-                    
+
                     // Update button states
                     chartContainer.querySelectorAll('[data-chart-type]').forEach(btn => {
                         btn.classList.remove('active');
@@ -930,10 +974,10 @@
                             labels: chartData.labels,
                             datasets: [{
                                 data: chartData.amounts,
-                                backgroundColor: chartType === 'pie' ? 
+                                backgroundColor: chartType === 'pie' ?
                                     chartData.colors.map(color => `${color}CC`) :
                                     chartData.colors[0] + 'CC',
-                                borderColor: chartType === 'pie' ? 
+                                borderColor: chartType === 'pie' ?
                                     chartData.colors :
                                     chartData.colors[0],
                                 borderWidth: 2
@@ -951,40 +995,11 @@
                 });
             });
 
-            // Handle sidebar state changes
-            const sidebar = document.querySelector('.sidebar');
-            const observer = new MutationObserver(function(mutations) {
-                mutations.forEach(function(mutation) {
-                    if (mutation.attributeName === 'class') {
-                        if (sidebar.classList.contains('collapsed')) {
-                            document.body.classList.add('sidebar-collapsed');
-                        } else {
-                            document.body.classList.remove('sidebar-collapsed');
-                        }
-                    }
-                });
-            });
-            observer.observe(sidebar, { attributes: true });
-
-            // Initialize collapsible sections
-            const sections = document.querySelectorAll('.dashboard-section');
-            sections.forEach(section => {
-                const content = section.querySelector('.section-content');
-                const icon = section.querySelector('.bi-chevron-down');
-
-                // Set initial state
-                if (content.classList.contains('show')) {
-                    icon.style.transform = 'rotate(180deg)';
-                }
-
-                // Use Bootstrap's collapse events
-                content.addEventListener('show.bs.collapse', () => {
-                    icon.style.transform = 'rotate(180deg)';
-                });
-
-                content.addEventListener('hide.bs.collapse', () => {
-                    icon.style.transform = 'rotate(0)';
-                });
+            // chevron rotation synced to bootstrap collapse
+            document.querySelectorAll('.dashboard-section .section-content').forEach(content => {
+                const header = content.parentElement.querySelector('.section-header');
+                content.addEventListener('show.bs.collapse', () => header && header.setAttribute('aria-expanded', 'true'));
+                content.addEventListener('hide.bs.collapse', () => header && header.setAttribute('aria-expanded', 'false'));
             });
 
             // Handle unit selection changes
@@ -1014,19 +1029,17 @@
                     headers: { 'Content-Type': 'application/json' }
                 });
                 const data = await response.json();
-                
+
                 if (data.success) {
                     if (elementId) {
                         // Update status badge
                         const statusCell = document.querySelector(`#status-${elementId}`);
                         if (statusCell) {
                             const newStatus = data.status || 'Updated';
-                            statusCell.innerHTML = `
-                                <span class="badge badge-${newStatus.toLowerCase()}">
-                                    <i class="bi bi-circle-fill me-1"></i>
-                                    ${newStatus}
-                                </span>
-                            `;
+                            const k = String(newStatus).toLowerCase().replace(/\s+/g, '-');
+                            const known = ['pending','processing','onprod','on-production','production-completed','completed','approved','paid','delivered','on-delivery','ready-to-deliver','partially-delivered','open','printed','scheduled','cancelled','declined','rejected','neutral'];
+                            const cls = 'status-' + (known.includes(k) ? k : 'neutral');
+                            statusCell.innerHTML = `<span class="status-badge ${cls}">${newStatus}</span>`;
                         }
 
                         // Update actions
@@ -1054,7 +1067,7 @@
                     const orderId = this.dataset.id;
                     // Open in new window/tab
                     window.open(`/finance/print/${orderId}`, '_blank');
-                    
+
                     // Update button state after printing
                     this.innerHTML = '<i class="bi bi-check-lg"></i> Printed';
                     this.classList.remove('btn-primary');
@@ -1101,7 +1114,7 @@
                 });
             });
 
-            // Existing button event listeners
+            // Order action buttons
             document.querySelectorAll('.mark-paid-btn').forEach(btn => {
                 btn.addEventListener('click', function() {
                     this.classList.add('loading');
@@ -1159,63 +1172,6 @@
 
         // Initial attachment of event listeners
         attachEventListeners();
-
-            // Add event listeners for action buttons
-            document.querySelectorAll('.mark-paid-btn').forEach(btn => {
-                btn.addEventListener('click', function() {
-                    this.classList.add('loading');
-                    this.disabled = true;
-                    const orderId = this.dataset.id;
-                    makeRequest(`/finance/markAsPaid/${orderId}`);
-                });
-            });
-
-            document.querySelectorAll('.proceed-delivery-btn').forEach(btn => {
-                btn.addEventListener('click', function() {
-                    this.classList.add('loading');
-                    this.disabled = true;
-                    const orderId = this.dataset.id;
-                    makeRequest(`/finance/proceedDelivery/${orderId}`);
-                });
-            });
-
-            document.querySelectorAll('.paid-request-btn').forEach(btn => {
-                btn.addEventListener('click', function() {
-                    this.classList.add('loading');
-                    this.disabled = true;
-                    const requestId = this.dataset.id;
-                    makeRequest(`/finance/payRawMaterial/${requestId}`);
-                });
-            });
-
-            document.querySelectorAll('.deliver-request-btn').forEach(btn => {
-                btn.addEventListener('click', function() {
-                    this.classList.add('loading');
-                    this.disabled = true;
-                    const requestId = this.dataset.id;
-                    makeRequest(`/finance/deliverRawMaterial/${requestId}`);
-                });
-            });
-
-            // Packaging request event listeners
-            document.querySelectorAll('.paid-packaging-btn').forEach(btn => {
-                btn.addEventListener('click', function() {
-                    this.classList.add('loading');
-                    this.disabled = true;
-                    const requestId = this.dataset.id;
-                    makeRequest(`/finance/payPackaging/${requestId}`);
-                });
-            });
-
-            document.querySelectorAll('.deliver-packaging-btn').forEach(btn => {
-                btn.addEventListener('click', function() {
-                    this.classList.add('loading');
-                    this.disabled = true;
-                    const requestId = this.dataset.id;
-                    makeRequest(`/finance/deliverPackaging/${requestId}`);
-                });
-            });
     </script>
-    <%- include('../partials/chat', { users: users, userRole: userRole, userId: userId }) %>
 </body>
 </html>

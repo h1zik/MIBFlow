@@ -1,231 +1,96 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Quarantined Raw Materials - MIB Flow</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.7.2/font/bootstrap-icons.css" rel="stylesheet">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <%- include('../partials/head', { pageTitle: 'Quarantine List' }) %>
     <style>
+        /* ============================================================
+           Quarantined Raw Materials — page-scoped flourishes
+           Built on the shared mibflow.css design system.
+           ============================================================ */
         :root {
-            --primary-color: #2e7d32;
-            --primary-light: #4caf50;
-            --primary-dark: #1b5e20;
-            --text-color: #2c3e50;
-            --background-light: #e8f5e9;
-            --shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-            --transition: all 0.3s ease;
+            --primary-color: var(--mib-primary);
+            --primary-light: var(--mib-primary-light);
+            --primary-dark: var(--mib-primary-dark);
         }
-
-        body {
-            font-family: 'Inter', sans-serif;
-            background-color: var(--background-light);
-            margin: 0;
-            padding: 0;
-            min-height: 100vh;
-        }
-
-        .main-content {
-            margin-left: 280px;
-            padding: 2rem;
-            transition: var(--transition);
-            width: calc(100% - 280px);
-        }
-
-        body.sidebar-collapsed .main-content {
-            margin-left: 70px;
-            width: calc(100% - 70px);
-        }
-
-        .page-header {
-            background: white;
-            padding: 1.5rem;
-            border-radius: 15px;
-            box-shadow: var(--shadow);
-            margin-bottom: 2rem;
-            animation: slideDown 0.5s ease-out;
-        }
-
-        .page-title {
-            margin: 0;
-            color: var(--primary-dark);
-            font-weight: 600;
-            font-size: 1.5rem;
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-        }
-
-        .table-container {
-            background: white;
-            border-radius: 15px;
-            box-shadow: var(--shadow);
-            padding: 1.5rem;
-            animation: fadeIn 0.5s ease-out;
-            margin-bottom: 2rem;
-        }
-
-        .search-box {
-            margin-bottom: 1rem;
-            position: relative;
-        }
-
-        .search-box i {
-            position: absolute;
-            left: 1rem;
-            top: 50%;
-            transform: translateY(-50%);
-            color: #6c757d;
-        }
-
-        .search-input {
-            padding: 0.5rem 1rem 0.5rem 2.5rem;
-            border-radius: 8px;
-            border: 1px solid #ced4da;
-            width: 100%;
-            transition: var(--transition);
-        }
-
-        .search-input:focus {
-            outline: none;
-            border-color: var(--primary-color);
-            box-shadow: 0 0 0 0.2rem rgba(46, 125, 50, 0.25);
-        }
-
-        .table {
-            margin: 0;
-        }
-
-        .table thead th {
-            background-color: var(--background-light);
-            color: var(--primary-dark);
-            font-weight: 600;
-            text-transform: uppercase;
-            font-size: 0.75rem;
-            letter-spacing: 0.5px;
-            padding: 1rem;
-            border: none;
-            white-space: nowrap;
-        }
-
-        .table tbody td {
-            padding: 1rem;
-            vertical-align: middle;
-            border-color: rgba(0,0,0,0.05);
-        }
-
-        .table tbody tr {
-            transition: var(--transition);
-        }
-
-        .table tbody tr:hover {
-            background-color: var(--background-light);
-        }
-
-        @keyframes slideDown {
-            from {
-                opacity: 0;
-                transform: translateY(-20px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-
-        @keyframes fadeIn {
-            from {
-                opacity: 0;
-                transform: translateY(10px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-
-        @media (max-width: 768px) {
-            .main-content {
-                margin-left: 0;
-                padding: 1rem;
-                width: 100%;
-            }
-
-            .page-header {
-                padding: 1rem;
-            }
-
-            .table-container {
-                padding: 1rem;
-            }
-        }
-
-        /* Badge styles */
-        .badge {
-            padding: 0.5rem 1rem;
-            border-radius: 50px;
-            font-weight: 500;
-            display: inline-flex;
-            align-items: center;
-            gap: 0.5rem;
-        }
-
-        .badge i {
-            font-size: 0.875rem;
-        }
-
-        .badge-pass {
-            background-color: #d1e7dd;
-            color: #0f5132;
-        }
-
-        .badge-fail {
-            background-color: #f8d7da;
-            color: #842029;
-        }
-
-        .badge-pending {
-            background-color: #fff3cd;
-            color: #856404;
-        }
-
-        .badge-danger {
-            background-color: #f8d7da;
-            color: #842029;
-        }
-
-        .badge-success {
-            background-color: #d1e7dd;
-            color: #0f5132;
-        }
-
-        .badge-secondary {
-            background-color: #e2e3e5;
-            color: #383d41;
-        }
+        .stagger > * { opacity: 0; animation: fadeIn 0.5s ease forwards; }
+        .stagger > *:nth-child(1) { animation-delay: 0.04s; }
+        .stagger > *:nth-child(2) { animation-delay: 0.10s; }
+        .stagger > *:nth-child(3) { animation-delay: 0.16s; }
+        .quick-stats { margin-bottom: 1.4rem; grid-template-columns: repeat(auto-fit, minmax(185px, 1fr)); }
+        .qr-toolbar { margin-bottom: 1.1rem; }
+        .table thead th { background: var(--mib-surface-2); }
     </style>
 </head>
-<body>
-    <%- include('../partials/sidebar', { userRole: userRole }) %>
+<body class="app-shell">
+    <%- include('../partials/sidebar', { userRole: userRole, path: '/raw-material-quarantine/list' }) %>
 
-    <div class="main-content">
-        <div class="page-header">
-            <h1 class="page-title">
-                <i class="bi bi-exclamation-triangle"></i>
-                Quarantined Raw Materials
-            </h1>
-            <p class="text-muted mb-0">View quarantined raw material requests</p>
+    <%
+        /* ---- Defensive normalisation (guard optional locals) ---- */
+        const qList = (typeof quarantinedRawMaterials !== 'undefined' && quarantinedRawMaterials) ? quarantinedRawMaterials : [];
+
+        /* status badge helper (spec) + quarantine-specific extras */
+        const KNOWN_STATUS = new Set(['pending','processing','onprod','on-production','production-completed','completed','approved','paid','delivered','on-delivery','ready-to-deliver','partially-delivered','open','printed','scheduled','cancelled','declined','rejected','neutral']);
+        const sb = (s) => {
+            const k = String(s || '').toLowerCase().replace(/\s+/g, '-');
+            if (k === 'quarantined') return 'status-declined';
+            if (k === 'destroyed')   return 'status-cancelled';
+            return 'status-' + (KNOWN_STATUS.has(k) ? k : 'neutral');
+        };
+        const qb = (s) => s === 'Pass' ? 'status-completed' : (s === 'Fail' ? 'status-declined' : 'status-pending');
+
+        const quarantinedCount = qList.filter(m => m.status === 'Quarantined').length;
+        const failedCount       = qList.filter(m => m.qcStatus === 'Fail').length;
+        const fmtDate = (d) => d ? new Date(d).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' }) : '—';
+    %>
+
+    <div class="content content-wide">
+        <%- include('../partials/page-header', {
+              pageTitle: 'Quarantined Raw Materials',
+              pageIcon: 'bi-exclamation-triangle',
+              pageSubtitle: 'Review, destroy or reuse raw material that failed quality control'
+        }) %>
+
+        <!-- Quick stats -->
+        <div class="quick-stats stagger">
+            <div class="stat-card">
+                <div class="stat-icon is-warning"><i class="bi bi-exclamation-triangle"></i></div>
+                <div class="stat-body">
+                    <div class="stat-label">In Quarantine</div>
+                    <div class="stat-value"><%= quarantinedCount %></div>
+                    <span class="stat-sub">Awaiting a decision</span>
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon is-danger"><i class="bi bi-x-octagon"></i></div>
+                <div class="stat-body">
+                    <div class="stat-label">Failed QC</div>
+                    <div class="stat-value"><%= failedCount %></div>
+                    <span class="stat-sub">Rejected by quality control</span>
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon is-info"><i class="bi bi-clipboard2-data"></i></div>
+                <div class="stat-body">
+                    <div class="stat-label">Total Records</div>
+                    <div class="stat-value"><%= qList.length %></div>
+                    <span class="stat-sub">All quarantine history</span>
+                </div>
+            </div>
         </div>
 
-        <!-- Quarantined Raw Materials -->
-        <div class="table-container">
-            <div class="search-box">
-                <i class="bi bi-search"></i>
-                <input type="text" class="search-input" id="rawMaterialSearch" placeholder="Search raw materials...">
+        <!-- Quarantined Raw Materials table -->
+        <div class="table-card fade-in">
+            <div class="card-header">
+                <h2 class="card-title"><i class="bi bi-box-seam"></i> Quarantine Records</h2>
+                <div class="toolbar mb-0 qr-toolbar">
+                    <div class="search">
+                        <i class="bi bi-search"></i>
+                        <input type="text" class="form-control form-control-sm" id="rawMaterialSearch" placeholder="Search raw materials…" autocomplete="off">
+                    </div>
+                </div>
             </div>
             <div class="table-responsive">
-                <table class="table" id="rawMaterialsTable">
+                <table class="table table-cards align-middle" id="rawMaterialsTable">
                     <thead>
                         <tr>
                             <th>Raw Material</th>
@@ -235,87 +100,56 @@
                             <th>QC Comment</th>
                             <th>Date</th>
                             <th>Status</th>
-                            <th>Actions</th>
+                            <th class="text-end">Actions</th>
                         </tr>
                     </thead>
                     <tbody>
-                        <% if (quarantinedRawMaterials && quarantinedRawMaterials.length > 0) { %>
-                            <% quarantinedRawMaterials.forEach(material => { %>
+                        <% if (qList.length > 0) { %>
+                            <% qList.forEach(material => { %>
                                 <tr>
-                                    <td><%= material.RawMaterialRequest.RawMaterial ? material.RawMaterialRequest.RawMaterial.name : 'N/A' %></td>
-                                    <td><%= material.Vendor ? material.Vendor.name : 'N/A' %></td>
-                                    <td>
-                                        <%= material.rejectQuantity > 0 ? material.rejectQuantity : material.splitQuantity %> Kg
+                                    <td data-label="Raw Material">
+                                        <span class="cell-strong"><%= material.RawMaterialRequest && material.RawMaterialRequest.RawMaterial ? material.RawMaterialRequest.RawMaterial.name : 'N/A' %></span>
+                                        <div class="cell-sub">#<%= material.id %></div>
+                                    </td>
+                                    <td data-label="Vendor"><%= material.Vendor ? material.Vendor.name : 'N/A' %></td>
+                                    <td data-label="Quantity">
+                                        <span class="cell-strong"><%= material.rejectQuantity > 0 ? material.rejectQuantity : material.splitQuantity %> Kg</span>
                                         <% if (material.rejectQuantity > 0) { %>
-                                            <small class="text-danger">(Rejected)</small>
+                                            <div class="cell-sub text-danger">Rejected</div>
                                         <% } %>
                                     </td>
-                                    <td>
-                                        <% if (material.qcStatus === 'Pass') { %>
-                                            <span class="badge badge-pass">
-                                                <i class="bi bi-check-circle"></i>
-                                                Pass
-                                            </span>
-                                        <% } else if (material.qcStatus === 'Fail') { %>
-                                            <span class="badge badge-fail">
-                                                <i class="bi bi-x-circle"></i>
-                                                Fail
-                                            </span>
-                                        <% } else { %>
-                                            <span class="badge badge-pending">
-                                                <i class="bi bi-clock"></i>
-                                                <%= material.qcStatus || 'Pending' %>
-                                            </span>
-                                        <% } %>
+                                    <td data-label="QC Status">
+                                        <span class="status-badge <%= qb(material.qcStatus) %>"><%= material.qcStatus || 'Pending' %></span>
                                     </td>
-                                    <td><%= material.qcComment || '-' %></td>
-                                    <td><%= new Date(material.createdAt).toLocaleDateString('en-US', { 
-                                        year: 'numeric', 
-                                        month: 'short', 
-                                        day: 'numeric' 
-                                    }) %></td>
-                                    <td>
+                                    <td data-label="QC Comment"><%= material.qcComment || '—' %></td>
+                                    <td data-label="Date"><%= fmtDate(material.createdAt) %></td>
+                                    <td data-label="Status">
+                                        <span class="status-badge <%= sb(material.status) %>"><%= material.status %></span>
+                                    </td>
+                                    <td data-label="Actions" class="text-end">
                                         <% if (material.status === 'Quarantined') { %>
-                                            <span class="badge badge-danger">
-                                                <i class="bi bi-exclamation-triangle"></i>
-                                                Quarantined
-                                            </span>
-                                        <% } else if (material.status === 'Pending') { %>
-                                            <span class="badge badge-pending">
-                                                <i class="bi bi-clock"></i>
-                                                Pending
-                                            </span>
-                                        <% } else if (material.status === 'Completed') { %>
-                                            <span class="badge badge-success">
-                                                <i class="bi bi-check-circle"></i>
-                                                Completed
-                                            </span>
-                                        <% } else { %>
-                                            <span class="badge badge-secondary">
-                                                <i class="bi bi-circle"></i>
-                                                <%= material.status %>
-                                            </span>
-                                        <% } %>
-                                    </td>
-                                    <td>
-                                        <% if (material.status === 'Quarantined') { %>
-                                            <div class="btn-group" role="group">
-                                                <button class="btn btn-danger btn-sm me-2" onclick="handleDestroy('<%= material.id %>')">
+                                            <div class="action-buttons justify-content-end">
+                                                <button type="button" class="btn btn-sm btn-outline-danger" onclick="handleDestroy('<%= material.id %>')">
                                                     <i class="bi bi-trash"></i> Destroy
                                                 </button>
-                                                <button class="btn btn-success btn-sm" onclick="handleReuse('<%= material.id %>')">
+                                                <button type="button" class="btn btn-sm btn-success" onclick="handleReuse('<%= material.id %>')">
                                                     <i class="bi bi-recycle"></i> Reuse
                                                 </button>
                                             </div>
+                                        <% } else { %>
+                                            <span class="text-muted-2">—</span>
                                         <% } %>
                                     </td>
                                 </tr>
                             <% }); %>
                         <% } else { %>
-                            <tr>
-                                <td colspan="7" class="text-center py-4 text-muted">
-                                    <i class="bi bi-inbox fs-4 d-block mb-2"></i>
-                                    No quarantined raw materials found
+                            <tr class="is-empty-row">
+                                <td colspan="8">
+                                    <div class="empty-state">
+                                        <i class="bi bi-inbox"></i>
+                                        <h4>No quarantined raw materials</h4>
+                                        <p>Raw materials that fail QC will appear here for review.</p>
+                                    </div>
                                 </td>
                             </tr>
                         <% } %>
@@ -326,7 +160,6 @@
     </div>
 
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
     <script>
         // Function to handle destroy action
         async function handleDestroy(id) {
@@ -338,7 +171,7 @@
                             'Content-Type': 'application/json'
                         }
                     });
-                    
+
                     if (response.ok) {
                         window.location.reload();
                     } else {
@@ -362,7 +195,7 @@
                             'Content-Type': 'application/json'
                         }
                     });
-                    
+
                     if (response.ok) {
                         window.location.reload();
                     } else {
@@ -377,30 +210,16 @@
         }
 
         document.addEventListener('DOMContentLoaded', function() {
-            // Handle sidebar state changes
-            const sidebar = document.querySelector('.sidebar');
-            const observer = new MutationObserver(function(mutations) {
-                mutations.forEach(function(mutation) {
-                    if (mutation.attributeName === 'class') {
-                        if (sidebar.classList.contains('collapsed')) {
-                            document.body.classList.add('sidebar-collapsed');
-                        } else {
-                            document.body.classList.remove('sidebar-collapsed');
-                        }
-                    }
-                });
-            });
-            observer.observe(sidebar, { attributes: true });
+            // Search functionality (live-filter table rows)
+            const searchInput = document.getElementById('rawMaterialSearch');
+            if (searchInput) {
+                searchInput.addEventListener('input', function(e) {
+                    const searchText = e.target.value.toLowerCase();
+                    const table = document.getElementById('rawMaterialsTable');
+                    const rows = table.querySelectorAll('tbody tr');
 
-            // Search functionality
-            document.getElementById('rawMaterialSearch').addEventListener('input', function(e) {
-                const searchText = e.target.value.toLowerCase();
-                const table = document.getElementById('rawMaterialsTable');
-                const rows = table.getElementsByTagName('tr');
-
-                for (let i = 1; i < rows.length; i++) {
-                    const row = rows[i];
-                    if (!row.classList.contains('no-results')) {
+                    rows.forEach(function(row) {
+                        if (row.classList.contains('is-empty-row')) return;
                         const cells = row.getElementsByTagName('td');
                         let found = false;
                         for (let cell of cells) {
@@ -410,9 +229,9 @@
                             }
                         }
                         row.style.display = found ? '' : 'none';
-                    }
-                }
-            });
+                    });
+                });
+            }
         });
     </script>
 </body>

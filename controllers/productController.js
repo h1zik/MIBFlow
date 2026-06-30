@@ -16,10 +16,10 @@ exports.addProductForm = async (req, res) => {
         const rawMaterials = await RawMaterial.findAll();
 
         // Render the addProduct page, passing the list of raw materials
-        res.render('products/addProduct', { 
-            userRole, 
+        res.render('products/addProduct', {
+            userRole,
             rawMaterials,
-            path: '/products/add'
+            path: '/products/addProduct'
         });
     } catch (error) {
         console.error('Error fetching raw materials:', error);

@@ -1,244 +1,113 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Production Schedule</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
-
-    <!-- FullCalendar CSS -->
-    <link href="https://cdn.jsdelivr.net/npm/fullcalendar@5.10.1/main.min.css" rel="stylesheet">
-
+    <%- include('../partials/head', {
+          pageTitle: 'Productions Schedule',
+          extraStylesheets: ['https://cdn.jsdelivr.net/npm/fullcalendar@5.10.1/main.min.css']
+    }) %>
     <style>
+        /* Productions Schedule — page-scoped flourishes (built on --mib-* tokens) */
         :root {
-            --primary-color: #4CAF50;
-            --primary-dark: #1b5e20;
-            --secondary-color: #2c3e50;
-            --text-color: #333;
-            --text-muted: #6c757d;
-            --bg-color: #f8f9fa;
-            --border-radius: 8px;
-            --box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            --primary-color: var(--mib-primary);
+            --primary-light: var(--mib-primary-light);
+            --primary-dark: var(--mib-primary-dark);
         }
+        .stagger > * { opacity: 0; animation: fadeIn 0.5s ease forwards; }
+        .stagger > *:nth-child(1) { animation-delay: 0.04s; }
+        .stagger > *:nth-child(2) { animation-delay: 0.10s; }
 
-        body {
-            font-family: 'Segoe UI', 'Roboto', sans-serif;
-            background: var(--bg-color);
-            color: var(--text-color);
-            line-height: 1.6;
+        /* Calendar shell */
+        .calendar-card { padding: 1.5rem; }
+        #calendar { background: transparent; }
+
+        /* FullCalendar themed to the design system */
+        .fc .fc-button-primary {
+            background-color: var(--mib-primary) !important;
+            border-color: var(--mib-primary) !important;
+            box-shadow: none;
         }
-
-        .content {
-            margin-left: 260px;
-            padding: 2rem;
-            transition: margin-left 0.3s ease;
+        .fc .fc-button-primary:hover,
+        .fc .fc-button-primary:not(:disabled).fc-button-active,
+        .fc .fc-button-primary:not(:disabled):active {
+            background-color: var(--mib-primary-dark) !important;
+            border-color: var(--mib-primary-dark) !important;
         }
-
-        .header {
-            background: white;
-            padding: 2rem;
-            border-radius: var(--border-radius);
-            box-shadow: var(--box-shadow);
-            margin-bottom: 2rem;
-        }
-
-        .header h1 {
-            font-size: 2rem;
-            color: var(--secondary-color);
-            font-weight: 600;
-            margin-bottom: 0.5rem;
-        }
-
-        .header p {
-            color: var(--text-muted);
-            font-size: 1rem;
-            margin-bottom: 0;
-        }
-
-        #calendar {
-            background: white;
-            border-radius: var(--border-radius);
-            box-shadow: var(--box-shadow);
-            padding: 1.5rem;
-            margin-bottom: 2rem;
-        }
-
-        .fc-button {
-            background-color: var(--primary-color) !important;
-            border-color: var(--primary-color) !important;
-        }
-
-        .fc-button:hover {
-            background-color: var(--primary-dark) !important;
-            border-color: var(--primary-dark) !important;
-        }
-
+        .fc .fc-button-primary:focus { box-shadow: var(--mib-ring) !important; }
+        .fc .fc-button-primary:disabled { background-color: var(--mib-primary-light) !important; border-color: var(--mib-primary-light) !important; }
         .fc-event {
-            border-radius: 4px;
+            border-radius: var(--mib-radius-sm);
             padding: 2px 4px;
             margin: 1px 0;
             border: none;
-            background-color: var(--primary-color);
-            color: white;
+            background-color: var(--mib-primary);
+            color: #fff;
             cursor: pointer;
             transition: transform 0.2s ease, box-shadow 0.2s ease;
         }
+        .fc-event:hover { transform: translateY(-1px); box-shadow: var(--mib-shadow-md); }
+        .fc .fc-toolbar-title { color: var(--mib-text); font-weight: 650; }
+        .fc .fc-col-header-cell-cushion { color: var(--mib-text); font-weight: 600; padding: 8px; }
+        .fc .fc-day-today { background-color: var(--mib-primary-soft) !important; }
+        .fc-scrollgrid { border-radius: var(--mib-radius-sm); overflow: hidden; }
+        .fc-theme-standard td, .fc-theme-standard th { border-color: var(--mib-border); }
 
-        .fc-event:hover {
-            transform: translateY(-1px);
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.15);
+        /* Modal detail rows */
+        #productionModal .detail-row {
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 0.75rem 0; border-bottom: 1px solid var(--mib-border); gap: 1rem;
         }
+        #productionModal .detail-row:last-child { border-bottom: none; }
+        #productionModal .detail-row span:first-child { color: var(--mib-text-muted); font-weight: 500; }
+        #productionModal .detail-row span:last-child { font-weight: 650; color: var(--mib-text); text-align: right; }
 
-        .fc-toolbar-title {
-            color: var(--secondary-color);
-            font-weight: 600;
-        }
-
-        .fc-day-today {
-            background-color: rgba(76, 175, 80, 0.05) !important;
-        }
-
-        .fc-day-header {
-            background-color: var(--primary-color);
-            color: white;
-            padding: 8px !important;
-        }
-
-        .fc-scrollgrid {
-            border-radius: var(--border-radius);
-            overflow: hidden;
-        }
-
-        .tooltip {
-            font-family: 'Segoe UI', 'Roboto', sans-serif;
-            font-size: 0.875rem;
-        }
-
-        .tooltip-inner {
-            background-color: var(--secondary-color);
-            border-radius: 4px;
-            padding: 8px 12px;
-        }
-
-        /* Modal Styles */
-        .modal-content {
-            border-radius: var(--border-radius);
-            box-shadow: var(--box-shadow);
-        }
-
-        .modal-header {
-            background-color: var(--primary-color);
-            color: white;
-            border-top-left-radius: var(--border-radius);
-            border-top-right-radius: var(--border-radius);
-            padding: 1rem 1.5rem;
-        }
-
-        .modal-title {
-            font-weight: 600;
-            font-size: 1.25rem;
-        }
-
-        .modal-body {
-            padding: 1.5rem;
-        }
-
-        .detail-row {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 0.75rem 0;
-            border-bottom: 1px solid #eee;
-        }
-
-        .detail-row:last-child {
-            border-bottom: none;
-        }
-
-        .detail-row span:first-child {
-            color: var(--text-muted);
-            font-weight: 500;
-        }
-
-        .detail-row span:last-child {
-            font-weight: 600;
-            color: var(--text-color);
-        }
-
-        .modal-footer {
-            background-color: #f8f9fa;
-            border-bottom-left-radius: var(--border-radius);
-            border-bottom-right-radius: var(--border-radius);
-            padding: 1rem 1.5rem;
-        }
-
-        .btn-secondary {
-            background-color: var(--text-muted);
-            border: none;
-        }
-
-        .btn-secondary:hover {
-            background-color: #5a6268;
-        }
-
-        /* Responsive Design */
-        @media (max-width: 992px) {
-            .content {
-                margin-left: 0;
-                padding: 1rem;
-            }
-
-            .header {
-                padding: 1.5rem;
-            }
-
-            .header h1 {
-                font-size: 1.75rem;
-            }
-
-            #calendar {
-                padding: 1rem;
-            }
-        }
+        .tooltip-inner { white-space: pre-line; }
 
         @media (max-width: 576px) {
-            .header h1 {
-                font-size: 1.5rem;
-            }
-
-            .modal-body {
-                padding: 1rem;
-            }
-
-            .detail-row {
-                flex-direction: column;
-                align-items: flex-start;
-                gap: 0.5rem;
-            }
-
-            .detail-row span:last-child {
-                padding-left: 1rem;
-            }
+            #productionModal .detail-row { flex-direction: column; align-items: flex-start; gap: 0.35rem; }
+            #productionModal .detail-row span:last-child { text-align: left; }
         }
     </style>
 </head>
-<body>
-    <%- include('../partials/sidebar', { userRole: userRole }) %>
-    
-    <div class="content">
-        <div class="header">
-            <h1>Production Schedule</h1>
-            <p>Manage and view all your production schedules in one place.</p>
+<body class="app-shell">
+    <%- include('../partials/sidebar', { userRole: userRole, path: '/productionSchedule' }) %>
+
+    <%
+        /* ---- Defensive normalisation ---- */
+        const events = (typeof productionEvents !== 'undefined' && productionEvents) ? productionEvents : [];
+    %>
+
+    <div class="content content-wide">
+
+        <%- include('../partials/page-header', {
+              pageTitle: 'Productions Schedule',
+              pageIcon: 'bi-calendar-week',
+              pageSubtitle: 'Manage and view all your production schedules in one place.'
+        }) %>
+
+        <!-- ===================== Quick stats ===================== -->
+        <div class="quick-stats stagger">
+            <div class="stat-card">
+                <div class="stat-icon is-info"><i class="bi bi-calendar-event"></i></div>
+                <div class="stat-body">
+                    <div class="stat-label">Scheduled Productions</div>
+                    <div class="stat-value"><%= events.length %></div>
+                    <span class="stat-sub">Events on the calendar</span>
+                </div>
+            </div>
         </div>
-        <div id="calendar"></div>
+
+        <!-- ===================== Calendar ===================== -->
+        <div class="card calendar-card fade-in">
+            <div id="calendar"></div>
+        </div>
     </div>
 
     <!-- Modal to display production details -->
     <div class="modal fade" id="productionModal" tabindex="-1" role="dialog" aria-labelledby="productionModalLabel" aria-hidden="true">
-        <div class="modal-dialog" role="document">
+        <div class="modal-dialog modal-dialog-centered" role="document">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h5 class="modal-title" id="productionModalLabel">Production Details</h5>
+                    <h5 class="modal-title" id="productionModalLabel"><i class="bi bi-clipboard-data"></i> Production Details</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <div class="modal-body">
@@ -268,7 +137,7 @@
                     </div>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                    <button type="button" class="btn btn-light" data-bs-dismiss="modal">Close</button>
                 </div>
             </div>
         </div>
@@ -310,14 +179,14 @@
                 },
                 eventClick: function(info) {
                     const event = info.event.extendedProps;
-                    
+
                     // Update modal with formatted data
                     document.getElementById('batchNumber').textContent = event.batchNumber || 'N/A';
                     document.getElementById('quantity').textContent = event.quantity ? `${event.quantity} Kg` : 'N/A';
                     document.getElementById('qcStatus').textContent = event.qcStatus || 'Not Available';
                     document.getElementById('stirSequence').textContent = event.stirSequence || 'N/A';
                     document.getElementById('sampleRetained').textContent = event.sampleRetained ? 'Yes' : 'No';
-                    document.getElementById('retainedSampleVolume').textContent = 
+                    document.getElementById('retainedSampleVolume').textContent =
                         event.retainedSampleVolume ? `${event.retainedSampleVolume} L` : 'N/A';
 
                     // Show the modal using Bootstrap 5 syntax

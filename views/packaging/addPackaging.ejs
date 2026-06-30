@@ -1,335 +1,83 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Add Packaging - MIB Flow</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.7.2/font/bootstrap-icons.css" rel="stylesheet">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <%- include('../partials/head', { pageTitle: 'Add Packaging' }) %>
     <style>
+        /* Add Packaging — page-scoped flourishes on the shared design system */
         :root {
-            --primary-color: #2e7d32;
-            --primary-dark: #1b5e20;
-            --background-light: #e8f5e9;
-            --shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            --primary-color: var(--mib-primary);
+            --primary-light: var(--mib-primary-light);
+            --primary-dark: var(--mib-primary-dark);
         }
-
-        body {
-            font-family: 'Inter', sans-serif;
-            background-color: var(--background-light);
-            margin: 0;
-            padding: 0;
-            min-height: 100vh;
-        }
-
-        .main-content {
-            margin-left: 0;
-            padding: 1rem;
-            width: 100%;
-            transition: all 0.3s ease;
-        }
-
-        .page-header {
-            background: white;
-            padding: 1rem;
-            border-radius: 15px;
-            box-shadow: var(--shadow);
-            margin-bottom: 1rem;
-        }
-
-        .page-title {
-            margin: 0;
-            color: var(--primary-dark);
-            font-weight: 600;
-            font-size: 1.25rem;
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-        }
-
-        .page-subtitle {
-            color: #6c757d;
-            margin: 0.5rem 0 0 0;
-            font-size: 0.9rem;
-        }
-
-        .card {
-            background: white;
-            border-radius: 15px;
-            box-shadow: var(--shadow);
-            margin-bottom: 1rem;
-            border: none;
-            overflow: hidden;
-        }
-
-        .card-header {
-            background-color: var(--background-light);
-            border-bottom: 1px solid rgba(0,0,0,0.1);
-            padding: 1rem;
-        }
-
-        .card-title {
-            color: var(--primary-dark);
-            font-weight: 600;
-            font-size: 1rem;
-            margin: 0;
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-        }
-
-        .card-body {
-            padding: 1rem;
-        }
-
-        .form-label {
-            font-weight: 500;
-            color: #2c3e50;
-            margin-bottom: 0.5rem;
-            font-size: 0.875rem;
-        }
-
-        .form-control {
-            border-radius: 8px;
-            border: 1px solid rgba(0,0,0,0.1);
-            padding: 0.75rem 1rem;
-            transition: all 0.3s ease;
-            font-size: 0.875rem;
-        }
-
-        .form-control:focus {
-            border-color: var(--primary-color);
-            box-shadow: 0 0 0 0.2rem rgba(46, 125, 50, 0.25);
-        }
-
-        .btn {
-            padding: 0.75rem 1rem;
-            border-radius: 8px;
-            font-weight: 500;
-            display: inline-flex;
-            align-items: center;
-            gap: 0.5rem;
-            transition: all 0.3s ease;
-            font-size: 0.875rem;
-            justify-content: center;
-        }
-
-        .btn-primary {
-            background-color: var(--primary-color);
-            border: none;
-            color: white;
-        }
-
-        .btn-primary:hover {
-            background-color: var(--primary-dark);
-            transform: translateY(-1px);
-        }
-
-        .btn-secondary {
-            background-color: #6c757d;
-            border: none;
-            color: white;
-        }
-
-        .btn-secondary:hover {
-            background-color: #5a6268;
-            transform: translateY(-1px);
-        }
-
-        .alert {
-            border: none;
-            border-radius: 15px;
-            padding: 1rem 1.5rem;
-            margin-bottom: 1rem;
-            display: flex;
-            align-items: center;
-            gap: 0.75rem;
-        }
-
-        .alert-success {
-            background-color: #d1e7dd;
-            color: #0f5132;
-        }
-
-        .alert .btn-close {
-            padding: 1.25rem;
-            margin: -1rem -1rem -1rem auto;
-        }
-
-        .fade-in {
-            animation: fadeIn 0.3s ease-in;
-        }
-
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(10px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-
-        /* Desktop styles */
-        @media (min-width: 769px) {
-            .main-content {
-                margin-left: 280px;
-                padding: 2rem;
-                width: calc(100% - 280px);
-            }
-
-            .page-header {
-                padding: 1.5rem;
-                margin-bottom: 2rem;
-            }
-
-            .page-title {
-                font-size: 1.5rem;
-            }
-
-            .card-header {
-                padding: 1.5rem;
-            }
-
-            .card-body {
-                padding: 1.5rem;
-            }
-
-            .form-label {
-                font-size: 1rem;
-            }
-
-            .form-control {
-                font-size: 1rem;
-            }
-
-            .btn {
-                font-size: 1rem;
-            }
-
-            body:has(.sidebar.collapsed) .main-content {
-                margin-left: 70px;
-                width: calc(100% - 70px);
-            }
-
-            .btn-group {
-                display: flex;
-                gap: 0.5rem;
-            }
-
-            .btn {
-                width: auto;
-            }
-        }
-
-        /* Mobile styles */
-        @media (max-width: 768px) {
-            .btn-group {
-                display: grid;
-                gap: 0.5rem;
-            }
-
-            .btn {
-                width: 100%;
-            }
-        }
+        .form-actions { display: flex; flex-wrap: wrap; gap: 0.6rem; }
+        @media (max-width: 575.98px) { .form-actions { display: grid; } }
     </style>
 </head>
-<body>
-    <%- include('../partials/sidebar', { userRole: userRole }) %>
+<body class="app-shell">
+    <%- include('../partials/sidebar', { userRole: userRole, path: '/packaging/add' }) %>
 
-    <div class="main-content">
-        <div class="page-header fade-in">
-            <h1 class="page-title">
-                <i class="bi bi-plus-circle"></i>
-                Add Packaging
-            </h1>
-            <p class="page-subtitle">Fill in the details below to add a new packaging.</p>
-        </div>
+    <%
+        /* Defensive locals — only some renders pass these */
+        const successMsg = (typeof successMessage !== 'undefined' && successMessage) ? successMessage : null;
+        const errorMsg   = (typeof error !== 'undefined' && error) ? error : null;
+        const fd         = (typeof formData !== 'undefined' && formData) ? formData : {};
+    %>
 
-        <% if (successMessage) { %>
-            <div class="alert alert-success fade-in" role="alert">
+    <div class="content content-narrow">
+        <%- include('../partials/page-header', {
+              pageTitle: 'Add Packaging',
+              pageIcon: 'bi-plus-circle',
+              pageSubtitle: 'Fill in the details below to add a new packaging.',
+              actionsHtml: '<a href="/packaging/list" class="btn btn-light"><i class="bi bi-boxes"></i> Packaging List</a>'
+            }) %>
+
+        <% if (successMsg) { %>
+            <div class="mib-flash mib-flash-success alert-dismissible fade show" role="alert">
                 <i class="bi bi-check-circle-fill"></i>
-                <%= successMessage %>
-                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                <span><%= successMsg %></span>
+                <button type="button" class="btn-close ms-auto" data-bs-dismiss="alert" aria-label="Close"></button>
             </div>
         <% } %>
 
-        <div class="card fade-in">
-            <div class="card-header">
-                <h2 class="card-title">
-                    <i class="bi bi-box-seam"></i>
-                    Packaging Details
-                </h2>
+        <% if (errorMsg) { %>
+            <div class="mib-flash mib-flash-error alert-dismissible fade show" role="alert">
+                <i class="bi bi-exclamation-triangle-fill"></i>
+                <span><%= errorMsg %></span>
+                <button type="button" class="btn-close ms-auto" data-bs-dismiss="alert" aria-label="Close"></button>
             </div>
-            <div class="card-body">
-                <form action="/packaging/add" method="POST">
-                    <div class="row g-3">
-                        <div class="col-12">
-                            <label for="name" class="form-label">Packaging Name</label>
-                            <input type="text" class="form-control" id="name" name="name" required>
-                        </div>
-                        <div class="col-md-6">
-                            <label for="volume" class="form-label">Volume (L)</label>
-                            <input type="number" class="form-control" id="volume" name="volume" required min="0" step="0.1">
-                        </div>
-                        <div class="col-md-6">
-                            <label for="stock" class="form-label">Stock</label>
-                            <input type="number" class="form-control" id="stock" name="stock" required min="0">
-                        </div>
-                        <div class="col-12">
-                            <div class="btn-group">
-                                <a href="/dashboard/raw-material-warehouse" class="btn btn-secondary">
-                                    <i class="bi bi-arrow-left"></i>
-                                    Back
-                                </a>
-                                <button type="submit" class="btn btn-primary">
-                                    <i class="bi bi-plus-lg"></i>
-                                    Add Packaging
-                                </button>
-                            </div>
+        <% } %>
+
+        <form action="/packaging/add" method="POST" class="fade-in">
+            <div class="form-section">
+                <h2 class="form-section-title"><i class="bi bi-box-seam"></i> Packaging Details</h2>
+                <p class="form-section-desc">Enter the packaging name, its volume in litres and the quantity currently in stock.</p>
+
+                <div class="row g-3">
+                    <div class="col-12">
+                        <label for="name" class="form-label">Packaging Name</label>
+                        <input type="text" class="form-control" id="name" name="name" placeholder="e.g. Jerry Can 5L" value="<%= fd.name || '' %>" required>
+                    </div>
+                    <div class="col-md-6">
+                        <label for="volume" class="form-label">Volume (L)</label>
+                        <input type="number" class="form-control" id="volume" name="volume" placeholder="e.g. 5" value="<%= fd.volume || '' %>" required min="0" step="0.1">
+                    </div>
+                    <div class="col-md-6">
+                        <label for="stock" class="form-label">Stock</label>
+                        <input type="number" class="form-control" id="stock" name="stock" placeholder="e.g. 100" value="<%= fd.stock || '' %>" required min="0">
+                    </div>
+                    <div class="col-12">
+                        <div class="form-actions">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="bi bi-plus-lg"></i> Add Packaging
+                            </button>
+                            <a href="/dashboard/raw-material-warehouse" class="btn btn-light">
+                                <i class="bi bi-arrow-left"></i> Back
+                            </a>
                         </div>
                     </div>
-                </form>
+                </div>
             </div>
-        </div>
+        </form>
     </div>
-
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
-    <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            // Handle sidebar state changes
-            const sidebar = document.querySelector('.sidebar');
-            const mainContent = document.querySelector('.main-content');
-
-            function updateContentWidth() {
-                if (window.innerWidth > 768) {
-                    if (sidebar.classList.contains('collapsed')) {
-                        mainContent.style.marginLeft = '70px';
-                        mainContent.style.width = 'calc(100% - 70px)';
-                    } else {
-                        mainContent.style.marginLeft = '280px';
-                        mainContent.style.width = 'calc(100% - 280px)';
-                    }
-                } else {
-                    mainContent.style.marginLeft = '0';
-                    mainContent.style.width = '100%';
-                }
-            }
-
-            // Initial width update
-            updateContentWidth();
-
-            // Watch for sidebar class changes
-            const observer = new MutationObserver(function(mutations) {
-                mutations.forEach(function(mutation) {
-                    if (mutation.attributeName === 'class') {
-                        updateContentWidth();
-                    }
-                });
-            });
-
-            observer.observe(sidebar, { attributes: true });
-
-            // Handle window resize
-            window.addEventListener('resize', updateContentWidth);
-        });
-    </script>
 </body>
 </html>

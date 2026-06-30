@@ -1,151 +1,64 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Undelivered Orders - MIB Flow</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.7.2/font/bootstrap-icons.css" rel="stylesheet">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <%- include('../partials/head', { pageTitle: 'Undelivered Orders', extraScripts: ['https://code.jquery.com/jquery-3.6.0.min.js'] }) %>
     <style>
+        /* Legacy-var bridge so shared partials stay on-brand */
         :root {
-            --primary-color: #2e7d32;
-            --primary-light: #4caf50;
-            --primary-dark: #1b5e20;
-            --text-color: #2c3e50;
-            --background-light: #e8f5e9;
-            --shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-            --transition: all 0.3s ease;
+            --primary-color: var(--mib-primary);
+            --primary-light: var(--mib-primary-light);
+            --primary-dark: var(--mib-primary-dark);
         }
-
-        body {
-            font-family: 'Inter', sans-serif;
-            background-color: var(--background-light);
-            margin: 0;
-            padding: 0;
-            min-height: 100vh;
-        }
-
-        .main-content {
-            margin-left: 280px;
-            padding: 2rem;
-            transition: var(--transition);
-            width: calc(100% - 280px);
-        }
-
-        body.sidebar-collapsed .main-content {
-            margin-left: 70px;
-            width: calc(100% - 70px);
-        }
-
-        .page-header {
-            background: white;
-            padding: 1.5rem;
-            border-radius: 15px;
-            box-shadow: var(--shadow);
-            margin-bottom: 2rem;
-        }
-
-        .page-title {
-            margin: 0;
-            color: var(--primary-dark);
-            font-weight: 600;
-            font-size: 1.5rem;
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-        }
-
-        .dashboard-section {
-            background: white;
-            border-radius: 15px;
-            box-shadow: var(--shadow);
-            margin-bottom: 2rem;
-            overflow: hidden;
-        }
-
-        .table {
-            margin: 0;
-        }
-
-        .table thead th {
-            background-color: var(--background-light);
-            color: var(--primary-dark);
-            font-weight: 600;
-            text-transform: uppercase;
-            font-size: 0.75rem;
-            letter-spacing: 0.5px;
-            padding: 1rem;
-            border: none;
-            white-space: nowrap;
-        }
-
-        .table tbody td {
-            padding: 1rem;
-            vertical-align: middle;
-            border-color: rgba(0,0,0,0.05);
-        }
-
-        .table tbody tr {
-            transition: var(--transition);
-        }
-
-        .table tbody tr:hover {
-            background-color: var(--background-light);
-        }
-
-        .btn {
-            padding: 0.5rem 1rem;
-            border-radius: 8px;
-            transition: var(--transition);
-            display: inline-flex;
-            align-items: center;
-            gap: 0.5rem;
-            font-weight: 500;
-        }
-
-        .btn-primary {
-            background-color: var(--primary-color);
-            border: none;
-        }
-
-        .btn-primary:hover {
-            background-color: var(--primary-dark);
-            transform: translateY(-1px);
-            box-shadow: 0 4px 12px rgba(46, 125, 50, 0.25);
-        }
-
-        @media (max-width: 768px) {
-            .main-content {
-                margin-left: 0;
-                padding: 1rem;
-                width: 100%;
-            }
-
-            .page-header {
-                padding: 1rem;
-            }
-
-            .dashboard-section {
-                margin-bottom: 1rem;
-            }
-        }
+        .quick-stats { margin-bottom: 1.4rem; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); }
+        .stagger > * { opacity: 0; animation: fadeIn 0.5s ease forwards; }
+        .stagger > *:nth-child(1) { animation-delay: 0.04s; }
+        .stagger > *:nth-child(2) { animation-delay: 0.10s; }
+        .action-buttons { display: flex; gap: 0.4rem; flex-wrap: wrap; align-items: center; }
     </style>
 </head>
-<body>
-    <%- include('../partials/sidebar', { userRole: userRole }) %>
-    <div class="main-content">
-        <div class="page-header">
-            <h1 class="page-title">
-                <i class="bi bi-box-seam"></i>
-                Undelivered Orders
-            </h1>
-            <p class="text-muted mb-0">Orders with remaining quantities to be delivered</p>
+<body class="app-shell">
+    <%- include('../partials/sidebar', { userRole: userRole, path: '/productWarehouse/undelivered' }) %>
+
+    <%
+        /* ---- Defensive normalisation ---- */
+        const items = (typeof undeliveredItems !== 'undefined' && undeliveredItems) ? undeliveredItems : [];
+
+        /* aggregate remaining units (cosmetic stat) */
+        let totalRemaining = 0;
+        items.forEach(it => { const rem = (it.unit || 0) - (it.sentQuantity || 0); if (!isNaN(rem)) totalRemaining += rem; });
+    %>
+
+    <div class="content content-wide">
+
+        <%- include('../partials/page-header', {
+              pageTitle: 'Undelivered Orders',
+              pageIcon: 'bi-box-seam',
+              pageSubtitle: 'Orders with remaining quantities to be delivered' }) %>
+
+        <!-- ===================== Quick stats ===================== -->
+        <div class="quick-stats stagger">
+            <div class="stat-card">
+                <div class="stat-icon is-warning"><i class="bi bi-truck"></i></div>
+                <div class="stat-body">
+                    <div class="stat-label">Pending Items</div>
+                    <div class="stat-value"><%= items.length %></div>
+                    <span class="stat-sub">Lines awaiting delivery</span>
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon is-info"><i class="bi bi-box2"></i></div>
+                <div class="stat-body">
+                    <div class="stat-label">Remaining Units</div>
+                    <div class="stat-value"><%= totalRemaining %></div>
+                    <span class="stat-sub">Packaging units to send</span>
+                </div>
+            </div>
         </div>
 
-        <div class="dashboard-section">
+        <!-- ===================== Table ===================== -->
+        <div class="table-card fade-in">
             <div class="table-responsive">
-                <table class="table">
+                <table class="table table-cards align-middle">
                     <thead>
                         <tr>
                             <th>Order ID</th>
@@ -153,34 +66,34 @@
                             <th>Customer Name</th>
                             <th>Product</th>
                             <th>Packaging</th>
-                            <th>Ordered Quantity</th>
-                            <th>Sent Quantity</th>
-                            <th>Remaining</th>
-                            <th>Action</th>
+                            <th class="text-end">Ordered Quantity</th>
+                            <th class="text-end">Sent Quantity</th>
+                            <th class="text-end">Remaining</th>
+                            <th class="text-end">Action</th>
                         </tr>
                     </thead>
                     <tbody>
                         <% if (undeliveredItems && undeliveredItems.length > 0) { %>
                             <% undeliveredItems.forEach(function(item) { %>
                                 <tr>
-                                    <td>#<%= item.Order.id %></td>
-                                    <td><%= item.Order.sonumber %></td>
-                                    <td><%= item.Order.customerName %></td>
-                                    <td><%= item.Product.name %></td>
-                                    <td>
-                                        <%= item.Packaging.name %> 
+                                    <td data-label="Order ID"><span class="cell-strong">#<%= item.Order.id %></span></td>
+                                    <td data-label="SO Number"><%= item.Order.sonumber %></td>
+                                    <td data-label="Customer Name"><%= item.Order.customerName %></td>
+                                    <td data-label="Product"><%= item.Product.name %></td>
+                                    <td data-label="Packaging">
+                                        <%= item.Packaging.name %>
                                         (<%= item.Packaging.volume %> <%= item.satuan %>)
                                     </td>
-                                    <td><%= item.unit %> units</td>
-                                    <td><%= item.sentQuantity || 0 %> units</td>
-                                    <td><%= item.unit - (item.sentQuantity || 0) %> units</td>
-                                    <td>
-                                        <div class="d-flex gap-2">
-                                            <button type="button" class="btn btn-success" data-bs-toggle="modal" data-bs-target="#deliveryModal<%= item.id %>">
+                                    <td data-label="Ordered Quantity" class="text-end num"><%= item.unit %> units</td>
+                                    <td data-label="Sent Quantity" class="text-end num"><%= item.sentQuantity || 0 %> units</td>
+                                    <td data-label="Remaining" class="text-end num"><%= item.unit - (item.sentQuantity || 0) %> units</td>
+                                    <td data-label="Action" class="text-end">
+                                        <div class="action-buttons justify-content-end">
+                                            <button type="button" class="btn btn-sm btn-success" data-bs-toggle="modal" data-bs-target="#deliveryModal<%= item.id %>">
                                                 <i class="bi bi-truck"></i>
                                                 Deliver
                                             </button>
-                                            <a href="/orders/<%= item.Order.id %>" class="btn btn-primary">
+                                            <a href="/orders/<%= item.Order.id %>" class="btn btn-sm btn-primary">
                                                 <i class="bi bi-eye"></i>
                                                 View Order
                                             </a>
@@ -195,31 +108,31 @@
                                                         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                                                     </div>
                                                     <form action="/productWarehouse/deliver-remaining/<%= item.id %>" method="POST">
-                                                        <div class="modal-body">
+                                                        <div class="modal-body text-start">
                                                             <div class="mb-4">
                                                                 <h6 class="mb-3"><%= item.Product.name %></h6>
                                                                 <div class="mb-3">
                                                                     <label class="form-label">
-                                                                        <%= item.Product.name %> in <%= item.Packaging.name %> 
+                                                                        <%= item.Product.name %> in <%= item.Packaging.name %>
                                                                         (<%= item.Packaging.volume %> <%= item.satuan %>)
                                                                     </label>
                                                                     <div class="input-group">
-                                                                        <input type="number" 
-                                                                            class="form-control" 
-                                                                            name="sentQuantity" 
+                                                                        <input type="number"
+                                                                            class="form-control"
+                                                                            name="sentQuantity"
                                                                             placeholder="Enter number of packaging units"
                                                                             max="<%= item.unit - (item.sentQuantity || 0) %>"
                                                                             required>
                                                                         <span class="input-group-text">units</span>
                                                                     </div>
-                                                                    <small class="text-muted">
+                                                                    <small class="form-text">
                                                                         Total packaging units needed: <%= item.unit - (item.sentQuantity || 0) %>
                                                                     </small>
                                                                 </div>
                                                             </div>
                                                         </div>
                                                         <div class="modal-footer">
-                                                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                                                            <button type="button" class="btn btn-light" data-bs-dismiss="modal">Close</button>
                                                             <button type="submit" class="btn btn-success">
                                                                 <i class="bi bi-truck"></i>
                                                                 Confirm Delivery
@@ -233,10 +146,13 @@
                                 </tr>
                             <% }); %>
                         <% } else { %>
-                            <tr>
-                                <td colspan="9" class="text-center py-4 text-muted">
-                                    <i class="bi bi-inbox fs-4 d-block mb-2"></i>
-                                    No undelivered orders found
+                            <tr class="is-empty-row">
+                                <td colspan="9">
+                                    <div class="empty-state">
+                                        <i class="bi bi-inbox"></i>
+                                        <h4>No undelivered orders</h4>
+                                        <p>Orders with remaining quantities to deliver will appear here.</p>
+                                    </div>
                                 </td>
                             </tr>
                         <% } %>
@@ -245,25 +161,5 @@
             </div>
         </div>
     </div>
-
-    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
-    <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            const sidebar = document.querySelector('.sidebar');
-            const observer = new MutationObserver(function(mutations) {
-                mutations.forEach(function(mutation) {
-                    if (mutation.attributeName === 'class') {
-                        if (sidebar.classList.contains('collapsed')) {
-                            document.body.classList.add('sidebar-collapsed');
-                        } else {
-                            document.body.classList.remove('sidebar-collapsed');
-                        }
-                    }
-                });
-            });
-            observer.observe(sidebar, { attributes: true });
-        });
-    </script>
 </body>
 </html>

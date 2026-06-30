@@ -1,114 +1,261 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Production Dashboard - MIB Flow</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.7.2/font/bootstrap-icons.css" rel="stylesheet">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="/css/stylepurchase.css">
+    <%- include('../partials/head', { pageTitle: 'Production Dashboard' }) %>
     <style>
-        .badge-scheduled {
-            background-color: #d1e7dd;
-            color: #0f5132;
+        /* ============================================================
+           Production Floor — page-specific flourishes
+           Built on the shared mibflow.css design system.
+           ============================================================ */
+
+        /* Legacy-var bridge so shared partials (chat) stay on-brand */
+        :root {
+            --primary-color: var(--mib-primary);
+            --primary-light: var(--mib-primary-light);
+            --primary-dark: var(--mib-primary-dark);
         }
 
-        .badge-declined {
-            background-color: #f8d7da;
-            color: #842029;
-        }
-
-        .badge-pass {
-            background-color: #d1e7dd;
-            color: #0f5132;
-        }
-
-        .badge-fail {
-            background-color: #f8d7da;
-            color: #842029;
-        }
-
-        .badge-tank {
-            background-color: #e2e3e5;
-            color: #383d41;
-        }
-
-        .btn-warning {
-            background-color: #ffc107;
-            border: none;
-            color: #000;
-        }
-
-        .btn-warning:hover {
-            background-color: #ffca2c;
-            color: #000;
-            transform: translateY(-1px);
-            box-shadow: 0 4px 12px rgba(255, 193, 7, 0.25);
-        }
-
-        .action-buttons {
+        /* ---------- Hero ---------- */
+        .prod-hero {
+            position: relative;
+            overflow: hidden;
+            border-radius: var(--mib-radius-lg);
+            padding: 1.85rem 2rem;
+            margin-bottom: 1.6rem;
+            color: #eaf6ef;
+            background: var(--mib-sidebar-bg);
+            box-shadow: var(--mib-shadow-md);
             display: flex;
-            gap: 0.5rem;
+            align-items: center;
+            justify-content: space-between;
+            gap: 1.25rem;
             flex-wrap: wrap;
         }
-
-        .action-buttons .btn {
-            padding: 0.4rem 0.8rem;
-            font-size: 0.875rem;
+        .prod-hero::after {
+            content: "";
+            position: absolute;
+            inset: 0;
+            pointer-events: none;
+            background:
+                radial-gradient(460px 220px at 86% -30%, rgba(110, 231, 183, 0.30), transparent 60%),
+                radial-gradient(360px 200px at 8% 130%, rgba(110, 231, 183, 0.15), transparent 60%);
         }
+        .prod-hero__text { position: relative; z-index: 1; min-width: 0; }
+        .prod-eyebrow {
+            margin: 0 0 0.4rem; font-size: 0.78rem; font-weight: 600;
+            letter-spacing: 0.06em; text-transform: uppercase; color: rgba(255, 255, 255, 0.66);
+            display: inline-flex; align-items: center; gap: 0.5rem;
+        }
+        .live-dot {
+            width: 8px; height: 8px; border-radius: 50%;
+            background: #6ee7b7; box-shadow: 0 0 0 0 rgba(110, 231, 183, 0.7);
+            animation: livePulse 1.8s ease-out infinite;
+        }
+        @keyframes livePulse {
+            0%   { box-shadow: 0 0 0 0 rgba(110, 231, 183, 0.55); }
+            70%  { box-shadow: 0 0 0 9px rgba(110, 231, 183, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(110, 231, 183, 0); }
+        }
+        .prod-hero h1 {
+            margin: 0; font-size: 1.85rem; font-weight: 750; letter-spacing: -0.025em; color: #fff;
+            display: flex; align-items: center; gap: 0.6rem;
+        }
+        .prod-hero .sub { margin: 0.5rem 0 0; color: rgba(255, 255, 255, 0.78); font-size: 0.92rem; max-width: 56ch; }
+        .prod-hero__aside { position: relative; z-index: 1; display: flex; flex-direction: column; align-items: flex-end; gap: 0.85rem; }
+        .prod-clock {
+            font-variant-numeric: tabular-nums; font-weight: 750; font-size: 1.7rem; line-height: 1;
+            color: #fff; letter-spacing: -0.01em; text-align: right;
+        }
+        .prod-clock small { display: block; font-size: 0.74rem; font-weight: 500; color: rgba(255,255,255,0.66); letter-spacing: 0.02em; margin-top: 0.3rem; text-align: right; }
+        .prod-hero__actions { display: flex; gap: 0.55rem; flex-wrap: wrap; justify-content: flex-end; }
+        .prod-hero .btn-white { background: #fff; color: var(--mib-primary-dark); border: none; box-shadow: 0 8px 18px -6px rgba(0,0,0,0.3); }
+        .prod-hero .btn-white:hover { background: #f3faf6; color: var(--mib-primary-dark); transform: translateY(-1px); }
+        .prod-hero .btn-glass { background: rgba(255,255,255,0.13); border: 1px solid rgba(255,255,255,0.22); color: #fff; backdrop-filter: blur(4px); }
+        .prod-hero .btn-glass:hover { background: rgba(255,255,255,0.22); color: #fff; }
 
-        /* Enhanced Mobile Styles */
+        /* ---------- Staggered entrance ---------- */
+        .stagger > * { opacity: 0; animation: fadeIn 0.5s ease forwards; }
+        .stagger > *:nth-child(1) { animation-delay: 0.04s; }
+        .stagger > *:nth-child(2) { animation-delay: 0.10s; }
+        .stagger > *:nth-child(3) { animation-delay: 0.16s; }
+        .stagger > *:nth-child(4) { animation-delay: 0.22s; }
+        .stagger > *:nth-child(5) { animation-delay: 0.28s; }
+        .stagger > *:nth-child(6) { animation-delay: 0.34s; }
+
+        .quick-stats { margin-bottom: 1.4rem; grid-template-columns: repeat(auto-fit, minmax(185px, 1fr)); }
+        .stat-icon.is-violet { background: linear-gradient(135deg, #a78bfa, #7c3aed); box-shadow: 0 8px 18px -4px rgba(124, 58, 237, 0.35); }
+
+        /* ---------- Queue panels (collapsible sections) ---------- */
+        .dashboard-section {
+            --accent: var(--mib-primary);
+            --accent-soft: var(--mib-primary-soft);
+            background: var(--mib-grad-surface);
+            border: 1px solid var(--mib-border);
+            border-radius: var(--mib-radius);
+            box-shadow: var(--mib-shadow);
+            margin-bottom: 1rem;
+            overflow: hidden;
+            transition: box-shadow var(--mib-transition), border-color var(--mib-transition);
+        }
+        .dashboard-section:hover { box-shadow: var(--mib-shadow-md); }
+        .section-header {
+            position: relative; display: flex; align-items: center; gap: 0.85rem;
+            padding: 1rem 1.25rem 1rem 1.4rem; cursor: pointer; transition: background var(--mib-transition);
+        }
+        .section-header:hover { background: var(--mib-surface-2); }
+        .section-header::before { content: ""; position: absolute; left: 0; top: 0; bottom: 0; width: 4px; background: var(--accent); }
+        .sec-ico {
+            flex-shrink: 0; width: 40px; height: 40px; border-radius: 12px; display: grid; place-items: center;
+            font-size: 1.1rem; color: var(--accent); background: var(--accent-soft);
+        }
+        .sec-titles { min-width: 0; }
+        .section-title { margin: 0; font-weight: 650; font-size: 1rem; color: var(--mib-text); display: flex; align-items: center; gap: 0.55rem; }
+        .sec-sub { margin: 0.1rem 0 0; font-size: 0.78rem; color: var(--mib-text-muted); }
+        .sec-count {
+            display: inline-flex; align-items: center; justify-content: center; min-width: 1.5rem; height: 1.5rem; padding: 0 0.5rem;
+            border-radius: var(--mib-radius-pill); background: var(--accent-soft); color: var(--accent);
+            font-size: 0.78rem; font-weight: 700;
+        }
+        .sec-count.is-zero { background: var(--mib-surface-2); color: var(--mib-text-faint); }
+        .sec-chevron { margin-left: auto; color: var(--mib-text-faint); font-size: 1.1rem; transition: transform 0.28s ease; }
+        .section-content { border-top: 1px solid var(--mib-border); }
+        .section-content .table-responsive { box-shadow: none; border: none; border-radius: 0; margin: 0; }
+        .table thead th { background: var(--mib-surface-2); }
+
+        .action-buttons { display: flex; gap: 0.4rem; flex-wrap: wrap; align-items: center; }
+        .action-buttons form { margin: 0; }
+        .chip-list { display: flex; flex-wrap: wrap; gap: 0.3rem; }
+        .chip {
+            display: inline-flex; align-items: center; gap: 0.3rem; background: var(--mib-surface-2);
+            border: 1px solid var(--mib-border); color: var(--mib-text-muted); border-radius: var(--mib-radius-pill);
+            padding: 0.18rem 0.6rem; font-size: 0.76rem; font-weight: 550;
+        }
+        .inline-form { display: flex; gap: 0.4rem; flex-wrap: wrap; align-items: center; }
+        .inline-form .form-control, .inline-form .form-select { min-width: 150px; }
+
+        /* extra status mappings used on this dashboard */
+        .status-scheduled { background: var(--mib-info-soft); color: #1e40af; }
+        .status-pass { background: var(--mib-success-soft); color: #166534; }
+        .status-fail { background: var(--mib-danger-soft); color: #991b1b; }
+
+        /* ---------- Button loading spinner ---------- */
+        .btn.loading { pointer-events: none; color: transparent !important; position: relative; }
+        .btn.loading::after {
+            content: ""; position: absolute; width: 16px; height: 16px; top: 50%; left: 50%; margin: -8px 0 0 -8px;
+            border: 2px solid rgba(255, 255, 255, 0.55); border-top-color: #fff; border-radius: 50%; animation: spin 0.7s linear infinite;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
         @media (max-width: 768px) {
-            /* Button Improvements */
-            .action-buttons {
-                flex-direction: column;
-                gap: 0.5rem;
-            }
-
-            .action-buttons .btn {
-                width: 100%;
-                justify-content: center;
-                height: 40px;
-                padding: 0 1rem;
-                margin: 0.25rem 0;
-                font-size: 0.9rem;
-                display: inline-flex;
-                align-items: center;
-                min-width: 100px;
-                touch-action: manipulation;
-            }
+            .prod-hero { padding: 1.4rem 1.25rem; }
+            .prod-hero__aside { align-items: flex-start; width: 100%; }
+            .prod-hero__actions { justify-content: flex-start; }
+            .prod-clock { text-align: left; }
+            .prod-clock small { text-align: left; }
+            .action-buttons { width: 100%; }
+            .inline-form .form-control, .inline-form .form-select { min-width: 0; flex: 1 1 100%; }
         }
     </style>
 </head>
-<body>
-    <%- include('../partials/sidebar', { userRole: userRole }) %>
+<body class="app-shell">
+    <%- include('../partials/sidebar', { userRole: userRole, path: '/dashboard/production' }) %>
+    <%- include('../partials/chat', { users: (typeof users !== 'undefined' ? users : []), userRole: userRole, userId: userId }) %>
 
-    <div class="main-content">
-        <div class="page-header">
-            <h1 class="page-title">
-                <i class="bi bi-gear-fill"></i>
-                Production Dashboard
-            </h1>
-            <p class="text-muted mb-0">Manage production requests and processes</p>
+    <%
+        /* ---- Defensive normalisation (page is rendered from a single route, but guard anyway) ---- */
+        const requestList   = (typeof requests !== 'undefined' && requests) ? requests : [];
+        const ongoingList   = (typeof ongoingProcesses !== 'undefined' && ongoingProcesses) ? ongoingProcesses : [];
+        const upcomingList  = (typeof upcomingProcesses !== 'undefined' && upcomingProcesses) ? upcomingProcesses : [];
+        const reworkItemList = (typeof reworkItems !== 'undefined' && reworkItems) ? reworkItems : [];
+        const reworkProdList = (typeof reworkProductions !== 'undefined' && reworkProductions) ? reworkProductions : [];
+
+        /* status badge helpers */
+        const KNOWN_STATUS = new Set(['pending','processing','onprod','on-production','production-completed','completed','approved','paid','delivered','on-delivery','ready-to-deliver','partially-delivered','open','printed','scheduled','cancelled','declined','rejected','neutral']);
+        const sb = (s) => { const k = String(s || '').toLowerCase().replace(/\s+/g, '-'); return 'status-' + (KNOWN_STATUS.has(k) ? k : 'neutral'); };
+        const fmtD = (d) => d ? new Date(d).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : '—';
+    %>
+
+    <div class="content content-wide">
+
+        <!-- ===================== Hero ===================== -->
+        <div class="prod-hero fade-in">
+            <div class="prod-hero__text">
+                <p class="prod-eyebrow"><span class="live-dot"></span> Production Floor</p>
+                <h1><i class="bi bi-gear-fill"></i> Production Dashboard</h1>
+                <p class="sub">Manage production requests, run active batches, and track quality &amp; rework — your live production command center.</p>
+            </div>
+            <div class="prod-hero__aside">
+                <div class="prod-clock">
+                    <span id="prodClock">--:--</span>
+                    <small id="prodDate"></small>
+                </div>
+                <div class="prod-hero__actions">
+                    <a href="/productionSchedule" class="btn btn-glass"><i class="bi bi-calendar-week"></i> Schedule</a>
+                    <a href="/productions/stock-updated" class="btn btn-white"><i class="bi bi-clipboard-check"></i> History</a>
+                </div>
+            </div>
         </div>
 
-        <!-- Production Request List Section -->
+        <!-- ===================== Quick stats ===================== -->
+        <div class="quick-stats stagger">
+            <div class="stat-card">
+                <div class="stat-icon is-info"><i class="bi bi-list-check"></i></div>
+                <div class="stat-body">
+                    <div class="stat-label">Production Requests</div>
+                    <div class="stat-value" data-count="<%= requestList.length %>">0</div>
+                    <span class="stat-sub">Awaiting scheduling</span>
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon is-success"><i class="bi bi-play-circle"></i></div>
+                <div class="stat-body">
+                    <div class="stat-label">Ongoing Processes</div>
+                    <div class="stat-value" data-count="<%= ongoingList.length %>">0</div>
+                    <span class="stat-sub">In production now</span>
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon is-violet"><i class="bi bi-calendar-event"></i></div>
+                <div class="stat-body">
+                    <div class="stat-label">Upcoming Processes</div>
+                    <div class="stat-value" data-count="<%= upcomingList.length %>">0</div>
+                    <span class="stat-sub">Scheduled ahead</span>
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon <%= reworkItemList.length ? 'is-danger' : 'is-success' %>"><i class="bi bi-tools"></i></div>
+                <div class="stat-body">
+                    <div class="stat-label">Rework Items</div>
+                    <div class="stat-value" data-count="<%= reworkItemList.length %>">0</div>
+                    <span class="stat-sub">Pending rework schedule</span>
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon is-warning"><i class="bi bi-arrow-repeat"></i></div>
+                <div class="stat-body">
+                    <div class="stat-label">Rework Production</div>
+                    <div class="stat-value" data-count="<%= reworkProdList.length %>">0</div>
+                    <span class="stat-sub">Active rework batches</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- List / Board toggle (shared partial — kanban-auto.js wires it up) -->
         <%- include('../partials/kanban-toggle') %>
-        <div class="dashboard-section">
-            <div class="section-header" data-bs-toggle="collapse" data-bs-target="#productionRequests">
-                <h2 class="section-title">
-                    <i class="bi bi-list-check"></i>
-                    Production Requests
-                    <% if (requests && requests.length > 0) { %>
-                        <span class="badge rounded-pill bg-danger ms-2"><%= requests.length %></span>
-                    <% } %>
-                </h2>
-                <i class="bi bi-chevron-down"></i>
+
+        <!-- ===================== Production Requests ===================== -->
+        <section class="dashboard-section" style="--accent:#2563eb;--accent-soft:#dbeafe">
+            <div class="section-header" data-bs-toggle="collapse" data-bs-target="#productionRequests" aria-expanded="false" aria-controls="productionRequests">
+                <span class="sec-ico"><i class="bi bi-list-check"></i></span>
+                <div class="sec-titles">
+                    <h2 class="section-title">Production Requests <span class="sec-count <%= requestList.length ? '' : 'is-zero' %>"><%= requestList.length %></span></h2>
+                    <p class="sec-sub">New requests waiting to be scheduled or declined</p>
+                </div>
+                <i class="bi bi-chevron-down sec-chevron"></i>
             </div>
             <div id="productionRequests" class="section-content collapse">
                 <div class="table-responsive">
-                    <table class="table">
+                    <table class="table table-cards align-middle">
                         <thead>
                             <tr>
                                 <th>ID</th>
@@ -117,14 +264,14 @@
                                 <th>Quantity</th>
                                 <th>Formula</th>
                                 <th>Status</th>
-                                <th>Actions</th>
+                                <th class="text-end">Actions</th>
                             </tr>
                         </thead>
                         <tbody>
-                            <% if (requests && requests.length > 0) { %>
-                                <% requests.forEach(function(request) { %>
+                            <% if (requestList.length > 0) { %>
+                                <% requestList.forEach(function(request) { %>
                                     <tr>
-                                        <td data-label="ID">#<%= request.id %></td>
+                                        <td data-label="ID"><span class="cell-strong">#<%= request.id %></span></td>
                                         <td data-label="Number">
                                             <% if (request.Order) { %>
                                                 <%= request.Order.sonumber %>
@@ -132,63 +279,45 @@
                                                 <%= request.prodreqnumber || '-' %>
                                             <% } %>
                                         </td>
-                                        <td data-label="Product">
-                                            <div class="fw-semibold"><%= request.product %></div>
-                                        </td>
+                                        <td data-label="Product"><span class="cell-strong"><%= request.product %></span></td>
                                         <td data-label="Quantity"><%= request.quantity %> Kg</td>
                                         <td data-label="Formula">
-                                            <a href="/uploads/<%= request.formula %>" target="_blank" class="btn btn-sm btn-outline-primary">
-                                                <i class="bi bi-file-pdf"></i>
-                                                View Formula
+                                            <a href="/uploads/<%= request.formula %>" target="_blank" class="btn btn-sm btn-soft">
+                                                <i class="bi bi-file-pdf"></i> View Formula
                                             </a>
                                         </td>
                                         <td data-label="Status">
-                                            <% if (request.status === 'Pending') { %>
-                                                <span class="badge badge-pending">
-                                                    <i class="bi bi-clock"></i>
-                                                    Pending
-                                                </span>
-                                            <% } else if (request.status === 'Scheduled') { %>
-                                                <span class="badge badge-scheduled">
-                                                    <i class="bi bi-calendar-check"></i>
-                                                    Scheduled
-                                                </span>
-                                            <% } else if (request.status === 'Declined') { %>
-                                                <span class="badge badge-declined">
-                                                    <i class="bi bi-x-circle"></i>
-                                                    Declined
-                                                </span>
-                                            <% } %>
+                                            <span class="status-badge <%= sb(request.status) %>"><%= request.status %></span>
                                         </td>
-                                        <td data-label="Actions">
-                                            <div class="action-buttons">
+                                        <td data-label="Actions" class="text-end">
+                                            <div class="action-buttons justify-content-end">
                                                 <% if (request.status === 'Pending') { %>
-                                                    <form action="/production/schedule/<%= request.id %>" method="GET">
-                                                        <button type="submit" class="btn btn-primary">
-                                                            <i class="bi bi-calendar-plus"></i>
-                                                            Schedule
+                                                    <form action="/production/schedule/<%= request.id %>" method="GET" class="d-inline">
+                                                        <button type="submit" class="btn btn-sm btn-primary">
+                                                            <i class="bi bi-calendar-plus"></i> Schedule
                                                         </button>
                                                     </form>
-                                                    <form action="/production/decline/<%= request.id %>" method="POST">
-                                                        <button type="submit" class="btn btn-danger">
-                                                            <i class="bi bi-x-lg"></i>
-                                                            Decline
+                                                    <form action="/production/decline/<%= request.id %>" method="POST" class="d-inline">
+                                                        <button type="submit" class="btn btn-sm btn-outline-danger">
+                                                            <i class="bi bi-x-lg"></i> Decline
                                                         </button>
                                                     </form>
                                                 <% } %>
-                                                <a href="/production/<%= request.id %>/view" class="btn btn-primary">
-                                                    <i class="bi bi-eye"></i>
-                                                    View
+                                                <a href="/production/<%= request.id %>/view" class="btn btn-sm btn-soft">
+                                                    <i class="bi bi-eye"></i> View
                                                 </a>
                                             </div>
                                         </td>
                                     </tr>
                                 <% }); %>
                             <% } else { %>
-                                <tr>
-                                    <td colspan="7" class="text-center py-4 text-muted">
-                                        <i class="bi bi-inbox fs-4 d-block mb-2"></i>
-                                        No production requests found
+                                <tr class="is-empty-row">
+                                    <td colspan="7">
+                                        <div class="empty-state">
+                                            <i class="bi bi-inbox"></i>
+                                            <h4>No production requests</h4>
+                                            <p>New requests will appear here for scheduling.</p>
+                                        </div>
                                     </td>
                                 </tr>
                             <% } %>
@@ -196,23 +325,21 @@
                     </table>
                 </div>
             </div>
-        </div>
+        </section>
 
-        <!-- Ongoing Processes Section -->
-        <div class="dashboard-section">
-            <div class="section-header" data-bs-toggle="collapse" data-bs-target="#ongoingProcesses">
-                <h2 class="section-title">
-                    <i class="bi bi-play-circle"></i>
-                    Ongoing Processes
-                    <% if (ongoingProcesses && ongoingProcesses.length > 0) { %>
-                        <span class="badge rounded-pill bg-danger ms-2"><%= ongoingProcesses.length %></span>
-                    <% } %>
-                </h2>
-                <i class="bi bi-chevron-down"></i>
+        <!-- ===================== Ongoing Processes ===================== -->
+        <section class="dashboard-section" style="--accent:#16a34a;--accent-soft:#dcfce7">
+            <div class="section-header" data-bs-toggle="collapse" data-bs-target="#ongoingProcesses" aria-expanded="false" aria-controls="ongoingProcesses">
+                <span class="sec-ico"><i class="bi bi-play-circle"></i></span>
+                <div class="sec-titles">
+                    <h2 class="section-title">Ongoing Processes <span class="sec-count <%= ongoingList.length ? '' : 'is-zero' %>"><%= ongoingList.length %></span></h2>
+                    <p class="sec-sub">Batches currently running on the floor</p>
+                </div>
+                <i class="bi bi-chevron-down sec-chevron"></i>
             </div>
             <div id="ongoingProcesses" class="section-content collapse">
                 <div class="table-responsive">
-                    <table class="table">
+                    <table class="table table-cards align-middle">
                         <thead>
                             <tr>
                                 <th>Batch</th>
@@ -221,81 +348,68 @@
                                 <th>Tanks</th>
                                 <th>Dates</th>
                                 <th>QC Status</th>
-                                <th>Actions</th>
+                                <th class="text-end">Actions</th>
                             </tr>
                         </thead>
                         <tbody>
-                            <% if (ongoingProcesses && ongoingProcesses.length > 0) { %>
-                                <% ongoingProcesses.forEach(function(production) { %>
-                                    <tr data-product-formulas='<%= JSON.stringify(production.Product.ProductFormulas || []) %>'>
+                            <% if (ongoingList.length > 0) { %>
+                                <% ongoingList.forEach(function(production) { %>
+                                    <tr data-product-formulas='<%= JSON.stringify((production.Product && production.Product.ProductFormulas) || []) %>'>
                                         <td data-label="Batch">
-                                            <div class="fw-semibold">#<%= production.batchNumber || 'Not Started' %></div>
-                                            <small class="text-muted">ID: <%= production.id %></small>
+                                            <span class="cell-strong">#<%= production.batchNumber || 'Not Started' %></span>
+                                            <div class="cell-sub">ID: <%= production.id %></div>
                                             <% if (production.ProductionRequest) { %>
-                                                <small class="text-muted d-block">
+                                                <div class="cell-sub">
                                                     <% if (production.ProductionRequest.Order) { %>
                                                         SO: <%= production.ProductionRequest.Order.sonumber %>
                                                     <% } else { %>
                                                         PRN: <%= production.ProductionRequest.prodreqnumber || '-' %>
                                                     <% } %>
-                                                </small>
+                                                </div>
                                             <% } %>
                                         </td>
-                                        <td data-label="Product"><%= production.Product.name %></td>
+                                        <td data-label="Product"><span class="cell-strong"><%= production.Product ? production.Product.name : '—' %></span></td>
                                         <td data-label="Quantity"><%= production.quantity %> Kg</td>
                                         <td data-label="Tanks">
-                                            <div class="d-flex flex-wrap gap-1">
-                                                <% production.Tanks.forEach(tank => { %>
-                                                    <span class="badge badge-tank">
-                                                        <%= tank.name %> (<%= tank.volume %> L)
-                                                    </span>
+                                            <div class="chip-list">
+                                                <% (production.Tanks || []).forEach(tank => { %>
+                                                    <span class="chip"><i class="bi bi-water"></i> <%= tank.name %> (<%= tank.volume %> L)</span>
                                                 <% }) %>
                                             </div>
                                         </td>
                                         <td data-label="Dates">
-                                            <div>Start: <%= new Date(production.startDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) %></div>
-                                            <div>Due: <%= new Date(production.deadlineDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) %></div>
+                                            <div class="cell-sub">Start: <%= fmtD(production.startDate) %></div>
+                                            <div class="cell-sub">Due: <%= fmtD(production.deadlineDate) %></div>
                                         </td>
                                         <td data-label="QC Status">
                                             <% if (production.qcStatus === 'Pass') { %>
-                                                <span class="badge badge-pass">
-                                                    <i class="bi bi-check-circle"></i>
-                                                    Pass
-                                                </span>
+                                                <span class="status-badge status-pass"><i class="bi bi-check-circle"></i> Pass</span>
                                             <% } else if (production.qcStatus === 'Fail') { %>
-                                                <span class="badge badge-fail">
-                                                    <i class="bi bi-x-circle"></i>
-                                                    Fail
-                                                </span>
+                                                <span class="status-badge status-fail"><i class="bi bi-x-circle"></i> Fail</span>
                                             <% } %>
                                             <% if (production.qcComment) { %>
-                                                <div class="small text-muted mt-1">
-                                                    <%= production.qcComment %>
-                                                </div>
+                                                <div class="cell-sub mt-1"><%= production.qcComment %></div>
                                             <% } %>
                                         </td>
-                                        <td data-label="Actions">
-                                            <div class="action-buttons">
+                                        <td data-label="Actions" class="text-end">
+                                            <div class="action-buttons justify-content-end">
                                                 <% if (!production.batchNumber) { %>
-                                                    <form action="/production/produceBatch/<%= production.id %>" method="POST" class="start-production-form">
-                                                        <button type="submit" class="btn btn-warning">
-                                                            <i class="bi bi-play-fill"></i>
-                                                            Start Production
+                                                    <form action="/production/produceBatch/<%= production.id %>" method="POST" class="start-production-form d-inline">
+                                                        <button type="submit" class="btn btn-sm btn-warning">
+                                                            <i class="bi bi-play-fill"></i> Start Production
                                                         </button>
                                                     </form>
                                                 <% } %>
                                                 <% if (!production.qcStatus) { %>
                                                     <% if (production.isPrinted && production.status != "In Production" ) { %>
-                                                        <button type="button" class="btn btn-info bg-received mb-2" data-production-id="<%= production.id %>">
-                                                            <i class="bi bi-box-seam"></i>
-                                                            BG Received
+                                                        <button type="button" class="btn btn-sm btn-soft bg-received" data-production-id="<%= production.id %>">
+                                                            <i class="bi bi-box-seam"></i> BG Received
                                                         </button>
                                                     <% } %>
                                                     <% if (production.status === 'In Production' && production.isPrinted) { %>
-                                                        <form id="testToQCForm-<%= production.id %>" action="/production/sendToQC/<%= production.id %>" method="POST">
-                                                            <button type="submit" id="testToQCBtn-<%= production.id %>" class="btn btn-primary">
-                                                                <i class="bi bi-clipboard-check"></i>
-                                                                Test to QC
+                                                        <form id="testToQCForm-<%= production.id %>" action="/production/sendToQC/<%= production.id %>" method="POST" class="d-inline">
+                                                            <button type="submit" id="testToQCBtn-<%= production.id %>" class="btn btn-sm btn-primary">
+                                                                <i class="bi bi-clipboard-check"></i> Test to QC
                                                             </button>
                                                         </form>
                                                     <% } %>
@@ -304,18 +418,16 @@
                                                     <div class="d-flex gap-2 flex-column">
                                                         <% if (production.rawMaterialChoice === 'pending') { %>
                                                             <div class="d-flex gap-2" id="rawMaterialChoice-<%= production.id %>">
-                                                                <button type="button" class="btn btn-primary raw-material-choice" data-production-id="<%= production.id %>" data-choice="add">
-                                                                    <i class="bi bi-plus-circle"></i>
-                                                                    Add Raw Material
+                                                                <button type="button" class="btn btn-sm btn-primary raw-material-choice" data-production-id="<%= production.id %>" data-choice="add">
+                                                                    <i class="bi bi-plus-circle"></i> Add Raw Material
                                                                 </button>
-                                                                <button type="button" class="btn btn-secondary raw-material-choice" data-production-id="<%= production.id %>" data-choice="skip">
-                                                                    <i class="bi bi-skip-forward"></i>
-                                                                    Don't Add
+                                                                <button type="button" class="btn btn-sm btn-soft raw-material-choice" data-production-id="<%= production.id %>" data-choice="skip">
+                                                                    <i class="bi bi-skip-forward"></i> Don't Add
                                                                 </button>
                                                             </div>
                                                         <% } else if (production.rawMaterialChoice === 'add' && !production.rawMaterialAdded) { %>
-                                                            <div class="d-flex gap-2" id="rawMaterialForm-<%= production.id %>">
-                                                                <select name="rawMaterialId" class="form-control" required>
+                                                            <div class="inline-form" id="rawMaterialForm-<%= production.id %>">
+                                                                <select name="rawMaterialId" class="form-select form-select-sm" required>
                                                                     <option value="">Select Raw Material</option>
                                                                     <% if (production.Product && production.Product.ProductFormulas) { %>
                                                                         <% production.Product.ProductFormulas.forEach(formula => { %>
@@ -325,46 +437,46 @@
                                                                         <% }) %>
                                                                     <% } %>
                                                                 </select>
-                                                                <input type="number" name="quantity" class="form-control" placeholder="Quantity (Kg)" required step="0.01" min="0">
-                                                                <button type="button" class="btn btn-primary add-raw-material" data-production-id="<%= production.id %>">
-                                                                    <i class="bi bi-plus-circle"></i>
-                                                                    Add Raw Material
+                                                                <input type="number" name="quantity" class="form-control form-control-sm" placeholder="Quantity (Kg)" required step="0.01" min="0">
+                                                                <button type="button" class="btn btn-sm btn-primary add-raw-material" data-production-id="<%= production.id %>">
+                                                                    <i class="bi bi-plus-circle"></i> Add Raw Material
                                                                 </button>
                                                             </div>
                                                         <% } %>
                                                         <% if (production.rawMaterialChoice === 'skip' || production.rawMaterialAdded) { %>
                                                             <div class="d-flex gap-2 flex-column" id="qcButtons-<%= production.id %>">
                                                                 <form id="testToQCForm-<%= production.id %>" action="/production/sendToQC/<%= production.id %>" method="POST">
-                                                                    <button type="submit" id="testToQCBtn-<%= production.id %>" class="btn btn-primary">
-                                                                        <i class="bi bi-clipboard-check"></i>
-                                                                        Test to QC
+                                                                    <button type="submit" id="testToQCBtn-<%= production.id %>" class="btn btn-sm btn-primary">
+                                                                        <i class="bi bi-clipboard-check"></i> Test to QC
                                                                     </button>
                                                                 </form>
-                                                                <button type="button" class="btn btn-danger quarantine-production" data-production-id="<%= production.id %>">
-                                                                    <i class="bi bi-exclamation-triangle"></i>
-                                                                    Quarantine
+                                                                <button type="button" class="btn btn-sm btn-outline-danger quarantine-production" data-production-id="<%= production.id %>">
+                                                                    <i class="bi bi-exclamation-triangle"></i> Quarantine
                                                                 </button>
                                                             </div>
                                                         <% } %>
                                                     </div>
                                                 <% } %>
                                                 <% if (production.qcStatus === 'Pass' && !production.stockUpdated) { %>
-                                                    <form id="updateStockForm-<%= production.id %>" action="/production/updateStock/<%= production.id %>" method="POST" class="d-flex gap-2">
-                                                        <input type="number" name="realQuantity" class="form-control" placeholder="Real Quantity (Kg)" required step="0.01" min="0" value="<%= production.quantity %>">
-                                                        <button type="submit" class="btn btn-primary">
+                                                    <form id="updateStockForm-<%= production.id %>" action="/production/updateStock/<%= production.id %>" method="POST" class="inline-form">
+                                                        <input type="number" name="realQuantity" class="form-control form-control-sm" placeholder="Real Quantity (Kg)" required step="0.01" min="0" value="<%= production.quantity %>">
+                                                        <button type="submit" class="btn btn-sm btn-primary">
                                                             <i class="bi bi-arrow-clockwise"></i> Update Stock
                                                         </button>
-                                                    </form>                                                                                                        
+                                                    </form>
                                                 <% } %>
                                             </div>
                                         </td>
                                     </tr>
                                 <% }); %>
                             <% } else { %>
-                                <tr>
-                                    <td colspan="7" class="text-center py-4 text-muted">
-                                        <i class="bi bi-inbox fs-4 d-block mb-2"></i>
-                                        No ongoing processes found
+                                <tr class="is-empty-row">
+                                    <td colspan="7">
+                                        <div class="empty-state">
+                                            <i class="bi bi-inbox"></i>
+                                            <h4>No ongoing processes</h4>
+                                            <p>Active production batches will show up here.</p>
+                                        </div>
                                     </td>
                                 </tr>
                             <% } %>
@@ -372,23 +484,21 @@
                     </table>
                 </div>
             </div>
-        </div>
+        </section>
 
-        <!-- Upcoming Processes Section -->
-        <div class="dashboard-section">
-            <div class="section-header" data-bs-toggle="collapse" data-bs-target="#upcomingProcesses">
-                <h2 class="section-title">
-                    <i class="bi bi-calendar-event"></i>
-                    Upcoming Processes
-                    <% if (upcomingProcesses && upcomingProcesses.length > 0) { %>
-                        <span class="badge rounded-pill bg-danger ms-2"><%= upcomingProcesses.length %></span>
-                    <% } %>
-                </h2>
-                <i class="bi bi-chevron-down"></i>
+        <!-- ===================== Upcoming Processes ===================== -->
+        <section class="dashboard-section" style="--accent:#7c3aed;--accent-soft:#f3e8ff">
+            <div class="section-header" data-bs-toggle="collapse" data-bs-target="#upcomingProcesses" aria-expanded="false" aria-controls="upcomingProcesses">
+                <span class="sec-ico"><i class="bi bi-calendar-event"></i></span>
+                <div class="sec-titles">
+                    <h2 class="section-title">Upcoming Processes <span class="sec-count <%= upcomingList.length ? '' : 'is-zero' %>"><%= upcomingList.length %></span></h2>
+                    <p class="sec-sub">Scheduled batches not yet started</p>
+                </div>
+                <i class="bi bi-chevron-down sec-chevron"></i>
             </div>
             <div id="upcomingProcesses" class="section-content collapse">
                 <div class="table-responsive">
-                    <table class="table">
+                    <table class="table table-cards align-middle">
                         <thead>
                             <tr>
                                 <th>ID</th>
@@ -399,34 +509,33 @@
                             </tr>
                         </thead>
                         <tbody>
-                            <% if (upcomingProcesses && upcomingProcesses.length > 0) { %>
-                                <% upcomingProcesses.forEach(function(production) { %>
+                            <% if (upcomingList.length > 0) { %>
+                                <% upcomingList.forEach(function(production) { %>
                                     <tr>
-                                        <td data-label="ID">#<%= production.id %></td>
-                                        <td data-label="Product">
-                                            <div class="fw-semibold"><%= production.Product.name %></div>
-                                        </td>
+                                        <td data-label="ID"><span class="cell-strong">#<%= production.id %></span></td>
+                                        <td data-label="Product"><span class="cell-strong"><%= production.Product ? production.Product.name : '—' %></span></td>
                                         <td data-label="Quantity"><%= production.quantity %> Kg</td>
                                         <td data-label="Tanks">
-                                            <div class="d-flex flex-wrap gap-1">
-                                                <% production.Tanks.forEach(tank => { %>
-                                                    <span class="badge badge-tank">
-                                                        <%= tank.name %> (<%= tank.volume %> L)
-                                                    </span>
+                                            <div class="chip-list">
+                                                <% (production.Tanks || []).forEach(tank => { %>
+                                                    <span class="chip"><i class="bi bi-water"></i> <%= tank.name %> (<%= tank.volume %> L)</span>
                                                 <% }) %>
                                             </div>
                                         </td>
                                         <td data-label="Dates">
-                                            <div>Start: <%= new Date(production.startDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) %></div>
-                                            <div>Due: <%= new Date(production.deadlineDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) %></div>
+                                            <div class="cell-sub">Start: <%= fmtD(production.startDate) %></div>
+                                            <div class="cell-sub">Due: <%= fmtD(production.deadlineDate) %></div>
                                         </td>
                                     </tr>
                                 <% }); %>
                             <% } else { %>
-                                <tr>
-                                    <td colspan="5" class="text-center py-4 text-muted">
-                                        <i class="bi bi-inbox fs-4 d-block mb-2"></i>
-                                        No upcoming processes found
+                                <tr class="is-empty-row">
+                                    <td colspan="5">
+                                        <div class="empty-state">
+                                            <i class="bi bi-inbox"></i>
+                                            <h4>No upcoming processes</h4>
+                                            <p>Future scheduled batches appear here.</p>
+                                        </div>
                                     </td>
                                 </tr>
                             <% } %>
@@ -434,23 +543,21 @@
                     </table>
                 </div>
             </div>
-        </div>
+        </section>
 
-        <!-- Rework Items Section -->
-        <div class="dashboard-section">
-            <div class="section-header" data-bs-toggle="collapse" data-bs-target="#reworkItems">
-                <h2 class="section-title">
-                    <i class="bi bi-tools"></i>
-                    Rework Items
-                    <% if (reworkItems && reworkItems.length > 0) { %>
-                        <span class="badge rounded-pill bg-danger ms-2"><%= reworkItems.length %></span>
-                    <% } %>
-                </h2>
-                <i class="bi bi-chevron-down"></i>
+        <!-- ===================== Rework Items ===================== -->
+        <section class="dashboard-section" style="--accent:#e11d48;--accent-soft:#ffe4e6">
+            <div class="section-header" data-bs-toggle="collapse" data-bs-target="#reworkItems" aria-expanded="false" aria-controls="reworkItems">
+                <span class="sec-ico"><i class="bi bi-tools"></i></span>
+                <div class="sec-titles">
+                    <h2 class="section-title">Rework Items <span class="sec-count <%= reworkItemList.length ? '' : 'is-zero' %>"><%= reworkItemList.length %></span></h2>
+                    <p class="sec-sub">Rejected items awaiting a rework schedule</p>
+                </div>
+                <i class="bi bi-chevron-down sec-chevron"></i>
             </div>
             <div id="reworkItems" class="section-content collapse">
                 <div class="table-responsive">
-                    <table class="table">
+                    <table class="table table-cards align-middle">
                         <thead>
                             <tr>
                                 <th>PO Number</th>
@@ -459,34 +566,37 @@
                                 <th>Quantity Rejected</th>
                                 <th>Notes</th>
                                 <th>Status</th>
-                                <th>Actions</th>
+                                <th class="text-end">Actions</th>
                             </tr>
                         </thead>
                         <tbody>
-                            <% if (reworkItems && reworkItems.length > 0) { %>
-                                <% reworkItems.forEach(function(item) { %>
+                            <% if (reworkItemList.length > 0) { %>
+                                <% reworkItemList.forEach(function(item) { %>
+                                    <% const itemOrder = (item.Complain && item.Complain.Order) ? item.Complain.Order : null; %>
                                     <tr>
-                                        <td data-label="PO Number"><%= item.Complain.Order.sonumber %></td>
-                                        <td data-label="Customer Name"><%= item.Complain.Order.customerName %></td>
+                                        <td data-label="PO Number"><span class="cell-strong"><%= itemOrder ? itemOrder.sonumber : '-' %></span></td>
+                                        <td data-label="Customer Name"><%= itemOrder ? itemOrder.customerName : '-' %></td>
                                         <td data-label="Product"><%= item.product %></td>
                                         <td data-label="Quantity Rejected"><%= item.quantityRejected %> KG</td>
                                         <td data-label="Notes"><%= item.notes || '-' %></td>
-                                        <td data-label="Status"><%= item.status %></td>
-                                        <td data-label="Actions">
-                                            <div class="action-buttons">
-                                                <a href="/complain/scheduleRework/<%= item.id %>" class="btn btn-primary">
-                                                    <i class="bi bi-calendar-plus"></i>
-                                                    Schedule
+                                        <td data-label="Status"><span class="status-badge <%= sb(item.status) %>"><%= item.status %></span></td>
+                                        <td data-label="Actions" class="text-end">
+                                            <div class="action-buttons justify-content-end">
+                                                <a href="/complain/scheduleRework/<%= item.id %>" class="btn btn-sm btn-primary">
+                                                    <i class="bi bi-calendar-plus"></i> Schedule
                                                 </a>
                                             </div>
                                         </td>
                                     </tr>
                                 <% }); %>
                             <% } else { %>
-                                <tr>
-                                    <td colspan="7" class="text-center py-4 text-muted">
-                                        <i class="bi bi-inbox fs-4 d-block mb-2"></i>
-                                        No rework items found
+                                <tr class="is-empty-row">
+                                    <td colspan="7">
+                                        <div class="empty-state">
+                                            <i class="bi bi-inbox"></i>
+                                            <h4>No rework items</h4>
+                                            <p>Items sent for rework will appear here.</p>
+                                        </div>
                                     </td>
                                 </tr>
                             <% } %>
@@ -494,23 +604,21 @@
                     </table>
                 </div>
             </div>
-        </div>
+        </section>
 
-        <!-- Rework Production Section -->
-        <div class="dashboard-section">
-            <div class="section-header" data-bs-toggle="collapse" data-bs-target="#reworkProduction">
-                <h2 class="section-title">
-                    <i class="bi bi-arrow-repeat"></i>
-                    Rework Production
-                    <% if (reworkProductions && reworkProductions.length > 0) { %>
-                        <span class="badge rounded-pill bg-danger ms-2"><%= reworkProductions.length %></span>
-                    <% } %>
-                </h2>
-                <i class="bi bi-chevron-down"></i>
+        <!-- ===================== Rework Production ===================== -->
+        <section class="dashboard-section" style="--accent:#d97706;--accent-soft:#fef3c7">
+            <div class="section-header" data-bs-toggle="collapse" data-bs-target="#reworkProduction" aria-expanded="false" aria-controls="reworkProduction">
+                <span class="sec-ico"><i class="bi bi-arrow-repeat"></i></span>
+                <div class="sec-titles">
+                    <h2 class="section-title">Rework Production <span class="sec-count <%= reworkProdList.length ? '' : 'is-zero' %>"><%= reworkProdList.length %></span></h2>
+                    <p class="sec-sub">Active rework batches and their QC flow</p>
+                </div>
+                <i class="bi bi-chevron-down sec-chevron"></i>
             </div>
             <div id="reworkProduction" class="section-content collapse">
                 <div class="table-responsive">
-                    <table class="table">
+                    <table class="table table-cards align-middle">
                         <thead>
                             <tr>
                                 <th>Batch</th>
@@ -519,126 +627,107 @@
                                 <th>Tanks</th>
                                 <th>Dates</th>
                                 <th>QC Status</th>
-                                <th>Actions</th>
+                                <th class="text-end">Actions</th>
                             </tr>
                         </thead>
                         <tbody>
-                            <% if (reworkProductions && reworkProductions.length > 0) { %>
-                                <% reworkProductions.forEach(function(rework) { %>
+                            <% if (reworkProdList.length > 0) { %>
+                                <% reworkProdList.forEach(function(rework) { %>
+                                    <% const reworkOrder = (rework.ComplainItem && rework.ComplainItem.Complain && rework.ComplainItem.Complain.Order) ? rework.ComplainItem.Complain.Order : null; %>
                                     <tr data-product-formulas='<%= JSON.stringify(rework.ComplainItem?.Product?.ProductFormulas || []) %>'>
                                         <td data-label="Batch">
-                                            <div class="fw-semibold">#<%= rework.batchNumber || 'Not Started' %></div>
-                                            <small class="text-muted">ID: <%= rework.id %></small>
-                                            <small class="text-muted d-block">
-                                                SO: <%= rework.ComplainItem.Complain.Order.sonumber %>
-                                            </small>
+                                            <span class="cell-strong">#<%= rework.batchNumber || 'Not Started' %></span>
+                                            <div class="cell-sub">ID: <%= rework.id %></div>
+                                            <div class="cell-sub">SO: <%= reworkOrder ? reworkOrder.sonumber : '-' %></div>
                                         </td>
-                                        <td data-label="Product"><%= rework.ComplainItem.product %></td>
+                                        <td data-label="Product"><span class="cell-strong"><%= rework.ComplainItem ? rework.ComplainItem.product : '—' %></span></td>
                                         <td data-label="Quantity"><%= rework.quantity %> Kg</td>
                                         <td data-label="Tanks">
-                                            <div class="d-flex flex-wrap gap-1">
-                                                <% rework.Tanks.forEach(tank => { %>
-                                                    <span class="badge badge-tank">
-                                                        <%= tank.name %> (<%= tank.volume %> L)
-                                                    </span>
+                                            <div class="chip-list">
+                                                <% (rework.Tanks || []).forEach(tank => { %>
+                                                    <span class="chip"><i class="bi bi-water"></i> <%= tank.name %> (<%= tank.volume %> L)</span>
                                                 <% }) %>
                                             </div>
                                         </td>
                                         <td data-label="Dates">
-                                            <div>Start: <%= new Date(rework.startDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) %></div>
-                                            <div>Due: <%= new Date(rework.deadlineDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) %></div>
+                                            <div class="cell-sub">Start: <%= fmtD(rework.startDate) %></div>
+                                            <div class="cell-sub">Due: <%= fmtD(rework.deadlineDate) %></div>
                                         </td>
                                         <td data-label="QC Status">
                                             <% if (rework.qcStatus === 'Pass') { %>
-                                                <span class="badge badge-pass">
-                                                    <i class="bi bi-check-circle"></i>
-                                                    Pass
-                                                </span>
+                                                <span class="status-badge status-pass"><i class="bi bi-check-circle"></i> Pass</span>
                                             <% } else if (rework.qcStatus === 'Fail') { %>
-                                                <span class="badge badge-fail">
-                                                    <i class="bi bi-x-circle"></i>
-                                                    Fail
-                                                </span>
+                                                <span class="status-badge status-fail"><i class="bi bi-x-circle"></i> Fail</span>
                                             <% } %>
                                             <% if (rework.qcComment) { %>
-                                                <div class="small text-muted mt-1">
-                                                    <%= rework.qcComment %>
-                                                </div>
+                                                <div class="cell-sub mt-1"><%= rework.qcComment %></div>
                                             <% } %>
                                         </td>
-                                        <td data-label="Actions">
-                                            <div class="action-buttons">
+                                        <td data-label="Actions" class="text-end">
+                                            <div class="action-buttons justify-content-end">
                                                 <% if (!rework.batchNumber) { %>
-                                                    <button type="button" class="btn btn-warning start-rework" data-rework-id="<%= rework.id %>">
-                                                        <i class="bi bi-play-fill"></i>
-                                                        Start Rework
+                                                    <button type="button" class="btn btn-sm btn-warning start-rework" data-rework-id="<%= rework.id %>">
+                                                        <i class="bi bi-play-fill"></i> Start Rework
                                                     </button>
                                                 <% } %>
                                                 <% if (rework.batchNumber && !rework.qcStatus) { %>
-                                                    <form id="testToQCForm-<%= rework.id %>" action="/complain/sendToQC/<%= rework.id %>" method="POST">
-                                                        <button type="submit" id="testToQCBtn-<%= rework.id %>" class="btn btn-primary">
-                                                            <i class="bi bi-clipboard-check"></i>
-                                                            Test to QC
+                                                    <form id="testToQCForm-<%= rework.id %>" action="/complain/sendToQC/<%= rework.id %>" method="POST" class="d-inline">
+                                                        <button type="submit" id="testToQCBtn-<%= rework.id %>" class="btn btn-sm btn-primary">
+                                                            <i class="bi bi-clipboard-check"></i> Test to QC
                                                         </button>
                                                     </form>
                                                 <% } else if (rework.qcStatus === 'Fail') { %>
                                                     <div class="d-flex gap-2 flex-column">
                                                         <% if (!rework.rawMaterialChoice || rework.rawMaterialChoice === 'pending') { %>
                                                             <div class="d-flex gap-2">
-                                                                <form action="/complain/setRawMaterialChoice/<%= rework.id %>" method="POST">
+                                                                <form action="/complain/setRawMaterialChoice/<%= rework.id %>" method="POST" class="d-inline">
                                                                     <input type="hidden" name="choice" value="add">
-                                                                    <button type="submit" class="btn btn-primary">
-                                                                        <i class="bi bi-plus-circle"></i>
-                                                                        Add Raw Material
+                                                                    <button type="submit" class="btn btn-sm btn-primary">
+                                                                        <i class="bi bi-plus-circle"></i> Add Raw Material
                                                                     </button>
                                                                 </form>
-                                                                <form action="/complain/setRawMaterialChoice/<%= rework.id %>" method="POST">
+                                                                <form action="/complain/setRawMaterialChoice/<%= rework.id %>" method="POST" class="d-inline">
                                                                     <input type="hidden" name="choice" value="skip">
-                                                                    <button type="submit" class="btn btn-secondary">
-                                                                        <i class="bi bi-skip-forward"></i>
-                                                                        Don't Add
+                                                                    <button type="submit" class="btn btn-sm btn-soft">
+                                                                        <i class="bi bi-skip-forward"></i> Don't Add
                                                                     </button>
                                                                 </form>
                                                             </div>
                                                         <% } else if (rework.rawMaterialChoice === 'add' && !rework.rawMaterialAdded) { %>
-                                                            <form action="/complain/addRawMaterial/<%= rework.id %>" method="POST" class="d-flex gap-2">
-                                                                <select name="rawMaterialId" class="form-control" required>
+                                                            <form action="/complain/addRawMaterial/<%= rework.id %>" method="POST" class="inline-form">
+                                                                <select name="rawMaterialId" class="form-select form-select-sm" required>
                                                                     <option value="">Select Raw Material</option>
-                                                    <% if (rework.ComplainItem?.Product?.ProductFormulas) { %>
-                                                        <% rework.ComplainItem.Product.ProductFormulas.forEach(formula => { %>
-                                                            <option value="<%= formula.RawMaterial.id %>">
-                                                                <%= formula.RawMaterial.name %> (Stock: <%= formula.RawMaterial.stock %> Kg)
-                                                            </option>
-                                                        <% }); %>
-                                                    <% } %>
+                                                                    <% if (rework.ComplainItem?.Product?.ProductFormulas) { %>
+                                                                        <% rework.ComplainItem.Product.ProductFormulas.forEach(formula => { %>
+                                                                            <option value="<%= formula.RawMaterial.id %>">
+                                                                                <%= formula.RawMaterial.name %> (Stock: <%= formula.RawMaterial.stock %> Kg)
+                                                                            </option>
+                                                                        <% }); %>
+                                                                    <% } %>
                                                                 </select>
-                                                                <input type="number" name="quantity" class="form-control" placeholder="Quantity (Kg)" required step="0.01" min="0">
-                                                                <button type="submit" class="btn btn-primary">
-                                                                    <i class="bi bi-plus-circle"></i>
-                                                                    Add Raw Material
+                                                                <input type="number" name="quantity" class="form-control form-control-sm" placeholder="Quantity (Kg)" required step="0.01" min="0">
+                                                                <button type="submit" class="btn btn-sm btn-primary">
+                                                                    <i class="bi bi-plus-circle"></i> Add Raw Material
                                                                 </button>
                                                             </form>
                                                         <% } %>
                                                         <% if (rework.rawMaterialChoice === 'skip' || rework.rawMaterialAdded) { %>
                                                             <form id="testToQCForm-<%= rework.id %>" action="/complain/sendToQC/<%= rework.id %>" method="POST">
-                                                                <button type="submit" id="testToQCBtn-<%= rework.id %>" class="btn btn-primary">
-                                                                    <i class="bi bi-clipboard-check"></i>
-                                                                    Test to QC
+                                                                <button type="submit" id="testToQCBtn-<%= rework.id %>" class="btn btn-sm btn-primary">
+                                                                    <i class="bi bi-clipboard-check"></i> Test to QC
                                                                 </button>
                                                             </form>
                                                             <form action="/complain/quarantine/<%= rework.id %>" method="POST">
-                                                                <button type="submit" class="btn btn-danger">
-                                                                    <i class="bi bi-exclamation-triangle"></i>
-                                                                    Quarantine
+                                                                <button type="submit" class="btn btn-sm btn-outline-danger">
+                                                                    <i class="bi bi-exclamation-triangle"></i> Quarantine
                                                                 </button>
                                                             </form>
                                                         <% } %>
                                                     </div>
                                                 <% } else if (rework.qcStatus === 'Pass' && rework.status !== 'Completed') { %>
-                                                    <form action="/complain/proceedToDeliver/<%= rework.id %>" method="POST">
-                                                        <button type="submit" class="btn btn-success">
-                                                            <i class="bi bi-truck"></i>
-                                                            Proceed to Deliver
+                                                    <form action="/complain/proceedToDeliver/<%= rework.id %>" method="POST" class="d-inline">
+                                                        <button type="submit" class="btn btn-sm btn-success">
+                                                            <i class="bi bi-truck"></i> Proceed to Deliver
                                                         </button>
                                                     </form>
                                                 <% } %>
@@ -647,10 +736,13 @@
                                     </tr>
                                 <% }); %>
                             <% } else { %>
-                                <tr>
-                                    <td colspan="7" class="text-center py-4 text-muted">
-                                        <i class="bi bi-inbox fs-4 d-block mb-2"></i>
-                                        No rework productions found
+                                <tr class="is-empty-row">
+                                    <td colspan="7">
+                                        <div class="empty-state">
+                                            <i class="bi bi-inbox"></i>
+                                            <h4>No rework productions</h4>
+                                            <p>Active rework batches will appear here.</p>
+                                        </div>
                                     </td>
                                 </tr>
                             <% } %>
@@ -658,48 +750,46 @@
                     </table>
                 </div>
             </div>
-        </div>
+        </section>
     </div>
 
-    <%- include('../partials/chat', { users: users, userRole: userRole, userId: userId }) %>
-
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
     <script>
         document.addEventListener('DOMContentLoaded', function() {
-            // Handle sidebar state changes
-            const sidebar = document.querySelector('.sidebar');
-            const observer = new MutationObserver(function(mutations) {
-                mutations.forEach(function(mutation) {
-                    if (mutation.attributeName === 'class') {
-                        if (sidebar.classList.contains('collapsed')) {
-                            document.body.classList.add('sidebar-collapsed');
-                        } else {
-                            document.body.classList.remove('sidebar-collapsed');
-                        }
-                    }
-                });
+            // ---- Hero clock ----
+            function tickClock() {
+                const c = document.getElementById('prodClock');
+                const d = document.getElementById('prodDate');
+                const now = new Date();
+                if (c) c.textContent = now.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
+                if (d) d.textContent = now.toLocaleDateString('en-US', { weekday: 'long', day: 'numeric', month: 'long' });
+            }
+            tickClock(); setInterval(tickClock, 15000);
+
+            // ---- Count-up stat values ----
+            document.querySelectorAll('.stat-value[data-count]').forEach(el => {
+                const target = parseInt(el.getAttribute('data-count'), 10) || 0;
+                if (!target) { el.textContent = '0'; return; }
+                const dur = 850, start = performance.now();
+                (function tick(now) {
+                    const p = Math.min((now - start) / dur, 1);
+                    el.textContent = Math.round(target * (1 - Math.pow(1 - p, 3))).toLocaleString('id-ID');
+                    if (p < 1) requestAnimationFrame(tick);
+                })(start);
             });
-            observer.observe(sidebar, { attributes: true });
 
-            // Initialize collapsible sections
-            const sections = document.querySelectorAll('.dashboard-section');
-            sections.forEach(section => {
-                const content = section.querySelector('.section-content');
-                const icon = section.querySelector('.bi-chevron-down');
-
-                // Set initial state
-                if (content.classList.contains('show')) {
-                    icon.style.transform = 'rotate(180deg)';
-                }
-
-                // Use Bootstrap's collapse events
+            // ---- Chevron rotation synced to bootstrap collapse ----
+            document.querySelectorAll('.dashboard-section .section-content').forEach(content => {
+                const header = content.parentElement.querySelector('.section-header');
+                const icon = header ? header.querySelector('.sec-chevron') : null;
+                if (content.classList.contains('show') && icon) icon.style.transform = 'rotate(180deg)';
                 content.addEventListener('show.bs.collapse', () => {
-                    icon.style.transform = 'rotate(180deg)';
+                    if (header) header.setAttribute('aria-expanded', 'true');
+                    if (icon) icon.style.transform = 'rotate(180deg)';
                 });
-
                 content.addEventListener('hide.bs.collapse', () => {
-                    icon.style.transform = 'rotate(0)';
+                    if (header) header.setAttribute('aria-expanded', 'false');
+                    if (icon) icon.style.transform = 'rotate(0)';
                 });
             });
 
@@ -713,13 +803,15 @@
 
                 if (localStorage.getItem(storageKey) === 'hidden') {
                     button.style.display = 'none';
-                    document.getElementById(qcButtonId).style.display = 'inline-block';
+                    const qcBtn = document.getElementById(qcButtonId);
+                    if (qcBtn) qcBtn.style.display = 'inline-block';
                 }
 
                 button.addEventListener('click', function(e) {
                     e.preventDefault();
                     button.style.display = 'none';
-                    document.getElementById(qcButtonId).style.display = 'inline-block';
+                    const qcBtn = document.getElementById(qcButtonId);
+                    if (qcBtn) qcBtn.style.display = 'inline-block';
                     localStorage.setItem(storageKey, 'hidden');
                     e.target.closest('form').submit();
                 });
@@ -730,7 +822,7 @@
                 e.preventDefault();
                 const form = $(this);
                 const btn = form.find('button[type="submit"]');
-                
+
                 // Add loading state
                 btn.addClass('loading').prop('disabled', true);
 
@@ -753,7 +845,7 @@
             $(document).on('click', '.start-rework', function() {
                 const btn = $(this);
                 const reworkId = btn.data('rework-id');
-                
+
                 // Add loading state
                 btn.addClass('loading').prop('disabled', true);
 
@@ -780,9 +872,9 @@
                 e.preventDefault();
                 const form = $(this);
                 const submitBtn = form.find('button[type="submit"]');
-                
+
                 submitBtn.prop('disabled', true).addClass('loading');
-                
+
                 $.ajax({
                     url: form.attr('action'),
                     method: 'POST',
@@ -804,9 +896,9 @@
                 e.preventDefault();
                 const form = $(this);
                 const submitBtn = form.find('button[type="submit"]');
-                
+
                 submitBtn.prop('disabled', true).addClass('loading');
-                
+
                 $.ajax({
                     url: form.attr('action'),
                     method: 'POST',
@@ -814,7 +906,7 @@
                     success: function() {
                         form.closest('.d-flex.gap-2.flex-column').html(`
                             <form id="testToQCForm-${form.attr('action').match(/\d+$/)[0]}" action="/production/sendToQC/${form.attr('action').match(/\d+$/)[0]}" method="POST">
-                                <button type="submit" class="btn btn-primary">
+                                <button type="submit" class="btn btn-sm btn-primary">
                                     <i class="bi bi-clipboard-check"></i>
                                     Test to QC
                                 </button>
@@ -835,9 +927,9 @@
                 const btn = $(this);
                 const productionId = btn.data('production-id');
                 const choice = btn.data('choice');
-                
+
                 btn.addClass('loading').prop('disabled', true);
-                
+
                 $.ajax({
                     url: `/production/setRawMaterialChoice/${productionId}`,
                     method: 'POST',
@@ -847,8 +939,8 @@
                         if (choice === 'add') {
                             // Show raw material form
                             container.replaceWith(`
-                                <div class="d-flex gap-2" id="rawMaterialForm-${productionId}">
-                                    <select name="rawMaterialId" class="form-control" required>
+                                <div class="inline-form" id="rawMaterialForm-${productionId}">
+                                    <select name="rawMaterialId" class="form-select form-select-sm" required>
                                         <option value="">Select Raw Material</option>
                                         ${$(`tr[data-product-formulas]`).data('product-formulas').map(formula => `
                                             <option value="${formula.RawMaterial.id}">
@@ -856,8 +948,8 @@
                                             </option>
                                         `).join('')}
                                     </select>
-                                    <input type="number" name="quantity" class="form-control" placeholder="Quantity (Kg)" required step="0.01" min="0">
-                                    <button type="button" class="btn btn-primary add-raw-material" data-production-id="${productionId}">
+                                    <input type="number" name="quantity" class="form-control form-control-sm" placeholder="Quantity (Kg)" required step="0.01" min="0">
+                                    <button type="button" class="btn btn-sm btn-primary add-raw-material" data-production-id="${productionId}">
                                         <i class="bi bi-plus-circle"></i>
                                         Add Raw Material
                                     </button>
@@ -868,12 +960,12 @@
                             container.replaceWith(`
                                 <div class="d-flex gap-2 flex-column" id="qcButtons-${productionId}">
                                     <form id="testToQCForm-${productionId}" action="/production/sendToQC/${productionId}" method="POST">
-                                        <button type="submit" id="testToQCBtn-${productionId}" class="btn btn-primary">
+                                        <button type="submit" id="testToQCBtn-${productionId}" class="btn btn-sm btn-primary">
                                             <i class="bi bi-clipboard-check"></i>
                                             Test to QC
                                         </button>
                                     </form>
-                                    <button type="button" class="btn btn-danger quarantine-production" data-production-id="${productionId}">
+                                    <button type="button" class="btn btn-sm btn-outline-danger quarantine-production" data-production-id="${productionId}">
                                         <i class="bi bi-exclamation-triangle"></i>
                                         Quarantine
                                     </button>
@@ -892,17 +984,17 @@
             $(document).on('click', '.add-raw-material', function() {
                 const btn = $(this);
                 const productionId = btn.data('production-id');
-                const form = btn.closest('.d-flex');
+                const form = btn.closest('.inline-form');
                 const rawMaterialId = form.find('select[name="rawMaterialId"]').val();
                 const quantity = form.find('input[name="quantity"]').val();
-                
+
                 if (!rawMaterialId || !quantity) {
                     alert('Please fill in all fields');
                     return;
                 }
-                
+
                 btn.addClass('loading').prop('disabled', true);
-                
+
                 $.ajax({
                     url: `/production/addRawMaterial/${productionId}`,
                     method: 'POST',
@@ -911,12 +1003,12 @@
                         form.replaceWith(`
                             <div class="d-flex gap-2 flex-column" id="qcButtons-${productionId}">
                                 <form id="testToQCForm-${productionId}" action="/production/sendToQC/${productionId}" method="POST">
-                                    <button type="submit" id="testToQCBtn-${productionId}" class="btn btn-primary">
+                                    <button type="submit" id="testToQCBtn-${productionId}" class="btn btn-sm btn-primary">
                                         <i class="bi bi-clipboard-check"></i>
                                         Test to QC
                                     </button>
                                 </form>
-                                <button type="button" class="btn btn-danger quarantine-production" data-production-id="${productionId}">
+                                <button type="button" class="btn btn-sm btn-outline-danger quarantine-production" data-production-id="${productionId}">
                                     <i class="bi bi-exclamation-triangle"></i>
                                     Quarantine
                                 </button>
@@ -935,9 +1027,9 @@
                 e.preventDefault();
                 const form = $(this);
                 const submitBtn = form.find('button[type="submit"]');
-                
+
                 submitBtn.addClass('loading').prop('disabled', true);
-                
+
                 $.ajax({
                     url: form.attr('action'),
                     method: 'POST',
@@ -956,9 +1048,9 @@
             $(document).on('click', '.bg-received', function() {
                 const btn = $(this);
                 const productionId = btn.data('production-id');
-                
+
                 btn.addClass('loading').prop('disabled', true);
-                
+
                 $.ajax({
                     url: `/production/setBGReceived/${productionId}`,
                     method: 'POST',
@@ -966,7 +1058,7 @@
                         // Remove BG Received button and add Test to QC button
                         const testToQCButton = `
                             <form id="testToQCForm-${productionId}" action="/production/sendToQC/${productionId}" method="POST">
-                                <button type="submit" id="testToQCBtn-${productionId}" class="btn btn-primary">
+                                <button type="submit" id="testToQCBtn-${productionId}" class="btn btn-sm btn-primary">
                                     <i class="bi bi-clipboard-check"></i>
                                     Test to QC
                                 </button>
@@ -986,13 +1078,13 @@
             $(document).on('click', '.quarantine-production', function() {
                 const btn = $(this);
                 const productionId = btn.data('production-id');
-                
+
                 if (!confirm('Are you sure you want to quarantine this production?')) {
                     return;
                 }
-                
+
                 btn.addClass('loading').prop('disabled', true);
-                
+
                 $.ajax({
                     url: `/production/quarantine/${productionId}`,
                     method: 'POST',
@@ -1015,12 +1107,12 @@
 
         evtSource.onmessage = function(event) {
             const data = JSON.parse(event.data);
-            
+
             if (data.type === 'productionPrinted') {
                 // Show notification for printed production
                 const notification = `Production ${data.batchNumber} has been printed`;
                 showNotification(notification);
-                
+
                 // Play audio if specified
                 if (data.audio) {
                     audio.play().catch(e => console.error('Error playing audio:', e));
@@ -1034,7 +1126,7 @@
                 // Show notification for QC status update
                 const notification = `Production ${data.batchNumber} QC status: ${data.status}`;
                 showNotification(notification);
-                
+
                 // Play audio if specified
                 if (data.audio) {
                     audio.play().catch(e => console.error('Error playing audio:', e));
@@ -1048,7 +1140,7 @@
                 // Show notification for rework QC status update
                 const notification = `Rework ${data.batchNumber} QC status: ${data.status}`;
                 showNotification(notification);
-                
+
                 // Play audio if specified
                 if (data.audio) {
                     audio.play().catch(e => console.error('Error playing audio:', e));
@@ -1062,7 +1154,7 @@
                 // Show notification for new rework request
                 const notification = `New rework request: ${data.product} (${data.sonumber} - ${data.customerName})`;
                 showNotification(notification);
-                
+
                 // Play audio if specified
                 if (data.audio) {
                     audio.play().catch(e => console.error('Error playing audio:', e));
@@ -1079,7 +1171,7 @@
                     notification = `New production request #${data.prodreqnumber}: ${data.productName} (${data.quantity} Kg)`;
                 }
                 showNotification(notification);
-                
+
                 // Play audio if specified
                 if (data.audio) {
                     audio.play().catch(e => console.error('Error playing audio:', e));
@@ -1115,16 +1207,16 @@ document.addEventListener("DOMContentLoaded", function() {
     // Single event handler for all Test to QC forms using event delegation
     document.body.addEventListener("submit", function(event) {
         const form = event.target;
-        
+
         // Handle Test to QC forms
         if (form.matches('form[id^="testToQCForm-"]')) {
             event.preventDefault();
             console.log("Test to QC form submitted:", form.id);
-            
+
             const submitBtn = form.querySelector("button");
             submitBtn.disabled = true;
             submitBtn.classList.add('loading');
-            
+
             fetch(form.action, {
                 method: "POST",
                 headers: {
@@ -1149,14 +1241,14 @@ document.addEventListener("DOMContentLoaded", function() {
                 submitBtn.classList.remove('loading');
             });
         }
-        
+
         // Handle update stock forms
         if (form.matches('form[id^="updateStockForm-"]')) {
             event.preventDefault();
             const submitBtn = form.querySelector("button[type='submit']");
             submitBtn.disabled = true;
             submitBtn.classList.add('loading');
-            
+
             fetch(form.action, {
                 method: "POST",
                 headers: {

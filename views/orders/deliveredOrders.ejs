@@ -2,9 +2,23 @@
 <html lang="en">
 <head>
     <%- include('../partials/head', { pageTitle: 'Order History' }) %>
+    <style>
+        /* page-scoped helpers to echo the PPIC family look */
+        .stat-card .stat-sub { display: block; margin-top: 0.3rem; font-size: 0.76rem; color: var(--mib-text-muted); }
+        .stagger > * { opacity: 0; animation: fadeIn 0.5s ease forwards; }
+        .stagger > *:nth-child(1) { animation-delay: 0.04s; }
+        .stagger > *:nth-child(2) { animation-delay: 0.10s; }
+        .stagger > *:nth-child(3) { animation-delay: 0.16s; }
+    </style>
 </head>
 <body class="app-shell">
     <%- include('../partials/sidebar', { userRole: userRole, path: '/orders/delivered' }) %>
+
+    <%
+        const orderList = (typeof orders !== 'undefined' && orders) ? orders : [];
+        let productLines = 0;
+        orderList.forEach(o => { productLines += (o.products || []).length; });
+    %>
 
     <div class="content content-wide">
         <div class="page-header fade-in">
@@ -17,6 +31,25 @@
                 <a href="/dashboard/<%= userRole.toLowerCase() %>" class="btn btn-light"><i class="bi bi-arrow-left"></i> Dashboard</a>
             </div>
             <% } %>
+        </div>
+
+        <div class="quick-stats stagger">
+            <div class="stat-card">
+                <div class="stat-icon is-success"><i class="bi bi-truck"></i></div>
+                <div class="stat-body">
+                    <div class="stat-label">Delivered Orders</div>
+                    <div class="stat-value"><%= orderList.length.toLocaleString('id-ID') %></div>
+                    <span class="stat-sub">In the selected range</span>
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon is-info"><i class="bi bi-box-seam"></i></div>
+                <div class="stat-body">
+                    <div class="stat-label">Product Lines</div>
+                    <div class="stat-value"><%= productLines.toLocaleString('id-ID') %></div>
+                    <span class="stat-sub">Across all orders</span>
+                </div>
+            </div>
         </div>
 
         <div class="card fade-in">
@@ -43,7 +76,7 @@
         <div class="table-card fade-in">
             <div class="card-header"><h2 class="card-title"><i class="bi bi-list-check"></i> Delivered Orders</h2></div>
             <div class="table-responsive">
-                <% if (orders.length > 0) { %>
+                <% if (orderList.length > 0) { %>
                 <table class="table table-cards align-middle">
                     <thead>
                         <tr>
@@ -57,7 +90,7 @@
                         </tr>
                     </thead>
                     <tbody>
-                        <% orders.forEach(order => { %>
+                        <% orderList.forEach(order => { %>
                         <tr>
                             <td data-label="SO Number" class="cell-strong"><%= order.sonumber %></td>
                             <td data-label="Customer"><%= order.customerName %></td>

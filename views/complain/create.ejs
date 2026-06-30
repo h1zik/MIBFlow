@@ -9,14 +9,13 @@
 <body class="app-shell">
     <%- include('../partials/sidebar', { userRole: userRole, path: '/complain/create' }) %>
 
-    <div class="content">
-        <div class="page-header fade-in">
-            <div class="page-header__main">
-                <ul class="mib-breadcrumb"><li><a href="/complain">Complains</a></li><li>Create</li></ul>
-                <h1 class="page-title"><i class="bi bi-pencil-square"></i> Create Complain</h1>
-                <p class="page-subtitle">Report a new product complaint from a delivered order.</p>
-            </div>
-        </div>
+    <div class="content content-narrow">
+        <%- include('../partials/page-header', {
+              pageTitle: 'Create Complain',
+              pageIcon: 'bi-pencil-square',
+              pageSubtitle: 'Report a new product complaint from a delivered order.',
+              breadcrumb: [{ label: 'Complains', href: '/complain' }, { label: 'Create' }]
+        }) %>
 
         <form id="complainForm" class="needs-validation" novalidate>
             <div class="form-section">
