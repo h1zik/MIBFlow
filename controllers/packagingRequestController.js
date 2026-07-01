@@ -728,6 +728,21 @@ exports.createPackagingRequest = async (req, res) => {
             return res.status(400).json({ success: false, message: 'Invalid quantity requested.' });
         }
 
+        // Guard against duplicate requests: if this order already has an active
+        // (non-terminal) request for this packaging, don't create another one.
+        if (orderId) {
+            const existingRequest = await PackagingRequest.findOne({
+                where: {
+                    orderId,
+                    packagingId: packaging.id,
+                    status: { [Op.notIn]: ['Completed', 'Declined', 'Rejected'] }
+                }
+            });
+            if (existingRequest) {
+                return res.status(200).json({ success: true, skipped: true, message: 'A packaging request already exists for this order.' });
+            }
+        }
+
         const packagingRequest = await PackagingRequest.create({
             packagingName,
             quantity: requestQuantity,

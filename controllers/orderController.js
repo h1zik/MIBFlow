@@ -475,7 +475,7 @@ exports.getPpicDashboardData = async (req, res) => {
                     include: [
                         {
                             model: Product,
-                            attributes: ['name', 'formula', 'density']
+                            attributes: ['name', 'formula', 'density', 'stock']
                         },
                         {
                             model: Packaging,
@@ -529,8 +529,8 @@ exports.getPpicDashboardData = async (req, res) => {
             const productMap = {};
             order.OrderItems.forEach(item => {
                 const productName = item.Product.name;
-                const quantity = item.satuan === 'L' ? 
-                    item.quantity * (item.Product.density || 1) : 
+                const quantity = item.satuan === 'L' ?
+                    item.quantity * (item.Product.density || 1) :
                     item.quantity;
                 if (productMap[productName]) {
                     productMap[productName].quantity += quantity;
@@ -538,7 +538,8 @@ exports.getPpicDashboardData = async (req, res) => {
                     productMap[productName] = {
                         quantity: quantity,
                         satuan: item.satuan,
-                        density: item.Product.density || 1
+                        density: item.Product.density || 1,
+                        stock: item.Product.stock || 0
                     };
                 }
             });
@@ -546,15 +547,19 @@ exports.getPpicDashboardData = async (req, res) => {
                 const product = productMap[name];
                 return {
                     name,
-                    quantity: product.satuan === 'L' ? 
-                        product.quantity / product.density : 
+                    quantity: product.satuan === 'L' ?
+                        product.quantity / product.density :
                         product.quantity,
                     satuan: product.satuan
                 };
             });
+            // Production is only needed when some product's total ordered quantity
+            // (already normalised to KG above) exceeds the product's current stock.
+            const needsProduction = Object.values(productMap).some(p => p.quantity > p.stock);
             return {
                 ...order.toJSON(),
-                products
+                products,
+                needsProduction
             };
         });
 

@@ -206,6 +206,10 @@ exports.proceedToRework = async (req, res) => {
             }]
         });
 
+        if (!complainItem) {
+            return res.status(404).send('Complain item not found');
+        }
+
         await ComplainItem.update(
             { status: 'Rework Approved' },
             { where: { id: complainItemId } }
@@ -284,9 +288,19 @@ exports.updateQCStatus = async (req, res) => {
     const bgscanFile = req.files?.bgscan;
 
     try {
+        // Only Pass/Fail are valid QC outcomes for a production.
+        if (!['Pass', 'Fail'].includes(qcStatus)) {
+            return res.status(400).json({ success: false, message: 'Invalid QC status.' });
+        }
+
         const production = await Production.findByPk(id);
         if (!production) {
             return res.status(404).json({ success: false, message: 'Production not found' });
+        }
+
+        // Don't change the QC result after the production is completed (stock already added).
+        if (production.stockUpdated || production.status === 'Completed') {
+            return res.status(400).json({ success: false, message: 'This production is already completed; its QC result cannot be changed.' });
         }
 
         production.qcStatus = qcStatus;
@@ -826,9 +840,19 @@ exports.updateReworkStatus = async (req, res) => {
     const { qcStatus, qcComment } = req.body;
 
     try {
+        // Only Pass/Fail are valid QC outcomes for a rework.
+        if (!['Pass', 'Fail'].includes(qcStatus)) {
+            return res.status(400).json({ success: false, message: 'Invalid QC status.' });
+        }
+
         const rework = await ComplainRework.findByPk(id);
         if (!rework) {
             return res.status(404).json({ success: false, message: 'Rework not found' });
+        }
+
+        // Don't change the QC result after the rework is completed (stock already added).
+        if (rework.stockUpdated || rework.status === 'Completed') {
+            return res.status(400).json({ success: false, message: 'This rework is already completed; its QC result cannot be changed.' });
         }
 
         rework.qcStatus = qcStatus;

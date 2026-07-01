@@ -80,6 +80,22 @@ exports.requestRawMaterial = async (req, res) => {
         // Round to 2 decimal places
         finalQuantity = Math.round(finalQuantity * 100) / 100;
 
+        // Guard against duplicate requests: if this order already has an active
+        // (non-terminal) request for this material, don't create another one.
+        if (orderId) {
+            const existingRequest = await RawMaterialRequest.findOne({
+                where: {
+                    orderId,
+                    rawMaterialId: rawMaterial.id,
+                    status: { [Op.notIn]: ['Completed', 'Declined', 'Rejected'] }
+                }
+            });
+            if (existingRequest) {
+                if (wantsJson) return res.json({ success: true, skipped: true, message: 'A request for this material already exists for this order.' });
+                return res.redirect('/dashboard/ppic');
+            }
+        }
+
         // Create the raw material request using the found rawMaterialId
         const newRequest = await RawMaterialRequest.create({
             materialName,

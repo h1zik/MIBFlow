@@ -43,6 +43,11 @@ async function adjustStock(Model, id, delta, opts = {}) {
         throw new Error('adjustStock harus dipanggil di dalam transaksi (opts.transaction wajib diisi)');
     }
 
+    const numericDelta = Number(delta);
+    if (!Number.isFinite(numericDelta)) {
+        throw new Error(`adjustStock: delta tidak valid (${delta}) untuk ${Model.name} #${id}`);
+    }
+
     const record = await Model.findByPk(id, {
         transaction,
         lock: transaction.LOCK.UPDATE,
@@ -53,7 +58,7 @@ async function adjustStock(Model, id, delta, opts = {}) {
     }
 
     const current = Number(record[field]) || 0;
-    let next = current + Number(delta);
+    let next = current + numericDelta;
     next = integer ? Math.round(next) : roundQty(next);
 
     if (next < 0 && !allowNegative) {

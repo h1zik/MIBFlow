@@ -914,32 +914,19 @@
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="/js/dashboard-ajax.js"></script>
     <script>
         document.addEventListener('DOMContentLoaded', function() {
-            // Handle QC form submissions
+            // Thin wrapper over the shared dashboardRequest helper. On failure it
+            // alerts and returns { success: false } instead of throwing, so every
+            // handler's "restore button state" block always runs (no stuck buttons).
             async function makeRequest(url, method = 'POST', data = null) {
                 try {
-                    const options = {
-                        method
-                    };
-
-                    if (data instanceof FormData) {
-                        // For FormData, don't set Content-Type header - browser will set it with boundary
-                        options.body = data;
-                    } else if (data) {
-                        options.headers = { 'Content-Type': 'application/json' };
-                        options.body = JSON.stringify(data);
-                    }
-
-                    const response = await fetch(url, options);
-                    if (!response.ok) {
-                        throw new Error(`HTTP error! status: ${response.status}`);
-                    }
-                    return await response.json();
+                    return await dashboardRequest(url, { method, body: data });
                 } catch (error) {
                     console.error('Error:', error);
-                    alert('An error occurred. Please try again.');
-                    throw error;
+                    alert(error.message || 'An error occurred. Please try again.');
+                    return { success: false };
                 }
             }
 

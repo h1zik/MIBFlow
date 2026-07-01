@@ -1346,77 +1346,16 @@
                 });
             });
 
-            // Add split row button handler
-            $(document).on('click', '.btn-add-split', function() {
-                const container = $(this).closest('form').find('.split-rows');
-                const newRow = container.find('.split-row').first().clone();
-                newRow.find('input').val('');
-                container.append(newRow);
-            });
-
-            // Remove split row button handler
-            $(document).on('click', '.btn-remove-split', function() {
-                const container = $(this).closest('form').find('.split-rows');
-                if (container.find('.split-row').length > 1) {
-                    $(this).closest('.split-row').remove();
-                }
-            });
+            // NOTE: split rows are managed by the '.btn-add-split' / '.remove-split'
+            // handlers defined earlier (using #split-rows-<id>). A second, conflicting
+            // pair of handlers used to live here with a non-existent '.split-rows'
+            // selector and were removed.
         });
 
-        // Add handlers for Return and No Return buttons in failed requests
-        $(document).off('submit', '.failed-request-return-form, .failed-request-no-return-form');
-
-        // Handle Return button click for failed requests
-        $(document).on('submit', '.failed-request-return-form', function(e) {
-            e.preventDefault();
-            const form = $(this);
-            const url = form.attr('action');
-
-            $.ajax({
-                url: url,
-                type: 'POST',
-                data: form.serialize(),
-                success: function(response) {
-                    if (response.success) {
-                        // Remove the entire row from the failed requests table
-                        form.closest('tr').fadeOut(400, function() {
-                            $(this).remove();
-                        });
-                    } else {
-                        alert('Failed to process return. Please try again.');
-                    }
-                },
-                error: function(xhr, status, error) {
-                    alert('An error occurred. Please try again.');
-                }
-            });
-        });
-
-        // Handle No Return button click for failed requests
-        $(document).on('submit', '.failed-request-no-return-form', function(e) {
-            e.preventDefault();
-            const form = $(this);
-            const url = form.attr('action');
-
-            $.ajax({
-                url: url,
-                type: 'POST',
-                data: form.serialize(),
-                success: function(response) {
-                    if (response.success) {
-                        // Remove the entire row from the failed requests table
-                        form.closest('tr').fadeOut(400, function() {
-                            $(this).remove();
-                        });
-                    } else {
-                        alert('Failed to process no-return. Please try again.');
-                    }
-                },
-                error: function(xhr, status, error) {
-                    alert('An error occurred. Please try again.');
-                }
-            });
-        });
+        // NOTE: the Return / No-Return buttons for failed requests submit as normal
+        // forms (full page reload). Previous AJAX handlers here targeted classes
+        // ('.failed-request-return-form' / '.failed-request-no-return-form') that do
+        // not exist in the markup, so they never ran and were removed as dead code.
     </script>
 </body>
 </html>

@@ -867,29 +867,10 @@
                 });
             });
 
-            // Handle update stock form submissions
-            $(document).on('submit', '#updateStockForm-\\d+', function(e) {
-                e.preventDefault();
-                const form = $(this);
-                const submitBtn = form.find('button[type="submit"]');
-
-                submitBtn.prop('disabled', true).addClass('loading');
-
-                $.ajax({
-                    url: form.attr('action'),
-                    method: 'POST',
-                    data: form.serialize(),
-                    success: function() {
-                        form.remove(); // Remove the form after successful update
-                    },
-                    error: function() {
-                        alert('Error updating stock. Please try again.');
-                    },
-                    complete: function() {
-                        submitBtn.prop('disabled', false).removeClass('loading');
-                    }
-                });
-            });
+            // NOTE: update-stock submissions are handled by the fetch listener near the
+            // bottom of this file (form[id^="updateStockForm-"]). The old jQuery handler
+            // used an invalid selector (#updateStockForm-\d+) and duplicated that logic,
+            // so it was removed to avoid a double POST.
 
             // Handle raw material quantity form submissions
             $(document).on('submit', 'form[action*="addRawMaterial"]', function(e) {
@@ -904,8 +885,13 @@
                     method: 'POST',
                     data: form.serialize(),
                     success: function() {
+                        const action = form.attr('action');
+                        const id = action.match(/\d+$/)[0];
+                        // Stay in the same module as the submitted form: /production/addRawMaterial
+                        // -> /production/sendToQC, /complain/addRawMaterial -> /complain/sendToQC.
+                        const sendToQCAction = action.replace(/\/addRawMaterial\/\d+$/, `/sendToQC/${id}`);
                         form.closest('.d-flex.gap-2.flex-column').html(`
-                            <form id="testToQCForm-${form.attr('action').match(/\d+$/)[0]}" action="/production/sendToQC/${form.attr('action').match(/\d+$/)[0]}" method="POST">
+                            <form id="testToQCForm-${id}" action="${sendToQCAction}" method="POST">
                                 <button type="submit" class="btn btn-sm btn-primary">
                                     <i class="bi bi-clipboard-check"></i>
                                     Test to QC
@@ -937,12 +923,14 @@
                     success: function() {
                         const container = $(`#rawMaterialChoice-${productionId}`);
                         if (choice === 'add') {
+                            // Read the formulas from THIS production's row (not the first row on the page).
+                            const productFormulas = btn.closest('tr[data-product-formulas]').data('product-formulas') || [];
                             // Show raw material form
                             container.replaceWith(`
                                 <div class="inline-form" id="rawMaterialForm-${productionId}">
                                     <select name="rawMaterialId" class="form-select form-select-sm" required>
                                         <option value="">Select Raw Material</option>
-                                        ${$(`tr[data-product-formulas]`).data('product-formulas').map(formula => `
+                                        ${productFormulas.map(formula => `
                                             <option value="${formula.RawMaterial.id}">
                                                 ${formula.RawMaterial.name} (Stock: ${formula.RawMaterial.stock} Kg)
                                             </option>
@@ -1022,27 +1010,10 @@
                 });
             });
 
-            // Handle Test to QC form submissions
-            $(document).on('submit', '#testToQCForm-\\d+', function(e) {
-                e.preventDefault();
-                const form = $(this);
-                const submitBtn = form.find('button[type="submit"]');
-
-                submitBtn.addClass('loading').prop('disabled', true);
-
-                $.ajax({
-                    url: form.attr('action'),
-                    method: 'POST',
-                    success: function() {
-                        // Remove the Test to QC form without page reload
-                        form.remove();
-                    },
-                    error: function() {
-                        alert('Error sending to QC. Please try again.');
-                        submitBtn.removeClass('loading').prop('disabled', false);
-                    }
-                });
-            });
+            // NOTE: Test-to-QC submissions are handled by the fetch listener near the
+            // bottom of this file (form[id^="testToQCForm-"]). The old jQuery handler
+            // used an invalid selector (#testToQCForm-\d+) and duplicated that logic,
+            // so it was removed to avoid a double POST.
 
             // Handle BG Received button
             $(document).on('click', '.bg-received', function() {

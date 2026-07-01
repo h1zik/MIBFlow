@@ -1,6 +1,7 @@
 const ProductionRequest = require('../models/productionRequest');
 const Product = require('../models/product');
 const RawMaterialRequest = require('../models/rawMaterialRequest'); // Add this line
+const PackagingRequest = require('../models/packagingRequest');
 const { Production, ProductionRawMaterial } = require('../models/production');
 const Inbound = require('../models/inbound');
 const Outbound = require('../models/outbound');
@@ -586,6 +587,14 @@ exports.declineProductionRequest = async (req, res) => {
             return res.status(404).send({ error: 'Request not found' });
         }
 
+        // Only requests that have not yet been scheduled into production can be declined.
+        // Once Production records exist (status 'Scheduled') or the request is already
+        // Completed/Declined, restoring stock here would double-count or orphan productions.
+        if (!['Pending', 'Approved'].includes(request.status)) {
+            await transaction.rollback();
+            return res.status(400).send(`Cannot decline a request with status '${request.status}'.`);
+        }
+
         // Get the production request number for logging and finding outbound records
         const prodreqnumber = request.prodreqnumber;
         console.log(`Declining production request ${prodreqnumber}`);
@@ -608,7 +617,7 @@ exports.declineProductionRequest = async (req, res) => {
                 await Outbound.destroy({
                     where: {
                         packagingId: packaging.id,
-                        notes: { [Op.like]: `%${prodreqnumber}%` },
+                        notes: { [Op.like]: `%request ${prodreqnumber} for order%` },
                         type: 'Packaging'
                     },
                     transaction
@@ -638,7 +647,7 @@ exports.declineProductionRequest = async (req, res) => {
                 await Outbound.destroy({
                     where: {
                         product: rawMaterial.name,
-                        notes: { [Op.like]: `%${prodreqnumber}%` },
+                        notes: { [Op.like]: `%request ${prodreqnumber} for order%` },
                         type: 'Raw Material'
                     },
                     transaction
@@ -652,6 +661,16 @@ exports.declineProductionRequest = async (req, res) => {
         // 3. Update the production request status
         request.status = 'Declined';
         await request.save({ transaction });
+
+        // 4. If this request had moved the order into production, send the order back to the
+        // PPIC queue so it can be re-requested (it no longer has a full set of requests).
+        if (request.orderId) {
+            const order = await Order.findByPk(request.orderId, { transaction });
+            if (order && order.status === 'On Production') {
+                order.status = 'Pending';
+                await order.save({ transaction });
+            }
+        }
 
         // Commit the transaction
         await transaction.commit();
@@ -685,6 +704,12 @@ exports.sendToQC = async (req, res) => {
             return res.status(404).send({ error: 'Production not found' });
         }
 
+        // Don't re-open QC on an already-completed production (would wipe its QC result).
+        if (production.stockUpdated || production.status === 'Completed') {
+            if (wantsJson) return res.status(400).json({ success: false, message: 'This production is already completed.' });
+            return res.status(400).send('This production is already completed.');
+        }
+
         production.qcStatus = 'Pending';
         await production.save();
 
@@ -706,16 +731,39 @@ exports.sendToQC = async (req, res) => {
     }
 };
 
+// Advance an order to 'Production Completed' once every production belonging to the
+// order's production requests is finished (Completed/Quarantined). Idempotent: safe to
+// call repeatedly. Runs inside the caller's transaction.
+async function maybeCompleteOrder(orderId, transaction) {
+    if (!orderId) return;
+    const requests = await ProductionRequest.findAll({
+        where: { orderId },
+        include: [{ model: Production, as: 'Productions', attributes: ['status'] }],
+        transaction
+    });
+    if (!requests.length) return;
+    const allDone = requests.every(r =>
+        Array.isArray(r.Productions) && r.Productions.length > 0 &&
+        r.Productions.every(p => p.status === 'Completed' || p.status === 'Quarantined')
+    );
+    if (allDone) {
+        await Order.update(
+            { status: 'Production Completed' },
+            { where: { id: orderId }, transaction }
+        );
+    }
+}
+
 exports.updateStock = async (req, res) => {
     const wantsJson = req.xhr || (req.headers.accept && req.headers.accept.indexOf('json') > -1);
     const { id } = req.params;
     let { realQuantity } = req.body;
 
-    // Convert and validate realQuantity
+    // Convert and validate realQuantity (must be a positive number).
     realQuantity = parseFloat(realQuantity);
-    if (isNaN(realQuantity) || realQuantity < 0) {
-        if (wantsJson) return res.status(400).json({ success: false, message: 'Invalid quantity value. Please enter a valid non-negative number.' });
-        return res.status(400).send('Invalid quantity value. Please enter a valid non-negative number.');
+    if (isNaN(realQuantity) || realQuantity <= 0) {
+        if (wantsJson) return res.status(400).json({ success: false, message: 'Invalid quantity value. Please enter a valid positive number.' });
+        return res.status(400).send('Invalid quantity value. Please enter a valid positive number.');
     }
 
     const transaction = await sequelize.transaction();
@@ -750,6 +798,13 @@ exports.updateStock = async (req, res) => {
             return res.status(400).send('Production has not passed QC');
         }
 
+        // Idempotency guard: never add product stock twice for the same production.
+        if (production.stockUpdated || production.status === 'Completed') {
+            await transaction.rollback();
+            if (wantsJson) return res.status(400).json({ success: false, message: 'Stock has already been updated for this production.' });
+            return res.status(400).send('Stock has already been updated for this production.');
+        }
+
         // Add produced quantity to product stock (atomic, locked).
         await adjustStock(Product, production.Product.id, realQuantity, { transaction });
 
@@ -780,6 +835,10 @@ exports.updateStock = async (req, res) => {
             reason: 'Dari Produksi',
             notes: 'Created from production'
         }, { transaction });
+
+        // Keep the order status in sync: mark it 'Production Completed' automatically
+        // once all productions for this order are done (no manual PPIC step needed).
+        await maybeCompleteOrder(production.ProductionRequest?.orderId, transaction);
 
         await transaction.commit();
         console.log("Stock updated successfully");
@@ -968,6 +1027,32 @@ exports.renderRequestProductionPage = async (req, res) => {
             product.rawMaterialsToRequest = Array.from(product.rawMaterialsMap.values());
             delete product.rawMaterialsMap; // Clean up the map as it's no longer needed
         });
+
+        // Flag raw materials / packaging that already have an active (non-terminal)
+        // request for THIS order, so the view can disable their "Request" buttons and
+        // avoid duplicate requests when the page is reloaded or opened in two tabs.
+        const TERMINAL_REQUEST_STATUSES = ['Completed', 'Declined', 'Rejected'];
+        const [pendingRawRequests, pendingPackagingRequests] = await Promise.all([
+            RawMaterialRequest.findAll({
+                where: { orderId: order.id, status: { [Op.notIn]: TERMINAL_REQUEST_STATUSES } },
+                attributes: ['rawMaterialId']
+            }),
+            PackagingRequest.findAll({
+                where: { orderId: order.id, status: { [Op.notIn]: TERMINAL_REQUEST_STATUSES } },
+                attributes: ['packagingId']
+            })
+        ]);
+        const requestedRawMaterialIds = new Set(pendingRawRequests.map(r => r.rawMaterialId));
+        const requestedPackagingIds = new Set(pendingPackagingRequests.map(r => r.packagingId));
+        productsToProduce.forEach(product => {
+            (product.rawMaterials || []).forEach(rm => {
+                rm.alreadyRequested = requestedRawMaterialIds.has(rm.id);
+            });
+            (product.packagings || []).forEach(pkg => {
+                pkg.alreadyRequested = requestedPackagingIds.has(pkg.id);
+            });
+        });
+
         const userRole = req.user.role;
         res.render('ppic/requestProductions', { 
             order, 
@@ -1029,16 +1114,6 @@ exports.createProductionRequest = async (req, res) => {
             });
         }
         
-        // Send notification for new production request after validation is successful
-        req.app.locals.sendNotification({
-            type: 'newProductionRequest',
-            productName: productName,
-            quantity: quantity,
-            prodreqnumber: prodreqnumber,
-            status: 'Pending',
-            audio: 'production.mp3'
-        });
-
         // Create production request
         const productionRequest = await ProductionRequest.create({
             product: productName,
@@ -1101,8 +1176,11 @@ exports.createProductionRequest = async (req, res) => {
             
             // If we found the order item with packaging, use that
             if (orderItem && orderItem.Packaging) {
-                // Use a standard quantity of 1 per production unit
-                const packagingQuantity = Math.ceil(productionQuantity);
+                // Packaging unit count = production volume (L) / packaging volume (L), rounded up.
+                // (Previously this used the production WEIGHT in KG as the unit count, which was wrong.)
+                const density = orderItem.Product?.density || 1;
+                const volumeInLiters = productionQuantity / density;
+                const packagingQuantity = Math.max(1, Math.ceil(volumeInLiters / (orderItem.Packaging.volume || 1)));
                 
                 // Create production request packaging record
                 await ProductionRequestPackaging.create({
@@ -1200,6 +1278,18 @@ exports.createProductionRequest = async (req, res) => {
         }
 
         await transaction.commit();
+
+        // Notify only after everything succeeded and committed (previously this fired
+        // before the request was even created, so failed/rolled-back requests still notified).
+        req.app.locals.sendNotification({
+            type: 'newProductionRequest',
+            productName: productName,
+            quantity: quantity,
+            prodreqnumber: prodreqnumber,
+            status: 'Pending',
+            audio: 'production.mp3'
+        });
+
         res.redirect('/dashboard/ppic');
     } catch (error) {
         console.error('Error creating production request:', error);
@@ -1292,23 +1382,12 @@ exports.clearProductionRequest = async (req, res) => {
         productionRequest.status = 'Completed';
         await productionRequest.save({ transaction });
 
-        // If there's no associated order, subtract packaging quantities from stock
-        if (!productionRequest.orderId) {
-            for (const prp of productionRequest.ProductionRequestPackagings) {
-                const packaging = prp.Packaging;
-                if (packaging) {
-                    // Subtract the used quantity from packaging stock (atomic, locked, never negative)
-                    await adjustStock(Packaging, packaging.id, -prp.quantity, { transaction, integer: true });
-                }
-            }
-        }
-        // If there is an associated order, update its status
-        else {
-            const order = await Order.findByPk(productionRequest.orderId, { transaction });
-            if (order) {
-                order.status = 'Production Completed';
-                await order.save({ transaction });
-            }
+        // If linked to an order, advance the order to 'Production Completed' only when ALL of
+        // its productions are actually done. Packaging & raw-material stock were already
+        // consumed at request creation, so nothing is deducted again here (previously this
+        // path double-deducted packaging for order-less requests).
+        if (productionRequest.orderId) {
+            await maybeCompleteOrder(productionRequest.orderId, transaction);
         }
 
         await transaction.commit();
@@ -1353,6 +1432,11 @@ exports.setRawMaterialChoice = async (req, res) => {
     const { choice } = req.body;
 
     try {
+        if (!['add', 'skip'].includes(choice)) {
+            if (wantsJson) return res.status(400).json({ success: false, message: 'Invalid choice.' });
+            return res.status(400).send('Invalid choice.');
+        }
+
         const production = await Production.findByPk(id);
         if (!production) {
             if (wantsJson) return res.status(404).json({ success: false, message: 'Production not found' });
@@ -1374,10 +1458,17 @@ exports.setRawMaterialChoice = async (req, res) => {
 exports.addRawMaterial = async (req, res) => {
     const wantsJson = req.xhr || (req.headers.accept && req.headers.accept.indexOf('json') > -1);
     const { id } = req.params;
-    const { rawMaterialId, quantity } = req.body;
+    const { rawMaterialId } = req.body;
+    const quantity = parseFloat(req.body.quantity);
     const transaction = await sequelize.transaction();
 
     try {
+        if (isNaN(quantity) || quantity <= 0) {
+            await transaction.rollback();
+            if (wantsJson) return res.status(400).json({ success: false, message: 'Invalid quantity value. Please enter a valid positive number.' });
+            return res.status(400).send('Invalid quantity value. Please enter a valid positive number.');
+        }
+
         // Find the production
         const production = await Production.findByPk(id, {
             include: [{
@@ -1386,13 +1477,21 @@ exports.addRawMaterial = async (req, res) => {
                     model: ProductFormula,
                     include: [RawMaterial]
                 }]
-            }]
+            }],
+            transaction
         });
 
         if (!production) {
             await transaction.rollback();
             if (wantsJson) return res.status(404).json({ success: false, message: 'Production not found' });
             return res.status(404).send('Production not found');
+        }
+
+        // Idempotency guard: don't add raw material (and deduct stock) twice.
+        if (production.rawMaterialAdded) {
+            await transaction.rollback();
+            if (wantsJson) return res.status(400).json({ success: false, message: 'Raw material has already been added for this production.' });
+            return res.status(400).send('Raw material has already been added for this production.');
         }
 
         // Find the raw material (locked to keep the check-and-deduct atomic)
