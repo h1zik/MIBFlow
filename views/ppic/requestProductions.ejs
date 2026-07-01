@@ -403,10 +403,17 @@
                                 <input type="number" class="form-control raw-material-quantity" name="products[<%= product.productId %>][rawMaterials][<%= rawMaterial.id %>][quantity]" value="<%= Math.ceil(rawMaterial.quantity) %>" readonly>
                                 <span class="raw-material-stock">Current Stock: <%= rawMaterial.stock %> Kg</span>
                                 <% if (Math.ceil(rawMaterial.quantity) > rawMaterial.stock) { %>
-                                <button type="button" class="btn btn-warning request-raw-material-btn" data-material-id="<%= rawMaterial.id %>" data-material-name="<%= rawMaterial.name %>" data-quantity="<%= Math.ceil(rawMaterial.quantity) %>">
-                                    <i class="bi bi-plus-circle"></i>
-                                    Request Raw Material
-                                </button>
+                                    <% if (rawMaterial.alreadyRequested) { %>
+                                    <button type="button" class="btn btn-success" disabled>
+                                        <i class="bi bi-check-lg"></i>
+                                        Already Requested
+                                    </button>
+                                    <% } else { %>
+                                    <button type="button" class="btn btn-warning request-raw-material-btn" data-material-id="<%= rawMaterial.id %>" data-material-name="<%= rawMaterial.name %>" data-quantity="<%= Math.ceil(rawMaterial.quantity) %>">
+                                        <i class="bi bi-plus-circle"></i>
+                                        Request Raw Material
+                                    </button>
+                                    <% } %>
                                 <% } %>
                             </div>
                             <% }) %>
@@ -423,10 +430,17 @@
                                 <input type="number" class="form-control raw-material-quantity" name="products[<%= product.productId %>][packagings][<%= packaging.id %>][quantity]" value="<%= packaging.unit %>" readonly>
                                 <span class="raw-material-stock">Current Stock: <%= packaging.stock %> pcs | Need: <%= packaging.unit %> pcs (Volume: <%= packaging.volume %>L)</span>
                                 <% if (packaging.unit > packaging.stock) { %>
-                                <button type="button" class="btn btn-warning request-packaging-btn" data-packaging-id="<%= packaging.id %>" data-packaging-name="<%= packaging.name %>" data-quantity="<%= packaging.unit %>">
-                                    <i class="bi bi-plus-circle"></i>
-                                    Request Packaging
-                                </button>
+                                    <% if (packaging.alreadyRequested) { %>
+                                    <button type="button" class="btn btn-success" disabled>
+                                        <i class="bi bi-check-lg"></i>
+                                        Already Requested
+                                    </button>
+                                    <% } else { %>
+                                    <button type="button" class="btn btn-warning request-packaging-btn" data-packaging-id="<%= packaging.id %>" data-packaging-name="<%= packaging.name %>" data-quantity="<%= packaging.unit %>">
+                                        <i class="bi bi-plus-circle"></i>
+                                        Request Packaging
+                                    </button>
+                                    <% } %>
                                 <% } %>
                             </div>
                             <% }) %>

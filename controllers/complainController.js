@@ -426,6 +426,17 @@ exports.produceBatch = async (req, res) => {
             return res.status(404).send('Rework not found');
         }
 
+        // Idempotency: once a batch number exists, don't regenerate/overwrite it.
+        if (complainRework.batchNumber) {
+            if (wantsJson) return res.json({ success: true });
+            return res.redirect('/dashboard/production');
+        }
+
+        if (!complainRework.Tanks || complainRework.Tanks.length === 0) {
+            if (wantsJson) return res.status(400).json({ success: false, message: 'No tank assigned to this rework.' });
+            return res.status(400).send('No tank assigned to this rework.');
+        }
+
         // Generate the batch number
         const currentDate = new Date();
         const day = String(currentDate.getDate()).padStart(2, '0');
@@ -466,6 +477,12 @@ exports.sendToQC = async (req, res) => {
         if (!complainRework) {
             if (wantsJson) return res.status(404).json({ success: false, message: 'Rework not found' });
             return res.status(404).send({ error: 'Rework not found' });
+        }
+
+        // Don't re-open QC on an already-completed rework (would wipe its QC result).
+        if (complainRework.stockUpdated || complainRework.status === 'Completed') {
+            if (wantsJson) return res.status(400).json({ success: false, message: 'This rework is already completed.' });
+            return res.status(400).send('This rework is already completed.');
         }
 
         complainRework.qcStatus = 'Pending';
@@ -546,10 +563,10 @@ exports.updateStock = async (req, res) => {
     const { id } = req.params;
     let { realQuantity } = req.body;
 
-    // Convert and validate realQuantity
+    // Convert and validate realQuantity (must be a positive number).
     realQuantity = parseFloat(realQuantity);
-    if (isNaN(realQuantity) || realQuantity < 0) {
-        return res.status(400).send('Invalid quantity value. Please enter a valid non-negative number.');
+    if (isNaN(realQuantity) || realQuantity <= 0) {
+        return res.status(400).send('Invalid quantity value. Please enter a valid positive number.');
     }
 
     const transaction = await sequelize.transaction();
@@ -575,6 +592,12 @@ exports.updateStock = async (req, res) => {
             return res.status(400).send('Rework has not passed QC');
         }
 
+        // Idempotency guard: never add rework stock twice.
+        if (complainRework.stockUpdated || complainRework.status === 'Completed') {
+            await transaction.rollback();
+            return res.status(400).send('Stock has already been updated for this rework.');
+        }
+
         // Find the product using productId
         const product = await Product.findByPk(complainRework.ComplainItem.productId, { transaction });
 
@@ -583,17 +606,22 @@ exports.updateStock = async (req, res) => {
             return res.status(404).send('Product not found');
         }
 
-        // Ensure current stock is valid
-        const currentStock = parseFloat(product.stock) || 0;
+        // Add reworked quantity to product stock (atomic, locked) — same path as normal production.
+        await adjustStock(Product, product.id, realQuantity, { transaction });
 
-        // Calculate new stock with validated numbers
-        const newStock = currentStock + realQuantity;
-
-        // Update product stock with explicit number conversion and rounding
-        await product.update(
-            { stock: Number(newStock.toFixed(2)) },
-            { transaction }
-        );
+        // Create inbound record so reworked output is traceable like normal production.
+        await Inbound.create({
+            date: new Date(),
+            poSoNumber: 'N/A',
+            batchNumber: complainRework.batchNumber,
+            item: product.name,
+            vendor: 'Internal Production (Rework)',
+            quantity: realQuantity,
+            expiredDate: new Date(new Date().setFullYear(new Date().getFullYear() + 2)),
+            type: 'Produk',
+            reason: 'Dari Rework',
+            notes: 'Created from rework production'
+        }, { transaction });
 
         // Update rework record
         await complainRework.update(
@@ -679,10 +707,17 @@ exports.setRawMaterialChoice = async (req, res) => {
 exports.addRawMaterial = async (req, res) => {
     const wantsJson = req.xhr || (req.headers.accept && req.headers.accept.indexOf('json') > -1);
     const { id } = req.params;
-    const { rawMaterialId, quantity } = req.body;
+    const { rawMaterialId } = req.body;
+    const quantity = parseFloat(req.body.quantity);
     const transaction = await sequelize.transaction();
 
     try {
+        if (isNaN(quantity) || quantity <= 0) {
+            await transaction.rollback();
+            if (wantsJson) return res.status(400).json({ success: false, message: 'Invalid quantity value. Please enter a valid positive number.' });
+            return res.status(400).send('Invalid quantity value. Please enter a valid positive number.');
+        }
+
         const rework = await ComplainRework.findByPk(id, {
             include: [ComplainItem],
             transaction
@@ -692,6 +727,13 @@ exports.addRawMaterial = async (req, res) => {
             await transaction.rollback();
             if (wantsJson) return res.status(404).json({ success: false, message: 'Rework not found' });
             return res.status(404).send('Rework not found');
+        }
+
+        // Idempotency guard: don't add raw material (and deduct stock) twice.
+        if (rework.rawMaterialAdded) {
+            await transaction.rollback();
+            if (wantsJson) return res.status(400).json({ success: false, message: 'Raw material has already been added for this rework.' });
+            return res.status(400).send('Raw material has already been added for this rework.');
         }
 
         const rawMaterial = await RawMaterial.findByPk(rawMaterialId, {

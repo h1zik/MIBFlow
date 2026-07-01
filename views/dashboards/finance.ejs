@@ -626,6 +626,7 @@
         </section>
     </div>
 
+    <script src="/js/dashboard-ajax.js"></script>
     <script>
         // ---- SSE notifications ----
         const evtSource = new EventSource('/notifications');
@@ -1022,47 +1023,55 @@
         });
 
         // API Functions
-        async function makeRequest(url, method = 'POST', elementId = null) {
+
+        // Update a finance row (status badge + action buttons) from the server response.
+        function updateFinanceRow(elementId, data) {
+            if (!elementId) return;
+
+            const statusCell = document.querySelector(`#status-${elementId}`);
+            if (statusCell) {
+                const newStatus = data.status || 'Updated';
+                const k = String(newStatus).toLowerCase().replace(/\s+/g, '-');
+                const known = ['pending','processing','onprod','on-production','production-completed','completed','approved','paid','delivered','on-delivery','ready-to-deliver','partially-delivered','open','printed','scheduled','cancelled','declined','rejected','neutral'];
+                const cls = 'status-' + (known.includes(k) ? k : 'neutral');
+                statusCell.innerHTML = `<span class="status-badge ${cls}">${newStatus}</span>`;
+            }
+
+            const actionsCell = document.querySelector(`#actions-${elementId}`);
+            if (actionsCell && data.newActions) {
+                actionsCell.innerHTML = data.newActions;
+                attachEventListeners(); // bind listeners on the freshly injected buttons
+            }
+        }
+
+        // Run a finance action button: POST, update the row, and ALWAYS restore the
+        // button so a failed request never leaves it stuck in the loading state.
+        async function financeAction(btn, url, elementId) {
+            const originalHtml = btn.innerHTML;
+            btn.classList.add('loading');
+            btn.disabled = true;
             try {
-                const response = await fetch(url, {
-                    method,
-                    headers: { 'Content-Type': 'application/json' }
-                });
-                const data = await response.json();
-
-                if (data.success) {
-                    if (elementId) {
-                        // Update status badge
-                        const statusCell = document.querySelector(`#status-${elementId}`);
-                        if (statusCell) {
-                            const newStatus = data.status || 'Updated';
-                            const k = String(newStatus).toLowerCase().replace(/\s+/g, '-');
-                            const known = ['pending','processing','onprod','on-production','production-completed','completed','approved','paid','delivered','on-delivery','ready-to-deliver','partially-delivered','open','printed','scheduled','cancelled','declined','rejected','neutral'];
-                            const cls = 'status-' + (known.includes(k) ? k : 'neutral');
-                            statusCell.innerHTML = `<span class="status-badge ${cls}">${newStatus}</span>`;
-                        }
-
-                        // Update actions
-                        const actionsCell = document.querySelector(`#actions-${elementId}`);
-                        if (actionsCell && data.newActions) {
-                            actionsCell.innerHTML = data.newActions;
-                            // Reattach event listeners to new buttons
-                            attachEventListeners();
-                        }
-                    }
-                } else {
-                    throw new Error(data.message || 'Operation failed');
-                }
+                const data = await dashboardRequest(url, { method: 'POST' });
+                updateFinanceRow(elementId, data);
             } catch (error) {
                 console.error('Error:', error);
                 alert(error.message || 'An error occurred');
+            } finally {
+                // If the row was replaced, the button is detached — restoring is a harmless no-op.
+                if (btn.isConnected) {
+                    btn.classList.remove('loading');
+                    btn.disabled = false;
+                    btn.innerHTML = originalHtml;
+                }
             }
         }
 
         // Function to attach event listeners to all buttons
         function attachEventListeners() {
-            // Print button
+            // Print button (opens the PDF in a new tab, local state only — not AJAX)
             document.querySelectorAll('.print-btn').forEach(btn => {
+                if (btn.dataset.bound) return;
+                btn.dataset.bound = '1';
                 btn.addEventListener('click', function() {
                     const orderId = this.dataset.id;
                     // Open in new window/tab
@@ -1076,96 +1085,29 @@
                 });
             });
 
-            // Raw Material buttons
-            document.querySelectorAll('.approve-raw-material-btn').forEach(btn => {
-                btn.addEventListener('click', function() {
-                    this.classList.add('loading');
-                    this.disabled = true;
-                    const requestId = this.dataset.id;
-                    makeRequest(`/finance/approveRawMaterial/${requestId}`, 'POST', requestId);
-                });
-            });
+            // AJAX action buttons — every one does the same thing (POST, then refresh
+            // the row from the response), so they are described as data, not copy-pasted.
+            const financeActions = [
+                ['.approve-raw-material-btn', id => `/finance/approveRawMaterial/${id}`],
+                ['.decline-raw-material-btn', id => `/finance/declineRawMaterial/${id}`],
+                ['.approve-packaging-btn',    id => `/finance/approvePackaging/${id}`],
+                ['.decline-packaging-btn',    id => `/finance/declinePackaging/${id}`],
+                ['.mark-paid-btn',            id => `/finance/markAsPaid/${id}`],
+                ['.proceed-delivery-btn',     id => `/finance/proceedDelivery/${id}`],
+                ['.paid-request-btn',         id => `/finance/payRawMaterial/${id}`],
+                ['.deliver-request-btn',      id => `/finance/deliverRawMaterial/${id}`],
+                ['.paid-packaging-btn',       id => `/finance/payPackaging/${id}`],
+                ['.deliver-packaging-btn',    id => `/finance/deliverPackaging/${id}`],
+            ];
 
-            document.querySelectorAll('.decline-raw-material-btn').forEach(btn => {
-                btn.addEventListener('click', function() {
-                    this.classList.add('loading');
-                    this.disabled = true;
-                    const requestId = this.dataset.id;
-                    makeRequest(`/finance/declineRawMaterial/${requestId}`, 'POST', requestId);
-                });
-            });
-
-            // Packaging buttons
-            document.querySelectorAll('.approve-packaging-btn').forEach(btn => {
-                btn.addEventListener('click', function() {
-                    this.classList.add('loading');
-                    this.disabled = true;
-                    const requestId = this.dataset.id;
-                    makeRequest(`/finance/approvePackaging/${requestId}`, 'POST', requestId);
-                });
-            });
-
-            document.querySelectorAll('.decline-packaging-btn').forEach(btn => {
-                btn.addEventListener('click', function() {
-                    this.classList.add('loading');
-                    this.disabled = true;
-                    const requestId = this.dataset.id;
-                    makeRequest(`/finance/declinePackaging/${requestId}`, 'POST', requestId);
-                });
-            });
-
-            // Order action buttons
-            document.querySelectorAll('.mark-paid-btn').forEach(btn => {
-                btn.addEventListener('click', function() {
-                    this.classList.add('loading');
-                    this.disabled = true;
-                    const orderId = this.dataset.id;
-                    makeRequest(`/finance/markAsPaid/${orderId}`, 'POST', orderId);
-                });
-            });
-
-            document.querySelectorAll('.proceed-delivery-btn').forEach(btn => {
-                btn.addEventListener('click', function() {
-                    this.classList.add('loading');
-                    this.disabled = true;
-                    const orderId = this.dataset.id;
-                    makeRequest(`/finance/proceedDelivery/${orderId}`, 'POST', orderId);
-                });
-            });
-
-            document.querySelectorAll('.paid-request-btn').forEach(btn => {
-                btn.addEventListener('click', function() {
-                    this.classList.add('loading');
-                    this.disabled = true;
-                    const requestId = this.dataset.id;
-                    makeRequest(`/finance/payRawMaterial/${requestId}`, 'POST', requestId);
-                });
-            });
-
-            document.querySelectorAll('.deliver-request-btn').forEach(btn => {
-                btn.addEventListener('click', function() {
-                    this.classList.add('loading');
-                    this.disabled = true;
-                    const requestId = this.dataset.id;
-                    makeRequest(`/finance/deliverRawMaterial/${requestId}`, 'POST', requestId);
-                });
-            });
-
-            document.querySelectorAll('.paid-packaging-btn').forEach(btn => {
-                btn.addEventListener('click', function() {
-                    this.classList.add('loading');
-                    this.disabled = true;
-                    const requestId = this.dataset.id;
-                    makeRequest(`/finance/payPackaging/${requestId}`, 'POST', requestId);
-                });
-            });
-
-            document.querySelectorAll('.deliver-packaging-btn').forEach(btn => {
-                btn.addEventListener('click', function() {
-                    this.classList.add('loading');
-                    this.disabled = true;
-                    const requestId = this.dataset.id;
-                    makeRequest(`/finance/deliverPackaging/${requestId}`, 'POST', requestId);
+            financeActions.forEach(([selector, toUrl]) => {
+                document.querySelectorAll(selector).forEach(btn => {
+                    if (btn.dataset.bound) return; // avoid double-binding on re-attach
+                    btn.dataset.bound = '1';
+                    btn.addEventListener('click', function() {
+                        const id = this.dataset.id;
+                        financeAction(this, toUrl(id), id);
+                    });
                 });
             });
         }

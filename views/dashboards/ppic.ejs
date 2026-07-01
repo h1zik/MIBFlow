@@ -412,7 +412,7 @@
                                 <% } %>
                                 <button type="button" class="btn btn-sm btn-outline-primary check-stock-btn" data-order-id="<%= order.id %>"><i class="bi bi-box"></i> Stock</button>
                                 <a href="/orders/<%= order.id %>" class="btn btn-sm btn-soft"><i class="bi bi-eye"></i> View</a>
-                                <% if (order.status !== 'On Production' && order.status !== 'Production Completed') { %>
+                                <% if (order.needsProduction && order.status !== 'On Production' && order.status !== 'Production Completed') { %>
                                     <a href="/production/request/<%= order.id %>" class="btn btn-sm btn-primary"><i class="bi bi-gear"></i> Request</a>
                                 <% } %>
                                 <% if (!(order.OrderItems || []).every(item => item.Product.formula)) { %>
@@ -643,7 +643,7 @@
                                                     <% } %>
                                                     <button type="button" class="btn btn-sm btn-outline-primary check-stock-btn" data-order-id="<%= order.id %>"><i class="bi bi-box"></i> Stock</button>
                                                     <a href="/orders/<%= order.id %>" class="btn btn-sm btn-soft"><i class="bi bi-eye"></i> View</a>
-                                                    <% if (order.status !== 'On Production' && order.status !== 'Production Completed') { %>
+                                                    <% if (order.needsProduction && order.status !== 'On Production' && order.status !== 'Production Completed') { %>
                                                         <a href="/production/request/<%= order.id %>" class="btn btn-sm btn-primary"><i class="bi bi-gear"></i> Request Production</a>
                                                     <% } %>
                                                     <% if (!order.OrderItems.every(item => item.Product.formula)) { %>
@@ -1369,6 +1369,10 @@
                                                     </div>`).join('')}
                                             </div>
                                         </div>` : ''}
+                                    ${response.outOfStockProducts && response.outOfStockProducts.length ? `
+                                    <div class="stock-actions mt-3 d-flex justify-content-end">
+                                        <a href="/production/request/${orderId}" class="btn btn-primary"><i class="bi bi-gear"></i> Request Production</a>
+                                    </div>` : ''}
                                 </div>`;
                         } else if (response.inStockProducts) {
                             modalBody = `
@@ -1469,10 +1473,13 @@
             });
 
             $(document).on('click', '.complete-packaging', function () {
-                const btn = $(this); const id = btn.data('id');
+                const btn = $(this); const row = btn.closest('tr'); const id = btn.data('id');
                 btn.prop('disabled', true).addClass('loading');
                 $.post(`/packaging-request/complete/${id}`)
-                    .done(() => location.reload())
+                    .done(function () {
+                        if (row.length) row.fadeOut(300, function () { $(this).remove(); });
+                        const card = btn.closest('.kanban-card'); if (card.length) card.fadeOut(300, function () { $(this).remove(); if (window.ppicUpdateColumnCounts) window.ppicUpdateColumnCounts(); });
+                    })
                     .fail(function (xhr) { alert('Error completing packaging request: ' + ((xhr.responseJSON && xhr.responseJSON.error) || 'Unknown error')); btn.prop('disabled', false).removeClass('loading'); });
             });
 
@@ -1487,10 +1494,13 @@
             });
 
             $(document).on('click', '.complete-complain', function () {
-                const btn = $(this); const id = btn.data('id');
+                const btn = $(this); const row = btn.closest('tr'); const id = btn.data('id');
                 btn.prop('disabled', true).addClass('loading');
                 $.post(`/complain/complete/${id}`)
-                    .done(() => location.reload())
+                    .done(function () {
+                        if (row.length) row.fadeOut(300, function () { $(this).remove(); });
+                        const card = btn.closest('.kanban-card'); if (card.length) card.fadeOut(300, function () { $(this).remove(); if (window.ppicUpdateColumnCounts) window.ppicUpdateColumnCounts(); });
+                    })
                     .fail(function (xhr) { alert('Error completing complain: ' + ((xhr.responseJSON && xhr.responseJSON.error) || 'Unknown error')); btn.prop('disabled', false).removeClass('loading'); });
             });
 

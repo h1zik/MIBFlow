@@ -321,73 +321,9 @@ exports.scheduleProduction = async (req, res) => {
 };
 
 
-exports.updateStock = async (req, res) => {
-    const wantsJson = req.xhr || (req.headers.accept && req.headers.accept.indexOf('json') > -1);
-    const { id } = req.params;
-    let { realQuantity } = req.body;
-
-    // Convert and validate realQuantity
-    realQuantity = parseFloat(realQuantity);
-    if (isNaN(realQuantity) || realQuantity < 0) {
-        console.error("Error: Invalid real quantity value. Received:", realQuantity);
-        if (wantsJson) return res.status(400).json({ success: false, message: "Invalid quantity value. Please enter a valid positive number." });
-        return res.status(400).send("Invalid quantity value. Please enter a valid positive number.");
-    }
-
-    const transaction = await sequelize.transaction();
-
-    try {
-        const production = await Production.findByPk(id, {
-            include: [
-                {
-                    model: Product,
-                    attributes: ['id', 'stock']
-                }
-            ],
-            transaction
-        });
-
-        if (!production) {
-            await transaction.rollback();
-            if (wantsJson) return res.status(404).json({ success: false, message: "Production not found" });
-            return res.status(404).send("Production not found");
-        }
-
-        if (production.qcStatus !== "Pass") {
-            await transaction.rollback();
-            if (wantsJson) return res.status(400).json({ success: false, message: "Production has not passed QC" });
-            return res.status(400).send("Production has not passed QC");
-        }
-
-        if (!production.Product) {
-            await transaction.rollback();
-            if (wantsJson) return res.status(400).json({ success: false, message: "Product association not found" });
-            return res.status(400).send("Product association not found");
-        }
-
-        // Add produced quantity to product stock (atomic, locked).
-        await adjustStock(Product, production.Product.id, realQuantity, { transaction });
-
-        // Update production record with explicit float value
-        await production.update(
-            {
-                quantity: Number(realQuantity.toFixed(2)), // Round to 2 decimal places and ensure it's a number
-                stockUpdated: true,
-                status: 'Completed'
-            },
-            { transaction }
-        );
-
-        await transaction.commit();
-        if (wantsJson) return res.json({ success: true });
-        return res.redirect("/dashboard/production");
-    } catch (error) {
-        await transaction.rollback();
-        console.error("Error updating stock:", error);
-        if (wantsJson) return res.status(500).json({ success: false, message: "Error updating stock. Please try again." });
-        return res.status(500).send("Error updating stock. Please try again.");
-    }
-};
+// NOTE: production stock completion now lives solely in productionRequestController.updateStock
+// (POST /production/updateStock/:id), which is idempotent and writes an Inbound record. The old
+// divergent updateStock here was removed to avoid two conflicting stock-mutation paths.
 
 exports.produceBatch = async (req, res) => {
     const wantsJson = req.xhr || (req.headers.accept && req.headers.accept.indexOf('json') > -1);
@@ -406,6 +342,17 @@ exports.produceBatch = async (req, res) => {
         if (!production) {
             if (wantsJson) return res.status(404).json({ success: false, message: 'Production not found' });
             return res.status(404).send('Production not found');
+        }
+
+        // Idempotency: once a batch number exists, don't regenerate/overwrite it.
+        if (production.batchNumber) {
+            if (wantsJson) return res.json({ success: true });
+            return res.redirect('/production/production');
+        }
+
+        if (!production.Tanks || production.Tanks.length === 0) {
+            if (wantsJson) return res.status(400).json({ success: false, message: 'No tank assigned to this production.' });
+            return res.status(400).send('No tank assigned to this production.');
         }
 
         // Generate the batch number
